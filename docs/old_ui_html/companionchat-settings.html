@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CompanionChat - 设置</title>
+<style>
+:root {
+  --primary: #7C5CBF;
+  --primary-light: #A88DE0;
+  --primary-container: #EDE5FF;
+  --secondary: #D4688C;
+  --secondary-container: #FFE0EB;
+  --on-primary: #FFFFFF;
+  --surface: #FFFFFF;
+  --surface-dim: #F7F5FA;
+  --surface-container: #F2EFF6;
+  --background: #FDFCFE;
+  --on-surface: #1C1B1F;
+  --on-surface-variant: #49454F;
+  --outline: #79747E;
+  --outline-variant: #CAC4D0;
+  --outline-light: #E8E4EC;
+  --error: #B3261E;
+  --error-container: #F9DEDC;
+  --success: #2E7D52;
+  --font: -apple-system, 'PingFang SC', 'Noto Sans SC', 'Helvetica Neue', Arial, sans-serif;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font);
+  background: linear-gradient(135deg, #E8E4EC 0%, #F0ECF4 50%, #E4E0EC 100%);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 20px;
+  color: var(--on-surface);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Phone Frame ── */
+.phone-frame {
+  width: 390px;
+  height: 844px;
+  border-radius: 44px;
+  background: var(--background);
+  box-shadow: 0 0 0 2px #1a1a1a, 0 0 0 5px #3a3a3a, 0 25px 60px rgba(0,0,0,0.18), 0 8px 20px rgba(0,0,0,0.10);
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Status Bar ── */
+.status-bar {
+  height: 44px;
+  padding: 12px 28px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.status-time {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  color: var(--on-surface);
+}
+.status-icons {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.status-icons svg {
+  width: 16px;
+  height: 16px;
+  fill: var(--on-surface);
+}
+
+/* ── Top App Bar ── */
+.top-bar {
+  height: 52px;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+}
+.top-bar-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--on-surface);
+  letter-spacing: 0.3px;
+}
+
+/* ── Content Area ── */
+.content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px 16px 16px;
+  scroll-behavior: smooth;
+}
+.content::-webkit-scrollbar { display: none; }
+
+/* ── Settings Group ── */
+.settings-group {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--outline-light);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  margin-bottom: 12px;
+  overflow: hidden;
+  opacity: 0;
+  animation: fadeIn 0.4s ease forwards;
+  transition: box-shadow 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+.settings-group:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.group-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--outline);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 14px 16px 6px;
+}
+
+/* ── Setting Item ── */
+.setting-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+  position: relative;
+}
+.setting-item:active {
+  transform: scale(0.98);
+}
+.setting-item:hover {
+  background: var(--surface-dim);
+}
+.setting-item + .setting-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 60px;
+  right: 16px;
+  height: 1px;
+  background: var(--outline-light);
+}
+
+.icon-box {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-right: 14px;
+  transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+.icon-box svg {
+  width: 20px;
+  height: 20px;
+  fill: #fff;
+}
+
+.setting-info {
+  flex: 1;
+  min-width: 0;
+}
+.setting-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--on-surface);
+  line-height: 1.3;
+}
+.setting-subtitle {
+  font-size: 12px;
+  color: var(--outline);
+  margin-top: 2px;
+  line-height: 1.4;
+  transition: color 0.2s ease;
+}
+.setting-value {
+  font-size: 12px;
+  color: var(--outline);
+  flex-shrink: 0;
+  margin-right: 4px;
+  margin-left: 8px;
+}
+.chevron {
+  width: 20px;
+  height: 20px;
+  fill: var(--outline-variant);
+  flex-shrink: 0;
+  transition: transform 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+.setting-item:hover .chevron {
+  transform: translateX(2px);
+  fill: var(--outline);
+}
+
+/* ── Toggle Switch ── */
+.toggle-wrap {
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+.toggle {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  cursor: pointer;
+  display: block;
+}
+.toggle input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.toggle-track {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: var(--outline-variant);
+  border-radius: var(--radius-full);
+  transition: background 0.25s cubic-bezier(0.4,0,0.2,1);
+}
+.toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+}
+.toggle input:checked ~ .toggle-track {
+  background: var(--primary);
+}
+.toggle input:checked ~ .toggle-thumb {
+  transform: translateX(20px);
+}
+
+/* ── Bottom Nav ── */
+.bottom-nav {
+  height: 72px;
+  flex-shrink: 0;
+  background: var(--surface);
+  border-top: 1px solid var(--outline-light);
+  display: flex;
+  align-items: stretch;
+  justify-content: space-around;
+  padding-bottom: 12px;
+}
+.nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+  padding-top: 8px;
+}
+.nav-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%) scaleX(0);
+  width: 28px;
+  height: 3px;
+  background: var(--primary);
+  border-radius: 0 0 3px 3px;
+  transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+}
+.nav-item.active::before {
+  transform: translateX(-50%) scaleX(1);
+}
+.nav-icon {
+  width: 24px;
+  height: 24px;
+  fill: var(--outline);
+  transition: fill 0.2s ease;
+}
+.nav-item.active .nav-icon {
+  fill: var(--primary);
+}
+.nav-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--outline);
+  transition: color 0.2s ease;
+}
+.nav-item.active .nav-label {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+/* ── Animations ── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+/* ── Profile Card ── */
+.profile-card {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--outline-light);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  margin-bottom: 12px;
+  overflow: hidden;
+  opacity: 0;
+  animation: fadeIn 0.4s ease forwards;
+  transition: box-shadow 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+.profile-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+.profile-header {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  gap: 14px;
+}
+.profile-avatar-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+.profile-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary-container), var(--secondary-container));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  color: var(--primary);
+  font-weight: 700;
+  border: 3px solid var(--surface);
+  box-shadow: 0 2px 8px rgba(124,92,191,0.15);
+}
+.profile-camera {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 24px;
+  height: 24px;
+  background: var(--primary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--surface);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+.profile-camera:hover { transform: scale(1.1); }
+.profile-camera:active { transform: scale(0.95); }
+.profile-camera svg { width: 12px; height: 12px; fill: white; }
+.profile-info {
+  flex: 1;
+  min-width: 0;
+}
+.profile-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--on-surface);
+  line-height: 1.3;
+}
+.profile-bio {
+  font-size: 13px;
+  color: var(--outline);
+  margin-top: 3px;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.profile-edit-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 0 16px 14px;
+  padding: 8px 0;
+  background: var(--primary-container);
+  color: var(--primary);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+.profile-edit-btn:hover { background: var(--primary); color: white; }
+.profile-edit-btn:active { transform: scale(0.97); }
+.profile-edit-btn svg { width: 16px; height: 16px; fill: currentColor; }
+.profile-fields {
+  padding: 0 16px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.profile-field {
+  display: flex;
+  align-items: center;
+  padding: 10px 0;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+.profile-field + .profile-field::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--outline-light);
+}
+.profile-field:hover { opacity: 0.7; }
+.profile-field-label {
+  font-size: 14px;
+  color: var(--outline);
+  width: 72px;
+  flex-shrink: 0;
+}
+.profile-field-value {
+  font-size: 14px;
+  color: var(--on-surface);
+  flex: 1;
+  text-align: right;
+}
+.profile-field .chevron {
+  width: 18px;
+  height: 18px;
+  margin-left: 4px;
+}
+
+.settings-group:nth-child(1) { animation-delay: 0.05s; }
+.settings-group:nth-child(2) { animation-delay: 0.10s; }
+.settings-group:nth-child(3) { animation-delay: 0.15s; }
+.settings-group:nth-child(4) { animation-delay: 0.20s; }
+.settings-group:nth-child(5) { animation-delay: 0.25s; }
+.settings-group:nth-child(6) { animation-delay: 0.30s; }
+.settings-group:nth-child(7) { animation-delay: 0.35s; }
+</style>
+</head>
+<body>
+
+<div class="phone-frame">
+  <!-- Status Bar -->
+  <div class="status-bar">
+    <span class="status-time">9:41</span>
+    <div class="status-icons">
+      <svg viewBox="0 0 24 24"><path d="M12 21c1.1 0 2-.9 2-2h-4a2 2 0 002 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V3a1.5 1.5 0 00-3 0v.68C7.63 4.36 6 6.92 6 10v5l-2 2v1h16v-1l-2-2z" opacity="0"/><path d="M2 17h2v4H2zm4-3h2v7H6zm4-3h2v10h-2zm4-3h2v13h-2zm4-3h2v16h-2z"/></svg>
+      <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 001.48-5.34c-.47-2.78-2.79-5-5.59-5.34a6.505 6.505 0 00-7.27 7.27c.34 2.8 2.56 5.12 5.34 5.59a6.5 6.5 0 005.34-1.48l.27.28v.79l4.25 4.25c.41.41 1.08.41 1.49 0 .41-.41.41-1.08 0-1.49L15.5 14zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" opacity="0"/><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3a4.24 4.24 0 00-6 0zm-4-4l2 2a7.07 7.07 0 0110 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+      <svg viewBox="0 0 24 24"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+    </div>
+  </div>
+
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <span class="top-bar-title">设置</span>
+  </div>
+
+  <!-- Scrollable Content -->
+  <div class="content">
+
+    <!-- 我的形象 -->
+    <div class="profile-card">
+      <div class="profile-header">
+        <div class="profile-avatar-wrap">
+          <div class="profile-avatar">我</div>
+          <div class="profile-camera">
+            <svg viewBox="0 0 24 24"><path d="M12 15.2a3.2 3.2 0 100-6.4 3.2 3.2 0 000 6.4z"/><path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>
+          </div>
+        </div>
+        <div class="profile-info">
+          <div class="profile-name">我的形象</div>
+          <div class="profile-bio">设置你的头像、昵称和个人信息，让 AI 伙伴更了解你</div>
+        </div>
+      </div>
+      <button class="profile-edit-btn">
+        <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+        编辑个人资料
+      </button>
+      <div class="profile-fields">
+        <div class="profile-field">
+          <span class="profile-field-label">昵称</span>
+          <span class="profile-field-value">小明</span>
+          <svg class="chevron" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+        </div>
+        <div class="profile-field">
+          <span class="profile-field-label">性别</span>
+          <span class="profile-field-value">男</span>
+          <svg class="chevron" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+        </div>
+        <div class="profile-field">
+          <span class="profile-field-label">年龄</span>
+          <span class="profile-field-value">25</span>
+          <svg class="chevron" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+        </div>
+        <div class="profile-field">
+          <span class="profile-field-label">个性签名</span>
+          <span class="profile-field-value">热爱生活的普通青年</span>
+          <svg class="chevron" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+        </div>
+        <div class="profile-field">
+          <span class="profile-field-label">兴趣标签</span>
+          <span class="profile-field-value">动漫、科技、旅行</span>
+          <svg class="chevron" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- 角色 -->
+    <div class="settings-group">
+      <div class="group-label">角色</div>
+      <div class="setting-item">
+        <div class="icon-box" style="background: linear-gradient(135deg, var(--primary), var(--primary-light));">
+          <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+        </div>
+        <div class="setting-info">
+          <div class="setting-title">角色管理</div>
+          <div class="setting-subtitle">创建和切换陪伴角色卡</div>
+        </div>
+        <svg class="chevron" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+      </div>
+      <div class="setting-item">
+        <div class="icon-box" style="background: linear-gradient(135deg, var(--primary), var(--primary-light));">
+          <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        </div>
+        <div class="setting-info">
+          <div class="setting-title">Skills 管理</div>
+          <div class="setting-subtitle">管理工作能力模板和自定义 skills</div>
+        </div>
+        <svg class="chevron" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+      </div>
+    </div>
+
+    <!-- 记忆 -->
+    <div class="settings-group">
+      <div class="group-label">记忆</div>
+      <div class="setting-item">
+        <div class="icon-box" style="background: linear-gradient(135deg, #5B9BD5, #7BB3E0);">
+          <svg viewBox="0 0 24 24"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>
+        </div>
+        <div class="setting-info">
+          <div class="setting-title">记忆管理</div>
+          <div class="setting-subtitle">查看、编辑和提升短期记忆</div>
+        </div>
+        <svg class="chevron" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+      </div>
+      <div class="setting-item" id="autoLearnItem">
+        <div class="icon-box" style="background: linear-gradient(135deg, #5B9BD5, #7BB3E0);">
+          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+        </div>
+        <div class="setting-info">
+          <div class="setting-title">自动学习偏好</div>
+          <div class="setting-subtitle" id="autoLearnSubtitle">后台总结最近对话并逐步学习用户偏好</div>
+        </div>
+        <div class="toggle-wrap">
+          <label class="toggle">
+            <input type="checkbox" id="autoLearnToggle" checked onchange="toggleAutoLearn(this)">
+            <span class="toggle-track"></span>
+            <span class="toggle-thumb"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模型 -->
+    <div class="settings-group">
+      <div class="group-label">模型</div>
+      <div class="setting-item">
+        <div class="icon-box" style="background: linear-gradient(135deg, #D4A03C, #E0B85C);">
+          <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zM4 6h16v2H4V6zm0 12V10h16v8H4z"/><path d="M6 12h2v2H6zm0 4h2v2H6zm4-4h8v2h-8zm0 4h8v2h-8z" opacity=".7"/></svg>
+        </div>
+        <div class="setting-info">
+          <div class="setting-title">模型配置</div>
+          <div class="setting-subtitle">选择模型、GPU/CPU 后端</div>
+        </div>
+        <svg class="chevron" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+      </div>
+      <div class="setting-item">
+        <div class="icon-box" style="background: linear-gradient(135deg, #D4A03C, #E0B85C);">
+          <svg viewBox="0 0 24 24"><path d="M4 6h18V4H4c-1.1 0-2 .9-2 2v11H0v3h14v-3H4V6zm19 2h-6c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h6c.55 0 1-.45 1-1V9c0-.55-.45-1-1-1zm-1 9h-4v-7h4v7z"/></svg>
+        </div>
+        <div class="setting-info">
+          <div class="setting-title">上下文窗口大小</div>
+          <div class="setting-subtitle">当前保留最近 10 轮对话</div>
+        </div>
+        <svg class="chevron" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+      </div>
+      <div class="setting-item">
+        <div class="icon-box" style="background: linear-gradient(135deg, #D4A03C, #E0B85C);">
+          <svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+        </div>
+        <div class="setting-info">
+          <div class="setting-title">图片生成</div>
+          <div class="setting-subtitle">配置联网图片生成 HTTP 接口</div>
+        </div>
+        <svg class="chevron" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+      </div>
+    </div>
+
+    <!-- 语音 -->
+    <div class="settings-group">
+      <div class="group-label">语音</div>
+      <div class="setting-item">
+        <div class="icon-box" style="background: linear-gradient(135deg, var(--success), #48A06A);">
+          <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+        </div>
+        <div class="setting-info">
+          <div class="setting-title">语音设置</div>
+          <div class="setting-subtitle">语音输入输出、语速语调</div>
+        </div>
+        <svg class="chevron" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+      </div>
+      <div class="setting-item">
+        <div class="icon-box" style="background: linear-gradient(135deg, var(--success), #48A06A);">
+          <svg viewBox="0 0 24 24"><path d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0014.07 6H17V4h-7V2H8v2H1v1.97h7.01c-.34 2.01-1.08 3.85-2.13 5.45l-.01.01h.01c-.01.01-.01.02-.02.03A14.84 14.84 0 013.5 16.2l1.42 1.46a16.33 16.33 0 002.51-3.08l2.51 2.51 2.93-2.02zM18 11.5V14h3v2h-3v2.5h-2V16h-3v-2h3v-2.5h2z" opacity="0"/><path d="M11 18h2v2h-2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-5h2V9h-2v6z" opacity="0"/><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" opacity="0"/><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm6.93 6h-2.95a15.65 15.65 0 00-1.38-3.56A8.03 8.03 0 0118.92 8zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2s.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56A7.987 7.987 0 015.08 16zm2.95-8H5.08a7.987 7.987 0 014.33-3.56A15.65 15.65 0 008.03 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.32-.16-2s.07-1.35.16-2h4.68c.09.65.16 1.32.16 2s-.07 1.34-.16 2zm.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 01-4.33 3.56zM16.36 14c.08-.66.14-1.32.14-2s-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z"/></svg>
+        </div>
+        <div class="setting-info">
+          <div class="setting-title">语言</div>
+          <div class="setting-subtitle">中文</div>
+        </div>
+        <svg class="chevron" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+      </div>
+    </div>
+
+    <!-- 外观 -->
+    <div class="settings-group">
+      <div class="group-label">外观</div>
+      <div class="setting-item">
+        <div class="icon-box" style="background: linear-gradient(135deg, var(--secondary), #E088A8);">
+          <svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 109 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 01-4.4 2.26 5.403 5.403 0 01-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/></svg>
+        </div>
+        <div class="setting-info">
+          <div class="setting-title">深色模式</div>
+          <div class="setting-subtitle">跟随系统</div>
+        </div>
+        <svg class="chevron" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+      </div>
+    </div>
+
+    <!-- 关于 -->
+    <div class="settings-group">
+      <div class="group-label">关于</div>
+      <div class="setting-item">
+        <div class="icon-box" style="background: linear-gradient(135deg, var(--outline), #9E9A9F);">
+          <svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+        </div>
+        <div class="setting-info">
+          <div class="setting-title">关于</div>
+          <div class="setting-subtitle">版本 0.1.0</div>
+        </div>
+        <svg class="chevron" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Bottom Navigation -->
+  <div class="bottom-nav">
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+      <span class="nav-label">发现</span>
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+      <span class="nav-label">对话</span>
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>
+      <span class="nav-label">记忆</span>
+    </div>
+    <div class="nav-item active">
+      <svg class="nav-icon" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.488.488 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+      <span class="nav-label">设置</span>
+    </div>
+  </div>
+</div>
+
+<script>
+function toggleAutoLearn(el) {
+  const sub = document.getElementById('autoLearnSubtitle');
+  if (el.checked) {
+    sub.textContent = '后台总结最近对话并逐步学习用户偏好';
+    sub.style.color = '';
+  } else {
+    sub.textContent = '已关闭后台偏好总结，不会自动触发阶段四学习';
+    sub.style.color = 'var(--outline)';
+  }
+}
+</script>
+
+</body>
+</html>

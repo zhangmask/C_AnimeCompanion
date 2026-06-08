@@ -1,0 +1,51 @@
+# Models
+*.gguf
+*.litertlm
+third_party/models/
+CompanionChat/app/src/main/assets/models/
+
+# Local Android AAR cache (keep sherpa-onnx in libs)
+# app/libs/*.aar
+
+# Gradle
+.gradle/
+build/
+**/build/
+
+# Android native build intermediates
+.cxx/
+app/.cxx/
+
+# IDE
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Local configuration
+local.properties
+*.keystore
+*.jks
+
+# Kotlin
+.kotlin/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# APK
+*.apk
+*.aab
+
+# Logs
+*.log
+
+# Local temp database
+tmp_db/
+*.db
+*.db-shm
+*.db-wal
+
+# Local worktrees
+.worktrees/

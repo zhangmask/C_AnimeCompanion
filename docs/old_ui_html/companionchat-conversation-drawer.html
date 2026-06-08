@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CompanionChat - 对话列表</title>
+<style>
+:root {
+  --primary: #7C5CBF;
+  --primary-light: #A88DE0;
+  --primary-container: #EDE5FF;
+  --secondary: #D4688C;
+  --secondary-container: #FFE0EB;
+  --on-primary: #FFFFFF;
+  --surface: #FFFFFF;
+  --surface-dim: #F7F5FA;
+  --surface-container: #F2EFF6;
+  --background: #FDFCFE;
+  --on-surface: #1C1B1F;
+  --on-surface-variant: #49454F;
+  --outline: #79747E;
+  --outline-variant: #CAC4D0;
+  --outline-light: #E8E4EC;
+  --error: #B3261E;
+  --error-container: #F9DEDC;
+  --success: #2E7D52;
+  --font: -apple-system, 'PingFang SC', 'Noto Sans SC', 'Helvetica Neue', Arial, sans-serif;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: var(--font);
+  background: linear-gradient(135deg, #E8E4EC 0%, #F0ECF4 50%, #E4E0EC 100%);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 20px;
+  -webkit-font-smoothing: antialiased;
+}
+
+.phone-frame {
+  width: 390px; height: 844px;
+  border-radius: 44px;
+  background: var(--background);
+  overflow: hidden; position: relative;
+  box-shadow: 0 0 0 2px #1a1a1a, 0 0 0 5px #3a3a3a, 0 25px 60px rgba(0,0,0,0.18), 0 8px 20px rgba(0,0,0,0.10);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+/* Status Bar */
+.status-bar {
+  height: 54px;
+  padding: 14px 28px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--surface);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+.status-time { font-size: 15px; font-weight: 600; color: var(--on-surface); }
+.status-icons { display: flex; gap: 5px; align-items: center; }
+.status-icons svg { width: 18px; height: 18px; fill: var(--on-surface); }
+
+/* Background Chat (dimmed) */
+.bg-chat {
+  position: absolute;
+  top: 54px; left: 0; right: 0; bottom: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+}
+.bg-top-bar {
+  display: flex;
+  align-items: center;
+  padding: 10px 16px 12px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--outline-light);
+  flex-shrink: 0;
+}
+.bg-top-bar-placeholder {
+  width: 44px; height: 44px;
+}
+.bg-top-bar-center {
+  flex: 1;
+  text-align: center;
+}
+.bg-top-bar-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--on-surface);
+}
+.bg-top-bar-status {
+  font-size: 12px;
+  color: var(--success);
+  font-weight: 500;
+}
+.bg-chat-area {
+  flex: 1;
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: var(--background);
+}
+.bg-msg-row {
+  display: flex;
+  gap: 8px;
+  max-width: 85%;
+}
+.bg-msg-row.ai { align-self: flex-start; }
+.bg-msg-row.user { align-self: flex-end; flex-direction: row-reverse; }
+.bg-avatar {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #A88DE0, #7C5CBF);
+  flex-shrink: 0;
+}
+.bg-bubble {
+  padding: 12px 16px;
+  font-size: 15px;
+  line-height: 1.55;
+}
+.bg-msg-row.ai .bg-bubble {
+  background: var(--surface-container);
+  color: var(--on-surface);
+  border-radius: 4px 16px 16px 16px;
+}
+.bg-msg-row.user .bg-bubble {
+  background: var(--primary);
+  color: white;
+  border-radius: 16px 4px 16px 16px;
+}
+.bg-input-bar {
+  background: var(--surface);
+  border-top: 1px solid var(--outline-light);
+  padding: 10px 16px 34px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.bg-input-placeholder {
+  flex: 1;
+  height: 38px;
+  background: var(--surface-container);
+  border-radius: 20px;
+}
+.bg-input-circle {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  background: var(--surface-container);
+  flex-shrink: 0;
+}
+.bg-input-send {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  background: var(--primary);
+  flex-shrink: 0;
+}
+
+/* Overlay */
+.overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.35);
+  z-index: 10;
+  animation: overlayFade 0.3s ease-out both;
+}
+@keyframes overlayFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Drawer */
+.drawer {
+  position: absolute;
+  top: 0; left: 0; bottom: 0;
+  width: 85%;
+  background: var(--surface);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 4px 0 24px rgba(0,0,0,0.12), 1px 0 4px rgba(0,0,0,0.06);
+  animation: drawerSlide 0.35s cubic-bezier(0.4, 0, 0.2, 1) both;
+  border-radius: 0 0 0 0;
+}
+@keyframes drawerSlide {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+/* Drawer Header */
+.drawer-header {
+  padding: 58px 20px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.drawer-header h2 {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--on-surface);
+  letter-spacing: -0.3px;
+}
+.close-btn {
+  width: 36px; height: 36px;
+  border: none;
+  background: var(--surface-container);
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.close-btn:hover { background: var(--outline-light); }
+.close-btn:active { transform: scale(0.9); }
+.close-btn svg { width: 18px; height: 18px; fill: var(--on-surface-variant); }
+
+/* Drawer Filter Chips */
+.drawer-chips {
+  display: flex;
+  gap: 8px;
+  padding: 0 20px 16px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  flex-shrink: 0;
+}
+.drawer-chips::-webkit-scrollbar { display: none; }
+
+.dchip {
+  flex-shrink: 0;
+  height: 32px;
+  padding: 0 14px;
+  border: 1.5px solid var(--outline-variant);
+  border-radius: var(--radius-full);
+  background: var(--surface);
+  color: var(--on-surface-variant);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: var(--font);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+  user-select: none;
+}
+.dchip:hover { border-color: var(--primary-light); background: var(--primary-container); }
+.dchip:active { transform: scale(0.96); }
+.dchip.active {
+  background: var(--primary);
+  color: var(--on-primary);
+  border-color: var(--primary);
+}
+
+/* Conversation List */
+.conv-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 12px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.conv-list::-webkit-scrollbar { display: none; }
+
+.conv-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 12px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+.conv-item:hover { background: var(--surface-dim); }
+.conv-item:active { transform: scale(0.98); background: var(--surface-container); }
+.conv-item.active-conv { background: var(--primary-container); }
+
+.conv-avatar {
+  width: 46px; height: 46px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 600;
+  color: white;
+  flex-shrink: 0;
+  position: relative;
+}
+.conv-avatar.pink { background: linear-gradient(135deg, #E88BA7, #D4688C); }
+.conv-avatar.blue { background: linear-gradient(135deg, #7BA7D4, #5B8DB8); }
+.conv-avatar.purple { background: linear-gradient(135deg, #A88DE0, #7C5CBF); }
+.conv-avatar.teal { background: linear-gradient(135deg, #6BB5A0, #4A9A84); }
+.conv-avatar.orange { background: linear-gradient(135deg, #E0A66D, #D48B4A); }
+
+.conv-active-dot {
+  position: absolute;
+  bottom: 1px; right: 1px;
+  width: 10px; height: 10px;
+  background: var(--success);
+  border-radius: 50%;
+  border: 2px solid var(--surface);
+}
+
+.conv-info {
+  flex: 1;
+  min-width: 0;
+}
+.conv-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--on-surface);
+  margin-bottom: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.conv-meta {
+  font-size: 12px;
+  color: var(--outline);
+  font-weight: 400;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.conv-meta-dot {
+  width: 3px; height: 3px;
+  background: var(--outline-variant);
+  border-radius: 50%;
+}
+
+.conv-actions {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.conv-item:hover .conv-actions { opacity: 1; }
+.conv-action-btn {
+  width: 32px; height: 32px;
+  border: none;
+  background: none;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.conv-action-btn:hover { background: var(--outline-light); }
+.conv-action-btn:active { transform: scale(0.9); }
+.conv-action-btn svg { width: 16px; height: 16px; fill: var(--outline); }
+.conv-action-btn.delete-btn:hover { background: var(--error-container); }
+.conv-action-btn.delete-btn:hover svg { fill: var(--error); }
+
+/* Divider */
+.conv-divider {
+  height: 1px;
+  background: var(--outline-light);
+  margin: 0 12px;
+}
+
+/* Drawer Footer */
+.drawer-footer {
+  padding: 12px 20px 40px;
+  flex-shrink: 0;
+}
+.new-conv-btn {
+  width: 100%;
+  height: 48px;
+  border: none;
+  background: var(--primary);
+  color: var(--on-primary);
+  border-radius: var(--radius-lg);
+  font-size: 15px;
+  font-weight: 600;
+  font-family: var(--font);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(124,92,191,0.25);
+}
+.new-conv-btn:hover { background: var(--primary-light); box-shadow: 0 4px 14px rgba(124,92,191,0.3); }
+.new-conv-btn:active { transform: scale(0.97); }
+.new-conv-btn svg { width: 20px; height: 20px; fill: white; }
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.conv-item {
+  animation: fadeIn 0.35s ease-out both;
+}
+.conv-item:nth-child(1) { animation-delay: 0.12s; }
+.conv-item:nth-child(2) { animation-delay: 0.18s; }
+.conv-item:nth-child(3) { animation-delay: 0.24s; }
+.conv-item:nth-child(4) { animation-delay: 0.30s; }
+.conv-item:nth-child(5) { animation-delay: 0.36s; }
+</style>
+</head>
+<body>
+
+<div class="phone-frame">
+  <!-- Status Bar -->
+  <div class="status-bar">
+    <span class="status-time">9:41</span>
+    <div class="status-icons">
+      <svg viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3a4.237 4.237 0 00-6 0zm-4-4l2 2a7.074 7.074 0 0110 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+      <svg viewBox="0 0 24 24"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+    </div>
+  </div>
+
+  <!-- Background Chat (dimmed/blurred) -->
+  <div class="bg-chat">
+    <div class="bg-top-bar">
+      <div class="bg-top-bar-placeholder"></div>
+      <div class="bg-top-bar-center">
+        <div class="bg-top-bar-title">对话</div>
+        <div class="bg-top-bar-status">已就绪</div>
+      </div>
+      <div class="bg-top-bar-placeholder"></div>
+    </div>
+    <div class="bg-chat-area">
+      <div class="bg-msg-row ai">
+        <div class="bg-avatar"></div>
+        <div class="bg-bubble">你好！我是你的 AI 伙伴，很高兴见到你。</div>
+      </div>
+      <div class="bg-msg-row user">
+        <div class="bg-bubble">今天过得怎么样？</div>
+      </div>
+      <div class="bg-msg-row ai">
+        <div class="bg-avatar"></div>
+        <div class="bg-bubble">今天过得充实呢！</div>
+      </div>
+      <div class="bg-msg-row user">
+        <div class="bg-bubble">没什么特别的</div>
+      </div>
+    </div>
+    <div class="bg-input-bar">
+      <div class="bg-input-circle"></div>
+      <div class="bg-input-placeholder"></div>
+      <div class="bg-input-send"></div>
+    </div>
+  </div>
+
+  <!-- Overlay -->
+  <div class="overlay"></div>
+
+  <!-- Drawer -->
+  <div class="drawer">
+    <!-- Drawer Header -->
+    <div class="drawer-header">
+      <h2>对话列表</h2>
+      <button class="close-btn">
+        <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+      </button>
+    </div>
+
+    <!-- Filter Chips -->
+    <div class="drawer-chips">
+      <button class="dchip active" onclick="selectDChip(this)">全部</button>
+      <button class="dchip" onclick="selectDChip(this)">今天</button>
+      <button class="dchip" onclick="selectDChip(this)">昨天</button>
+      <button class="dchip" onclick="selectDChip(this)">本周</button>
+      <button class="dchip" onclick="selectDChip(this)">本月</button>
+    </div>
+
+    <!-- Conversation List -->
+    <div class="conv-list">
+      <div class="conv-item active-conv">
+        <div class="conv-avatar pink">
+          夏
+          <span class="conv-active-dot"></span>
+        </div>
+        <div class="conv-info">
+          <div class="conv-title">和小夏聊天</div>
+          <div class="conv-meta">
+            32条消息 <span class="conv-meta-dot"></span> 刚刚
+          </div>
+        </div>
+        <div class="conv-actions">
+          <button class="conv-action-btn">
+            <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a.996.996 0 000-1.41l-2.34-2.34a.996.996 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+          </button>
+          <button class="conv-action-btn delete-btn">
+            <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="conv-divider"></div>
+
+      <div class="conv-item">
+        <div class="conv-avatar blue">澈</div>
+        <div class="conv-info">
+          <div class="conv-title">阿澈的故事</div>
+          <div class="conv-meta">
+            18条消息 <span class="conv-meta-dot"></span> 2小时前
+          </div>
+        </div>
+        <div class="conv-actions">
+          <button class="conv-action-btn">
+            <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a.996.996 0 000-1.41l-2.34-2.34a.996.996 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+          </button>
+          <button class="conv-action-btn delete-btn">
+            <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="conv-divider"></div>
+
+      <div class="conv-item">
+        <div class="conv-avatar purple">M</div>
+        <div class="conv-info">
+          <div class="conv-title">与Mira冒险</div>
+          <div class="conv-meta">
+            45条消息 <span class="conv-meta-dot"></span> 昨天
+          </div>
+        </div>
+        <div class="conv-actions">
+          <button class="conv-action-btn">
+            <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a.996.996 0 000-1.41l-2.34-2.34a.996.996 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+          </button>
+          <button class="conv-action-btn delete-btn">
+            <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="conv-divider"></div>
+
+      <div class="conv-item">
+        <div class="conv-avatar teal">凛</div>
+        <div class="conv-info">
+          <div class="conv-title">凛的下午茶</div>
+          <div class="conv-meta">
+            12条消息 <span class="conv-meta-dot"></span> 3天前
+          </div>
+        </div>
+        <div class="conv-actions">
+          <button class="conv-action-btn">
+            <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a.996.996 0 000-1.41l-2.34-2.34a.996.996 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+          </button>
+          <button class="conv-action-btn delete-btn">
+            <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="conv-divider"></div>
+
+      <div class="conv-item">
+        <div class="conv-avatar orange">N</div>
+        <div class="conv-info">
+          <div class="conv-title">English with Niko</div>
+          <div class="conv-meta">
+            8条消息 <span class="conv-meta-dot"></span> 上周
+          </div>
+        </div>
+        <div class="conv-actions">
+          <button class="conv-action-btn">
+            <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a.996.996 0 000-1.41l-2.34-2.34a.996.996 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+          </button>
+          <button class="conv-action-btn delete-btn">
+            <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="drawer-footer">
+      <button class="new-conv-btn">
+        <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+        新建对话
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+function selectDChip(el) {
+  document.querySelectorAll('.dchip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+}
+</script>
+</body>
+</html>

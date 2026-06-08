@@ -1,0 +1,389 @@
+package com.companion.chat.ui.settings
+
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Chat
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Card
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.companion.chat.data.local.entity.RoleCard
+import kotlinx.coroutines.launch
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CharacterManagementScreen(
+    modifier: Modifier = Modifier,
+    onBack: () -> Unit = {},
+    onActivateRoleCard: suspend (Long) -> Unit = {},
+    onStartChat: (Long) -> Unit = {},
+    roleManagementViewModel: RoleManagementViewModel = viewModel()
+) {
+    val uiState by roleManagementViewModel.uiState.collectAsState()
+    val scope = rememberCoroutineScope()
+    var editingRoleCard by remember { mutableStateOf<RoleCard?>(null) }
+    var showCreateDialog by remember { mutableStateOf(false) }
+    var deletingRoleCard by remember { mutableStateOf<RoleCard?>(null) }
+
+    Scaffold(
+        modifier = modifier,
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = {
+                    Text(
+                        text = "角色管理",
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "返回"
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { showCreateDialog = true }) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "添加角色卡"
+                        )
+                    }
+                }
+            )
+        }
+    ) { paddingValues ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            item {
+                Text(
+                    text = "创建和切换陪伴角色卡",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            uiState.activeRoleCard?.let { activeRole ->
+                item {
+                    SectionTitle("当前激活")
+                }
+                item {
+                    RoleCardItem(
+                        roleCard = activeRole,
+                        isActive = true,
+                        onActivate = {},
+                        onStartChat = { onStartChat(activeRole.id) },
+                        onEdit = { editingRoleCard = activeRole },
+                        onDelete = if (activeRole.isBuiltIn) null else ({ deletingRoleCard = activeRole })
+                    )
+                }
+            }
+
+            item {
+                SectionTitle("我的角色卡")
+            }
+
+            if (uiState.roleCards.isEmpty()) {
+                item {
+                    EmptyState(
+                        title = "还没有角色卡",
+                        description = "点击右上角“+”创建你的第一张角色卡。"
+                    )
+                }
+            } else {
+                items(uiState.roleCards, key = { it.id }) { roleCard ->
+                    RoleCardItem(
+                        roleCard = roleCard,
+                        isActive = roleCard.isActive,
+                        onActivate = {
+                            scope.launch {
+                                onActivateRoleCard(roleCard.id)
+                                roleManagementViewModel.refresh()
+                            }
+                        },
+                        onStartChat = { onStartChat(roleCard.id) },
+                        onEdit = { editingRoleCard = roleCard },
+                        onDelete = if (roleCard.isBuiltIn) null else ({ deletingRoleCard = roleCard })
+                    )
+                }
+            }
+        }
+    }
+
+    if (showCreateDialog) {
+        RoleCardEditorDialog(
+            onDismiss = { showCreateDialog = false },
+            onSave = { name, description, avatar, persona, speakingStyle, background, rules, taboos, openingMessage, exampleDialogue, avatarImageUri, galleryImageUris, imageStylePrompt, voiceProfileUri, voiceMode, voiceDisplayName ->
+                if (name.isBlank() || persona.isBlank()) {
+                    return@RoleCardEditorDialog
+                }
+                roleManagementViewModel.createRoleCard(
+                    name = name,
+                    description = description,
+                    avatar = avatar,
+                    persona = persona,
+                    speakingStyle = speakingStyle,
+                    background = background,
+                    rules = rules,
+                    taboos = taboos,
+                    openingMessage = openingMessage,
+                    exampleDialogue = exampleDialogue,
+                    avatarImageUri = avatarImageUri,
+                    galleryImageUris = galleryImageUris,
+                    imageStylePrompt = imageStylePrompt,
+                    voiceProfileUri = voiceProfileUri,
+                    voiceMode = voiceMode,
+                    voiceDisplayName = voiceDisplayName
+                )
+                showCreateDialog = false
+            }
+        )
+    }
+
+    editingRoleCard?.let { roleCard ->
+        RoleCardEditorDialog(
+            roleCard = roleCard,
+            onDismiss = { editingRoleCard = null },
+            onSave = { name, description, avatar, persona, speakingStyle, background, rules, taboos, openingMessage, exampleDialogue, avatarImageUri, galleryImageUris, imageStylePrompt, voiceProfileUri, voiceMode, voiceDisplayName ->
+                if (name.isBlank() || persona.isBlank()) {
+                    return@RoleCardEditorDialog
+                }
+                roleManagementViewModel.updateRoleCard(
+                    id = roleCard.id,
+                    name = name,
+                    description = description,
+                    avatar = avatar,
+                    persona = persona,
+                    speakingStyle = speakingStyle,
+                    background = background,
+                    rules = rules,
+                    taboos = taboos,
+                    openingMessage = openingMessage,
+                    exampleDialogue = exampleDialogue,
+                    avatarImageUri = avatarImageUri,
+                    galleryImageUris = galleryImageUris,
+                    imageStylePrompt = imageStylePrompt,
+                    voiceProfileUri = voiceProfileUri,
+                    voiceMode = voiceMode,
+                    voiceDisplayName = voiceDisplayName
+                )
+                editingRoleCard = null
+            }
+        )
+    }
+
+    deletingRoleCard?.let { roleCard ->
+        AlertDialog(
+            onDismissRequest = { deletingRoleCard = null },
+            title = { Text("删除角色卡") },
+            text = { Text("确认删除“${roleCard.name}”吗？") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        roleManagementViewModel.deleteRoleCard(roleCard.id)
+                        deletingRoleCard = null
+                    }
+                ) {
+                    Text("删除")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { deletingRoleCard = null }) {
+                    Text("取消")
+                }
+            }
+        )
+    }
+}
+
+@Composable
+private fun SectionTitle(title: String) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.SemiBold,
+        color = MaterialTheme.colorScheme.onSurface
+    )
+}
+
+@Composable
+private fun RoleCardItem(
+    roleCard: RoleCard,
+    isActive: Boolean,
+    onActivate: () -> Unit,
+    onStartChat: () -> Unit,
+    onEdit: () -> Unit,
+    onDelete: (() -> Unit)?
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onEdit() }
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = roleCard.name,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    if (roleCard.description.isNotBlank()) {
+                        Text(
+                            text = roleCard.description,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    IconButton(
+                        onClick = onEdit,
+                        modifier = Modifier.height(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "编辑",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    if (isActive) {
+                        AssistChip(
+                            onClick = {},
+                            label = { Text("使用中") }
+                        )
+                    }
+                }
+            }
+
+            Text(
+                text = "人设：${roleCard.persona}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            if (roleCard.speakingStyle.isNotBlank()) {
+                Text(
+                    text = "风格：${roleCard.speakingStyle}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            if (roleCard.avatarImageUri.isNotBlank() || roleCard.galleryImageUris.isNotEmpty()) {
+                Text(
+                    text = "图片：头像${if (roleCard.avatarImageUri.isNotBlank()) "已配置" else "未配置"}，图库 ${roleCard.galleryImageUris.size} 张",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            if (roleCard.voiceProfileUri.isNotBlank() || roleCard.voiceDisplayName.isNotBlank()) {
+                Text(
+                    text = "语音：${roleCard.voiceDisplayName.ifBlank { roleCard.voiceMode }}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(onClick = onStartChat) {
+                    Icon(Icons.AutoMirrored.Filled.Chat, contentDescription = null)
+                    Text("对话")
+                }
+                if (!isActive) {
+                    TextButton(onClick = onActivate) {
+                        Text("启用")
+                    }
+                }
+                TextButton(onClick = onEdit) {
+                    Text("编辑")
+                }
+                onDelete?.let {
+                    TextButton(onClick = it) {
+                        Text("删除")
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun EmptyState(
+    title: String,
+    description: String
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 48.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            imageVector = Icons.Default.Person,
+            contentDescription = null
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        Text(text = title, style = MaterialTheme.typography.titleMedium)
+        Spacer(modifier = Modifier.height(6.dp))
+        Text(
+            text = description,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
+    }
+}

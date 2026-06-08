@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CompanionChat - 管理</title>
+<style>
+:root {
+  --primary: #7C5CBF;
+  --primary-light: #A88DE0;
+  --primary-container: #EDE5FF;
+  --secondary: #D4688C;
+  --secondary-container: #FFE0EB;
+  --on-primary: #FFFFFF;
+  --surface: #FFFFFF;
+  --surface-dim: #F7F5FA;
+  --surface-container: #F2EFF6;
+  --background: #FDFCFE;
+  --on-surface: #1C1B1F;
+  --on-surface-variant: #49454F;
+  --outline: #79747E;
+  --outline-variant: #CAC4D0;
+  --outline-light: #E8E4EC;
+  --error: #B3261E;
+  --error-container: #F9DEDC;
+  --success: #2E7D52;
+  --font: -apple-system, 'PingFang SC', 'Noto Sans SC', 'Helvetica Neue', Arial, sans-serif;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--font);
+  background: linear-gradient(135deg, #E8E4EC 0%, #F0ECF4 50%, #E4E0EC 100%);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 20px;
+  color: var(--on-surface);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Layout ── */
+.phones-row {
+  display: flex;
+  gap: 40px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.phone-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.phone-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--on-surface-variant);
+  letter-spacing: 0.5px;
+}
+
+/* ── Phone Frame ── */
+.phone-frame {
+  width: 390px;
+  height: 844px;
+  border-radius: 44px;
+  background: var(--background);
+  box-shadow: 0 0 0 2px #1a1a1a, 0 0 0 5px #3a3a3a, 0 25px 60px rgba(0,0,0,0.18), 0 8px 20px rgba(0,0,0,0.10);
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Status Bar ── */
+.status-bar {
+  height: 44px;
+  padding: 12px 28px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.status-time { font-size: 15px; font-weight: 600; color: var(--on-surface); }
+.status-icons { display: flex; align-items: center; gap: 5px; }
+.status-icons svg { width: 16px; height: 16px; fill: var(--on-surface); }
+
+/* ── Top App Bar ── */
+.top-bar {
+  height: 52px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 8px;
+}
+.top-bar .back-btn {
+  width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+  flex-shrink: 0;
+}
+.top-bar .back-btn:hover { background: var(--surface-dim); }
+.top-bar .back-btn:active { transform: scale(0.95); }
+.top-bar .back-btn svg { width: 22px; height: 22px; fill: var(--on-surface); }
+.top-bar-title { font-size: 18px; font-weight: 700; letter-spacing: 0.3px; flex: 1; }
+.top-bar .add-btn {
+  width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+  flex-shrink: 0;
+}
+.top-bar .add-btn:hover { background: var(--primary-container); }
+.top-bar .add-btn:active { transform: scale(0.95); }
+.top-bar .add-btn svg { width: 22px; height: 22px; fill: var(--primary); }
+
+.subtitle-bar {
+  padding: 0 24px 8px;
+  font-size: 12px;
+  color: var(--outline);
+  flex-shrink: 0;
+}
+
+/* ── Content ── */
+.content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 4px 16px 24px;
+  scroll-behavior: smooth;
+}
+.content::-webkit-scrollbar { display: none; }
+
+/* ── Section Label ── */
+.section-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--outline);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 10px 4px 8px;
+  opacity: 0;
+  animation: fadeIn 0.4s ease forwards;
+}
+
+/* ── Cards ── */
+.card {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--outline-light);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  padding: 16px;
+  margin-bottom: 12px;
+  opacity: 0;
+  animation: fadeIn 0.4s ease forwards;
+  transition: box-shadow 0.2s cubic-bezier(0.4,0,0.2,1), border-color 0.2s;
+  cursor: pointer;
+  position: relative;
+}
+.card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  border-color: var(--outline-variant);
+}
+.card:active {
+  transform: scale(0.985);
+}
+.card .edit-hint {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.card:hover .edit-hint {
+  opacity: 1;
+}
+.card .edit-hint svg {
+  width: 14px;
+  height: 14px;
+  fill: var(--outline);
+}
+
+/* stagger */
+.card:nth-child(2) { animation-delay: 0.08s; }
+.card:nth-child(3) { animation-delay: 0.14s; }
+.card:nth-child(4) { animation-delay: 0.20s; }
+.section-label:nth-child(1) { animation-delay: 0.02s; }
+.section-label:nth-child(5) { animation-delay: 0.16s; }
+
+/* ── Character Card ── */
+.char-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.avatar {
+  width: 48px; height: 48px;
+  border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; font-weight: 700;
+  flex-shrink: 0;
+  transition: transform 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+.avatar:hover { transform: scale(1.08); }
+.avatar.pink { background: var(--secondary-container); color: var(--secondary); }
+.avatar.blue { background: #D6E8F7; color: #3A7CC0; }
+.avatar.peach { background: #FDE8D8; color: #C07040; }
+.avatar.purple { background: var(--primary-container); color: var(--primary); }
+.avatar.green { background: #D8F5E3; color: var(--success); }
+.avatar.teal { background: #D0F0EC; color: #1A8A7A; }
+
+.char-info { flex: 1; min-width: 0; }
+.char-name-row { display: flex; align-items: center; gap: 8px; }
+.char-name { font-size: 16px; font-weight: 600; color: var(--on-surface); }
+.char-desc { font-size: 12px; color: var(--outline); margin-top: 3px; line-height: 1.4; }
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 10px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.chip.active {
+  background: var(--primary-container);
+  color: var(--primary);
+}
+.chip.usage {
+  background: var(--surface-dim);
+  color: var(--outline);
+  font-weight: 500;
+  font-size: 10px;
+}
+
+.char-details {
+  font-size: 12px;
+  color: var(--on-surface-variant);
+  line-height: 1.7;
+  padding: 8px 0;
+  border-top: 1px solid var(--outline-light);
+  margin-top: 4px;
+}
+.char-details span { display: block; }
+
+.card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.btn {
+  height: 34px;
+  padding: 0 16px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: var(--font);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: none;
+  transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+.btn:active { transform: scale(0.97); }
+.btn svg { width: 16px; height: 16px; }
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--outline-variant);
+  color: var(--on-surface-variant);
+}
+.btn-outline:hover { background: var(--surface-dim); border-color: var(--outline); }
+.btn-outline svg { fill: var(--on-surface-variant); }
+
+.btn-filled {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+.btn-filled:hover { filter: brightness(1.08); }
+.btn-filled svg { fill: var(--on-primary); }
+
+.btn-danger {
+  background: transparent;
+  border: 1px solid var(--error-container);
+  color: var(--error);
+}
+.btn-danger:hover { background: var(--error-container); }
+.btn-danger svg { fill: var(--error); }
+
+.btn-disabled {
+  background: var(--surface-dim);
+  color: var(--outline-variant);
+  border: 1px solid var(--outline-light);
+  cursor: not-allowed;
+  pointer-events: none;
+  opacity: 0.6;
+}
+.btn-disabled svg { fill: var(--outline-variant); }
+
+.btn-small {
+  height: 30px;
+  padding: 0 12px;
+  font-size: 12px;
+}
+
+/* ── Skill Card ── */
+.skill-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+.skill-icon {
+  width: 40px; height: 40px;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+.skill-icon:hover { transform: scale(1.08); }
+.skill-icon svg { width: 22px; height: 22px; fill: #fff; }
+.skill-name { font-size: 15px; font-weight: 600; color: var(--on-surface); }
+.skill-desc { font-size: 12px; color: var(--outline); margin-top: 2px; }
+.skill-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+/* ── Overlay Dialog ── */
+.dialog-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(28,27,31,0.45);
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 100;
+}
+.dialog-overlay.active {
+  display: flex;
+  animation: overlayIn 0.25s ease;
+}
+@keyframes overlayIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.dialog {
+  background: var(--surface);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  width: 100%;
+  max-height: 72%;
+  display: flex;
+  flex-direction: column;
+  animation: dialogSlide 0.3s cubic-bezier(0.4,0,0.2,1);
+  overflow: hidden;
+}
+@keyframes dialogSlide {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.dialog-header {
+  padding: 20px 20px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.dialog-title { font-size: 18px; font-weight: 700; }
+.dialog-close {
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.dialog-close:hover { background: var(--surface-dim); }
+.dialog-close svg { width: 20px; height: 20px; fill: var(--outline); }
+
+/* ── Tabs ── */
+.tabs {
+  display: flex;
+  padding: 0 20px;
+  gap: 0;
+  flex-shrink: 0;
+  position: relative;
+  border-bottom: 1px solid var(--outline-light);
+}
+.tab {
+  flex: 1;
+  text-align: center;
+  padding: 10px 0 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--outline);
+  cursor: pointer;
+  transition: color 0.2s cubic-bezier(0.4,0,0.2,1);
+  position: relative;
+}
+.tab.active { color: var(--primary); font-weight: 600; }
+.tab-indicator {
+  position: absolute;
+  bottom: -1px;
+  height: 2.5px;
+  border-radius: 2px;
+  background: var(--primary);
+  transition: left 0.3s cubic-bezier(0.4,0,0.2,1), width 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+
+.dialog-content {
+  padding: 16px 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+.dialog-content::-webkit-scrollbar { display: none; }
+
+.form-group { margin-bottom: 14px; }
+.form-group:last-child { margin-bottom: 0; }
+.form-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--on-surface-variant);
+  margin-bottom: 6px;
+  display: block;
+  letter-spacing: 0.3px;
+}
+.form-input {
+  width: 100%;
+  height: 42px;
+  border: none;
+  border-bottom: 1.5px solid var(--outline-variant);
+  background: var(--surface-dim);
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  padding: 0 12px;
+  font-size: 14px;
+  font-family: var(--font);
+  color: var(--on-surface);
+  outline: none;
+  transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+.form-input:focus {
+  border-bottom-color: var(--primary);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px rgba(124,92,191,0.12);
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--primary);
+}
+textarea.form-input {
+  height: auto;
+  min-height: 60px;
+  padding: 10px 12px;
+  resize: none;
+  line-height: 1.5;
+}
+
+.dialog-actions {
+  padding: 12px 20px 24px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-shrink: 0;
+  border-top: 1px solid var(--outline-light);
+}
+.dialog-actions .btn { height: 40px; padding: 0 24px; font-size: 14px; font-weight: 600; }
+
+/* ── Animations ── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Tab Content Panels ── */
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ── Voice Clips ── */
+.voice-section-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--outline);
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+.voice-clip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--surface-dim);
+  border-radius: var(--radius-md);
+  margin-bottom: 8px;
+  border: 1.5px solid transparent;
+  transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+  cursor: pointer;
+}
+.voice-clip:hover {
+  background: var(--surface-container);
+  border-color: var(--outline-variant);
+}
+.voice-clip.selected {
+  border-color: var(--primary);
+  background: var(--primary-container);
+}
+.voice-clip-play {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  background: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+  box-shadow: 0 2px 6px rgba(124,92,191,0.25);
+}
+.voice-clip-play:hover {
+  transform: scale(1.08);
+  box-shadow: 0 4px 10px rgba(124,92,191,0.35);
+}
+.voice-clip-play:active { transform: scale(0.95); }
+.voice-clip-play svg { width: 16px; height: 16px; fill: white; }
+.voice-clip-play.playing {
+  background: var(--secondary);
+  box-shadow: 0 2px 6px rgba(212,104,140,0.25);
+}
+.voice-clip-info {
+  flex: 1;
+  min-width: 0;
+}
+.voice-clip-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--on-surface);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.voice-clip-meta {
+  font-size: 11px;
+  color: var(--outline);
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.voice-clip-check {
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--primary);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.voice-clip.selected .voice-clip-check {
+  opacity: 1;
+}
+.voice-upload-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px;
+  margin-top: 4px;
+  border: 1.5px dashed var(--outline-variant);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--outline);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: var(--font);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+.voice-upload-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--primary-container);
+}
+.voice-upload-btn svg { width: 18px; height: 18px; fill: currentColor; }
+.voice-default-label {
+  font-size: 11px;
+  color: var(--outline);
+  margin-top: 12px;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.voice-default-label svg { width: 12px; height: 12px; fill: var(--outline); }
+
+@media (max-width: 900px) {
+  .phones-row { flex-direction: column; align-items: center; }
+}
+</style>
+</head>
+<body>
+
+<div class="phones-row">
+
+<!-- ═══════════════ PHONE 1: 角色管理 ═══════════════ -->
+<div class="phone-col">
+  <span class="phone-label">角色管理</span>
+  <div class="phone-frame">
+    <div class="status-bar">
+      <span class="status-time">9:41</span>
+      <div class="status-icons">
+        <svg viewBox="0 0 24 24"><path d="M2 17h2v4H2zm4-3h2v7H6zm4-3h2v10h-2zm4-3h2v13h-2zm4-3h2v16h-2z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3a4.24 4.24 0 00-6 0zm-4-4l2 2a7.07 7.07 0 0110 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+      </div>
+    </div>
+    <div class="top-bar">
+      <div class="back-btn"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></div>
+      <span class="top-bar-title">角色管理</span>
+      <div class="add-btn" onclick="openNewCharDialog()"><svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></div>
+    </div>
+    <div class="subtitle-bar">创建和切换陪伴角色卡</div>
+    <div class="content">
+
+      <!-- 当前激活 -->
+      <div class="section-label">当前激活</div>
+      <div class="card" style="animation-delay:0.06s;" onclick="openEditDialog('xiaoxia')">
+        <div class="edit-hint"><svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></div>
+        <div class="char-header">
+          <div class="avatar pink">夏</div>
+          <div class="char-info">
+            <div class="char-name-row">
+              <span class="char-name">小夏</span>
+              <span class="chip active">使用中</span>
+            </div>
+            <div class="char-desc">温柔治愈的邻家女孩</div>
+          </div>
+        </div>
+        <div class="char-details">
+          <span>人设：温柔体贴的邻家女孩...</span>
+          <span>风格：温暖亲切，偶尔撒娇</span>
+          <span>图片：头像已配置，图库 3 张</span>
+          <span>语音：小夏-甜美（默认）</span>
+        </div>
+        <div class="card-actions">
+          <button class="btn btn-outline btn-small" onclick="event.stopPropagation()">
+            <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+            对话
+          </button>
+          <button class="btn btn-outline btn-small" onclick="event.stopPropagation(); openEditDialog('xiaoxia')">编辑</button>
+          <button class="btn btn-danger btn-small" onclick="event.stopPropagation()">
+            <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+            删除
+          </button>
+        </div>
+      </div>
+
+      <!-- 我的角色卡 -->
+      <div class="section-label" style="animation-delay:0.12s;">我的角色卡</div>
+      <div class="card" style="animation-delay:0.16s;" onclick="openEditDialog('ache')">
+        <div class="edit-hint"><svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></div>
+        <div class="char-header">
+          <div class="avatar blue">澈</div>
+          <div class="char-info">
+            <div class="char-name-row">
+              <span class="char-name">阿澈</span>
+            </div>
+            <div class="char-desc">沉稳内敛的少年</div>
+          </div>
+          <button class="btn btn-filled btn-small" onclick="event.stopPropagation()">启用</button>
+        </div>
+      </div>
+      <div class="card" style="animation-delay:0.22s;" onclick="openEditDialog('lin')">
+        <div class="edit-hint"><svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></div>
+        <div class="char-header">
+          <div class="avatar peach">凛</div>
+          <div class="char-info">
+            <div class="char-name-row">
+              <span class="char-name">凛</span>
+            </div>
+            <div class="char-desc">优雅成熟的神秘少女</div>
+          </div>
+          <button class="btn btn-filled btn-small" onclick="event.stopPropagation()">启用</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Overlay Dialog -->
+    <div class="dialog-overlay" id="editOverlay">
+      <div class="dialog">
+        <div class="dialog-header">
+          <span class="dialog-title" id="dialogTitle">编辑角色卡</span>
+          <div class="dialog-close" onclick="closeEditDialog()"><svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></div>
+        </div>
+        <div class="tabs" id="dialogTabs">
+          <div class="tab active" onclick="switchTab(0)">基础</div>
+          <div class="tab" onclick="switchTab(1)">人设</div>
+          <div class="tab" onclick="switchTab(2)">图片</div>
+          <div class="tab" onclick="switchTab(3)">语音</div>
+          <div class="tab-indicator" id="tabIndicator"></div>
+        </div>
+
+        <!-- Tab: 基础 -->
+        <div class="dialog-content tab-panel active" id="tabPanel0">
+          <div class="form-group">
+            <label class="form-label">名称</label>
+            <input type="text" class="form-input" id="editName" value="小夏">
+          </div>
+          <div class="form-group">
+            <label class="form-label">简介</label>
+            <textarea class="form-input" rows="2" id="editDesc">温柔治愈的邻家女孩</textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">头像/图标标识</label>
+            <input type="text" class="form-input" id="editIcon" value="person">
+          </div>
+          <div class="form-group">
+            <label class="form-label">开场白</label>
+            <textarea class="form-input" rows="2" id="editGreeting">你好呀~今天想聊什么呢？</textarea>
+          </div>
+        </div>
+
+        <!-- Tab: 人设 -->
+        <div class="dialog-content tab-panel" id="tabPanel1">
+          <div class="form-group">
+            <label class="form-label">人设描述</label>
+            <textarea class="form-input" rows="4" id="editPersona">温柔体贴的邻家女孩，总是带着温暖的微笑。她善于倾听，会在你需要安慰时给你拥抱，也会在你开心时一起庆祝。</textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">性格标签（逗号分隔）</label>
+            <input type="text" class="form-input" id="editTags" value="温柔, 治愈, 倾听">
+          </div>
+          <div class="form-group">
+            <label class="form-label">对话风格</label>
+            <textarea class="form-input" rows="2" id="editStyle">温暖亲切，偶尔撒娇，喜欢用语气词和表情</textarea>
+          </div>
+        </div>
+
+        <!-- Tab: 图片 -->
+        <div class="dialog-content tab-panel" id="tabPanel2">
+          <div class="form-group">
+            <label class="form-label">图片风格描述</label>
+            <textarea class="form-input" rows="2">日系动漫风格，暖色调，柔和光线</textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">图库</label>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <div style="width:72px;height:72px;border-radius:var(--radius-md);background:linear-gradient(135deg,#D4A0E8,#F0C0D8);display:flex;align-items:center;justify-content:center;font-size:28px;">👩</div>
+              <div style="width:72px;height:72px;border-radius:var(--radius-md);background:linear-gradient(135deg,#E0C8F0,#F0D8E8);display:flex;align-items:center;justify-content:center;font-size:28px;">🌸</div>
+              <div style="width:72px;height:72px;border-radius:var(--radius-md);background:linear-gradient(135deg,#F0D0C0,#F8E0D0);display:flex;align-items:center;justify-content:center;font-size:28px;">☀️</div>
+              <div style="width:72px;height:72px;border-radius:var(--radius-md);border:1.5px dashed var(--outline-variant);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--outline);font-size:22px;">+</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab: 语音 -->
+        <div class="dialog-content tab-panel" id="tabPanel3">
+          <div class="voice-section-label">已上传的语音片段</div>
+
+          <div class="voice-clip selected" onclick="selectVoiceClip(this)">
+            <div class="voice-clip-play" onclick="event.stopPropagation(); togglePlay(this)">
+              <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            </div>
+            <div class="voice-clip-info">
+              <div class="voice-clip-name">小夏-甜美</div>
+              <div class="voice-clip-meta">
+                <span>0:12</span>
+                <span>·</span>
+                <span>已上传 3 天前</span>
+              </div>
+            </div>
+            <div class="voice-clip-check">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            </div>
+          </div>
+
+          <div class="voice-clip" onclick="selectVoiceClip(this)">
+            <div class="voice-clip-play" onclick="event.stopPropagation(); togglePlay(this)">
+              <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            </div>
+            <div class="voice-clip-info">
+              <div class="voice-clip-name">小夏-温柔</div>
+              <div class="voice-clip-meta">
+                <span>0:08</span>
+                <span>·</span>
+                <span>已上传 1 周前</span>
+              </div>
+            </div>
+            <div class="voice-clip-check">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            </div>
+          </div>
+
+          <div class="voice-clip" onclick="selectVoiceClip(this)">
+            <div class="voice-clip-play" onclick="event.stopPropagation(); togglePlay(this)">
+              <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            </div>
+            <div class="voice-clip-info">
+              <div class="voice-clip-name">moss_sample_01</div>
+              <div class="voice-clip-meta">
+                <span>0:15</span>
+                <span>·</span>
+                <span>已上传 2 周前</span>
+              </div>
+            </div>
+            <div class="voice-clip-check">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            </div>
+          </div>
+
+          <div class="voice-default-label">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+            选中的语音片段将作为该角色的默认语音
+          </div>
+
+          <button class="voice-upload-btn" onclick="event.stopPropagation()">
+            <svg viewBox="0 0 24 24"><path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/></svg>
+            上传新语音片段
+          </button>
+        </div>
+
+        <div class="dialog-actions">
+          <button class="btn btn-outline" onclick="closeEditDialog()">取消</button>
+          <button class="btn btn-filled" onclick="closeEditDialog()">保存</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════ PHONE 2: Skills 管理 ═══════════════ -->
+<div class="phone-col">
+  <span class="phone-label">Skills 管理</span>
+  <div class="phone-frame">
+    <div class="status-bar">
+      <span class="status-time">9:41</span>
+      <div class="status-icons">
+        <svg viewBox="0 0 24 24"><path d="M2 17h2v4H2zm4-3h2v7H6zm4-3h2v10h-2zm4-3h2v13h-2zm4-3h2v16h-2z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3a4.24 4.24 0 00-6 0zm-4-4l2 2a7.07 7.07 0 0110 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+      </div>
+    </div>
+    <div class="top-bar">
+      <div class="back-btn"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></div>
+      <span class="top-bar-title">Skills 管理</span>
+      <div class="add-btn"><svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></div>
+    </div>
+    <div class="subtitle-bar">管理工作能力模板和自定义 skills</div>
+    <div class="content">
+
+      <!-- 当前激活 -->
+      <div class="section-label">当前激活</div>
+      <div class="card" style="animation-delay:0.06s;">
+        <div class="skill-header">
+          <div class="skill-icon" style="background: linear-gradient(135deg, var(--primary), var(--primary-light));">
+            <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+          </div>
+          <div>
+            <div class="skill-name">深度对话</div>
+            <div class="skill-desc">增强对话上下文理解能力</div>
+          </div>
+        </div>
+        <div class="skill-meta">
+          <span class="chip usage">已使用 42 次</span>
+          <span class="chip active">使用中</span>
+        </div>
+        <div class="card-actions">
+          <button class="btn btn-outline btn-small">编辑</button>
+          <button class="btn btn-danger btn-small">
+            <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+            删除
+          </button>
+        </div>
+      </div>
+
+      <!-- 内置 Skill -->
+      <div class="section-label" style="animation-delay:0.12s;">内置 Skill</div>
+      <div class="card" style="animation-delay:0.16s;">
+        <div class="skill-header">
+          <div class="skill-icon" style="background: linear-gradient(135deg, var(--success), #48A06A);">
+            <svg viewBox="0 0 24 24"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>
+          </div>
+          <div>
+            <div class="skill-name">记忆提取</div>
+            <div class="skill-desc">从对话中自动提取记忆</div>
+          </div>
+        </div>
+        <div class="skill-meta">
+          <span class="chip usage">已使用 128 次</span>
+        </div>
+        <div class="card-actions">
+          <button class="btn btn-disabled btn-small">编辑</button>
+          <button class="btn btn-disabled btn-small">删除</button>
+        </div>
+      </div>
+      <div class="card" style="animation-delay:0.22s;">
+        <div class="skill-header">
+          <div class="skill-icon" style="background: linear-gradient(135deg, #1A8A7A, #30B0A0);">
+            <svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg>
+          </div>
+          <div>
+            <div class="skill-name">情感分析</div>
+            <div class="skill-desc">分析用户情感状态调整回复</div>
+          </div>
+        </div>
+        <div class="skill-meta">
+          <span class="chip usage">已使用 86 次</span>
+        </div>
+        <div class="card-actions">
+          <button class="btn btn-disabled btn-small">编辑</button>
+          <button class="btn btn-disabled btn-small">删除</button>
+        </div>
+      </div>
+
+      <!-- 我的 Skills -->
+      <div class="section-label" style="animation-delay:0.28s;">我的 Skills</div>
+      <div class="card" style="animation-delay:0.32s;">
+        <div class="skill-header">
+          <div class="skill-icon" style="background: linear-gradient(135deg, #C07040, #D89060);">
+            <svg viewBox="0 0 24 24"><path d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0014.07 6H17V4h-7V2H8v2H1v1.97h7.01c-.34 2.01-1.08 3.85-2.13 5.45l-.01.01h.01c-.01.01-.01.02-.02.03A14.84 14.84 0 013.5 16.2l1.42 1.46a16.33 16.33 0 002.51-3.08l2.51 2.51 2.93-2.02zM18 11.5V14h3v2h-3v2.5h-2V16h-3v-2h3v-2.5h2z"/></svg>
+          </div>
+          <div>
+            <div class="skill-name">日语练习</div>
+            <div class="skill-desc">辅助日语对话练习</div>
+          </div>
+        </div>
+        <div class="skill-meta">
+          <span class="chip usage">已使用 15 次</span>
+        </div>
+        <div class="card-actions">
+          <button class="btn btn-outline btn-small">编辑</button>
+          <button class="btn btn-danger btn-small">
+            <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+            删除
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+</div><!-- /phones-row -->
+
+<script>
+/* ── Character Data (simulated) ── */
+const characters = {
+  xiaoxia: {
+    name: '小夏', desc: '温柔治愈的邻家女孩', icon: 'person',
+    greeting: '你好呀~今天想聊什么呢？',
+    persona: '温柔体贴的邻家女孩，总是带着温暖的微笑。她善于倾听，会在你需要安慰时给你拥抱，也会在你开心时一起庆祝。',
+    tags: '温柔, 治愈, 倾听',
+    style: '温暖亲切，偶尔撒娇，喜欢用语气词和表情',
+    defaultVoice: '小夏-甜美'
+  },
+  ache: {
+    name: '阿澈', desc: '沉稳内敛的少年', icon: 'anchor',
+    greeting: '...你来了。坐吧，有什么想说的？',
+    persona: '沉默寡言但内心温柔的少年，总是安静地观察周围。他不善表达但会用行动关心人，偶尔冒出的一句话总能戳中要害。',
+    tags: '沉稳, 内敛, 温柔',
+    style: '简洁克制，偶尔毒舌，关键时刻真诚',
+    defaultVoice: null
+  },
+  lin: {
+    name: '凛', desc: '优雅成熟的神秘少女', icon: 'snowflake',
+    greeting: '哦？又来找我聊天了？说吧，这次想聊什么有趣的话题？',
+    persona: '气质冷艳的少女，说话带着几分玩味。看似高冷实则好奇心旺盛，喜欢讨论哲学和神秘事物。',
+    tags: '优雅, 神秘, 知性',
+    style: '从容优雅，带点调侃，喜欢反问和引导思考',
+    defaultVoice: null
+  }
+};
+
+let currentEditId = null;
+
+/* ── Tab switching for the edit dialog ── */
+function switchTab(index) {
+  const tabs = document.querySelectorAll('#dialogTabs .tab');
+  const indicator = document.getElementById('tabIndicator');
+  tabs.forEach((t, i) => {
+    t.classList.toggle('active', i === index);
+  });
+  const activeTab = tabs[index];
+  indicator.style.left = activeTab.offsetLeft + 'px';
+  indicator.style.width = activeTab.offsetWidth + 'px';
+
+  // Switch tab panels
+  document.querySelectorAll('.tab-panel').forEach((panel, i) => {
+    panel.classList.toggle('active', i === index);
+  });
+}
+
+/* ── Open Edit Dialog ── */
+function openEditDialog(charId) {
+  currentEditId = charId;
+  const data = characters[charId];
+  const overlay = document.getElementById('editOverlay');
+  const title = document.getElementById('dialogTitle');
+
+  // Pre-fill form data
+  if (data) {
+    title.textContent = '编辑角色卡 - ' + data.name;
+    document.getElementById('editName').value = data.name;
+    document.getElementById('editDesc').value = data.desc;
+    document.getElementById('editIcon').value = data.icon;
+    document.getElementById('editGreeting').value = data.greeting;
+    // Persona tab
+    const personaEl = document.getElementById('editPersona');
+    if (personaEl) personaEl.value = data.persona;
+    const tagsEl = document.getElementById('editTags');
+    if (tagsEl) tagsEl.value = data.tags;
+    const styleEl = document.getElementById('editStyle');
+    if (styleEl) styleEl.value = data.style;
+    // Voice tab - update default voice selection
+    updateVoiceSelection(data.defaultVoice);
+  }
+
+  // Show overlay
+  overlay.classList.add('active');
+  // Reset to first tab
+  switchTab(0);
+}
+
+/* ── Close Edit Dialog ── */
+function closeEditDialog() {
+  const overlay = document.getElementById('editOverlay');
+  overlay.classList.remove('active');
+  currentEditId = null;
+}
+
+/* ── Voice Clip Selection ── */
+function selectVoiceClip(clipEl) {
+  document.querySelectorAll('.voice-clip').forEach(c => c.classList.remove('selected'));
+  clipEl.classList.add('selected');
+}
+
+function updateVoiceSelection(defaultName) {
+  document.querySelectorAll('.voice-clip').forEach(clip => {
+    const nameEl = clip.querySelector('.voice-clip-name');
+    if (nameEl && nameEl.textContent === defaultName) {
+      clip.classList.add('selected');
+    } else {
+      clip.classList.remove('selected');
+    }
+  });
+}
+
+/* ── Voice Play Toggle (prototype simulation) ── */
+function togglePlay(btnEl) {
+  const isPlaying = btnEl.classList.toggle('playing');
+  const svg = btnEl.querySelector('svg');
+  if (isPlaying) {
+    svg.innerHTML = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
+    // Simulate auto-stop after 3 seconds
+    setTimeout(() => {
+      btnEl.classList.remove('playing');
+      svg.innerHTML = '<path d="M8 5v14l11-7z"/>';
+    }, 3000);
+  } else {
+    svg.innerHTML = '<path d="M8 5v14l11-7z"/>';
+  }
+}
+
+/* ── Close overlay on background click ── */
+document.addEventListener('DOMContentLoaded', function() {
+  const overlay = document.getElementById('editOverlay');
+  if (overlay) {
+    overlay.addEventListener('click', function(e) {
+      if (e.target === overlay) {
+        closeEditDialog();
+      }
+    });
+  }
+  // Initialize tab indicator
+  switchTab(0);
+});
+
+/* ── Open for new character ── */
+function openNewCharDialog() {
+  currentEditId = null;
+  const overlay = document.getElementById('editOverlay');
+  const title = document.getElementById('dialogTitle');
+  title.textContent = '创建新角色卡';
+  document.getElementById('editName').value = '';
+  document.getElementById('editDesc').value = '';
+  document.getElementById('editIcon').value = '';
+  document.getElementById('editGreeting').value = '';
+  const personaEl = document.getElementById('editPersona');
+  if (personaEl) personaEl.value = '';
+  const tagsEl = document.getElementById('editTags');
+  if (tagsEl) tagsEl.value = '';
+  const styleEl = document.getElementById('editStyle');
+  if (styleEl) styleEl.value = '';
+  overlay.classList.add('active');
+  switchTab(0);
+}
+</script>
+
+</body>
+</html>

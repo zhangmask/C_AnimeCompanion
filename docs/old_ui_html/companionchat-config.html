@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CompanionChat - 配置</title>
+<style>
+:root {
+  --primary: #7C5CBF;
+  --primary-light: #A88DE0;
+  --primary-container: #EDE5FF;
+  --secondary: #D4688C;
+  --secondary-container: #FFE0EB;
+  --on-primary: #FFFFFF;
+  --surface: #FFFFFF;
+  --surface-dim: #F7F5FA;
+  --surface-container: #F2EFF6;
+  --background: #FDFCFE;
+  --on-surface: #1C1B1F;
+  --on-surface-variant: #49454F;
+  --outline: #79747E;
+  --outline-variant: #CAC4D0;
+  --outline-light: #E8E4EC;
+  --error: #B3261E;
+  --error-container: #F9DEDC;
+  --success: #2E7D52;
+  --font: -apple-system, 'PingFang SC', 'Noto Sans SC', 'Helvetica Neue', Arial, sans-serif;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--font);
+  background: linear-gradient(135deg, #E8E4EC 0%, #F0ECF4 50%, #E4E0EC 100%);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 20px;
+  color: var(--on-surface);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Layout ── */
+.phones-row {
+  display: flex;
+  gap: 36px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.phone-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.phone-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--on-surface-variant);
+  letter-spacing: 0.5px;
+}
+
+/* ── Phone Frame ── */
+.phone-frame {
+  width: 390px;
+  height: 844px;
+  border-radius: 44px;
+  background: var(--background);
+  box-shadow: 0 0 0 2px #1a1a1a, 0 0 0 5px #3a3a3a, 0 25px 60px rgba(0,0,0,0.18), 0 8px 20px rgba(0,0,0,0.10);
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Status Bar ── */
+.status-bar {
+  height: 44px;
+  padding: 12px 28px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.status-time { font-size: 15px; font-weight: 600; color: var(--on-surface); }
+.status-icons { display: flex; align-items: center; gap: 5px; }
+.status-icons svg { width: 16px; height: 16px; fill: var(--on-surface); }
+
+/* ── Top App Bar ── */
+.top-bar {
+  height: 52px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 12px;
+}
+.top-bar .back-btn {
+  width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+  flex-shrink: 0;
+}
+.top-bar .back-btn:hover { background: var(--surface-dim); }
+.top-bar .back-btn:active { transform: scale(0.95); }
+.top-bar .back-btn svg { width: 22px; height: 22px; fill: var(--on-surface); }
+.top-bar-title { font-size: 18px; font-weight: 700; letter-spacing: 0.3px; }
+.top-bar-spacer { flex: 1; }
+
+/* ── Content ── */
+.content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px 16px 24px;
+  scroll-behavior: smooth;
+}
+.content::-webkit-scrollbar { display: none; }
+
+/* ── Section ── */
+.section {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--outline-light);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  margin-bottom: 14px;
+  padding: 16px;
+  opacity: 0;
+  animation: fadeIn 0.4s ease forwards;
+  transition: box-shadow 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+.section:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+
+/* stagger */
+.section:nth-child(1) { animation-delay: 0.05s; }
+.section:nth-child(2) { animation-delay: 0.10s; }
+.section:nth-child(3) { animation-delay: 0.15s; }
+.section:nth-child(4) { animation-delay: 0.20s; }
+.section:nth-child(5) { animation-delay: 0.25s; }
+.section:nth-child(6) { animation-delay: 0.30s; }
+.section:nth-child(7) { animation-delay: 0.35s; }
+
+/* ── Header Block ── */
+.header-block {
+  text-align: center;
+  padding: 20px 12px 8px;
+}
+.header-icon {
+  width: 72px; height: 72px;
+  margin: 0 auto 16px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 22px;
+  opacity: 0.7;
+}
+.header-icon svg { width: 40px; height: 40px; }
+.header-icon.purple { background: var(--primary-container); }
+.header-icon.purple svg { fill: var(--primary); }
+.header-icon.green { background: #D8F5E3; }
+.header-icon.green svg { fill: var(--success); }
+.header-icon.pink { background: var(--secondary-container); }
+.header-icon.pink svg { fill: var(--secondary); }
+.header-icon.gray { background: var(--surface-container); }
+.header-icon.gray svg { fill: var(--outline); }
+
+.header-headline {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--on-surface);
+  margin-bottom: 6px;
+}
+.header-desc {
+  font-size: 13px;
+  color: var(--outline);
+  line-height: 1.6;
+}
+
+/* ── Section Title ── */
+.section-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.section-title-row svg { width: 20px; height: 20px; fill: var(--primary); flex-shrink: 0; }
+.section-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--on-surface);
+  letter-spacing: 0.3px;
+}
+
+/* ── Radio Options ── */
+.radio-group { display: flex; flex-direction: column; gap: 8px; }
+.radio-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+  border: 1px solid transparent;
+}
+.radio-option:hover { background: var(--surface-dim); }
+.radio-option:active { transform: scale(0.98); }
+.radio-option.selected {
+  background: var(--primary-container);
+  border-color: var(--primary-light);
+}
+.radio-dot {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--outline-variant);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+  transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+.radio-option.selected .radio-dot {
+  border-color: var(--primary);
+  background: var(--primary);
+}
+.radio-dot::after {
+  content: '';
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #fff;
+  opacity: 0;
+  transform: scale(0);
+  transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+.radio-option.selected .radio-dot::after {
+  opacity: 1;
+  transform: scale(1);
+}
+.radio-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--on-surface);
+  line-height: 1.3;
+}
+.radio-desc {
+  font-size: 12px;
+  color: var(--outline);
+  margin-top: 2px;
+  line-height: 1.4;
+}
+
+/* ── Form Fields ── */
+.form-group { margin-bottom: 12px; }
+.form-group:last-child { margin-bottom: 0; }
+.form-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--on-surface-variant);
+  margin-bottom: 6px;
+  letter-spacing: 0.3px;
+}
+.form-input {
+  width: 100%;
+  height: 42px;
+  border: none;
+  border-bottom: 1.5px solid var(--outline-variant);
+  background: var(--surface-dim);
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  padding: 0 12px;
+  font-size: 13px;
+  font-family: var(--font);
+  color: var(--on-surface);
+  outline: none;
+  transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+.form-input:focus {
+  border-bottom-color: var(--primary);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px rgba(124,92,191,0.12);
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--primary);
+}
+.form-input::placeholder { color: var(--outline-variant); }
+textarea.form-input {
+  height: auto;
+  min-height: 72px;
+  padding: 10px 12px;
+  resize: none;
+  line-height: 1.5;
+}
+.form-helper {
+  font-size: 11px;
+  color: var(--outline);
+  margin-top: 4px;
+  line-height: 1.4;
+}
+.form-helper.success { color: var(--success); }
+.form-row { display: flex; gap: 10px; }
+.form-row .form-group { flex: 1; }
+
+/* ── Button ── */
+.btn-primary {
+  width: 100%;
+  height: 46px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  color: var(--on-primary);
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 15px;
+  font-weight: 600;
+  font-family: var(--font);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+  box-shadow: 0 2px 8px rgba(124,92,191,0.3);
+  margin: 6px 0;
+}
+.btn-primary:hover { filter: brightness(1.08); box-shadow: 0 4px 14px rgba(124,92,191,0.4); }
+.btn-primary:active { transform: scale(0.97); }
+
+.info-text {
+  font-size: 11px;
+  color: var(--outline);
+  line-height: 1.6;
+  padding: 8px 0;
+  border-top: 1px solid var(--outline-light);
+  margin-top: 8px;
+}
+
+/* ── Key-Value Card ── */
+.kv-card {
+  background: var(--surface-dim);
+  border-radius: var(--radius-md);
+  padding: 4px 0;
+  overflow: hidden;
+}
+.kv-row {
+  display: flex;
+  align-items: flex-start;
+  padding: 9px 14px;
+  gap: 12px;
+  transition: background 0.15s ease;
+}
+.kv-row + .kv-row { border-top: 1px solid var(--outline-light); }
+.kv-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--outline);
+  min-width: 82px;
+  flex-shrink: 0;
+}
+.kv-value {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--on-surface);
+  word-break: break-all;
+}
+.kv-value.muted { color: var(--outline-variant); }
+.kv-value.success { color: var(--success); }
+.kv-value.link { color: var(--primary); cursor: pointer; }
+.kv-value.link:hover { text-decoration: underline; }
+
+/* ── Tag Chip ── */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: var(--radius-full);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+.tag.coming {
+  background: var(--primary-container);
+  color: var(--primary);
+}
+
+/* ── Checkbox ── */
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  cursor: pointer;
+}
+.checkbox {
+  width: 20px; height: 20px;
+  border-radius: 5px;
+  border: 2px solid var(--outline-variant);
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+  flex-shrink: 0;
+}
+.checkbox.checked {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+.checkbox svg { width: 14px; height: 14px; fill: #fff; opacity: 0; transition: opacity 0.15s; }
+.checkbox.checked svg { opacity: 1; }
+.check-label { font-size: 13px; color: var(--on-surface); }
+
+/* ── Animations ── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 1280px) {
+  .phones-row { flex-direction: column; align-items: center; }
+}
+</style>
+</head>
+<body>
+
+<div class="phones-row">
+
+<!-- ═══════════════ PHONE 1: 模型配置 ═══════════════ -->
+<div class="phone-col">
+  <span class="phone-label">模型配置</span>
+  <div class="phone-frame">
+    <div class="status-bar">
+      <span class="status-time">9:41</span>
+      <div class="status-icons">
+        <svg viewBox="0 0 24 24"><path d="M2 17h2v4H2zm4-3h2v7H6zm4-3h2v10h-2zm4-3h2v13h-2zm4-3h2v16h-2z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3a4.24 4.24 0 00-6 0zm-4-4l2 2a7.07 7.07 0 0110 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+      </div>
+    </div>
+    <div class="top-bar">
+      <div class="back-btn"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></div>
+      <span class="top-bar-title">模型配置</span>
+      <div class="top-bar-spacer"></div>
+    </div>
+    <div class="content">
+
+      <!-- Header -->
+      <div class="section" style="padding-bottom: 4px;">
+        <div class="header-block">
+          <div class="header-icon purple">
+            <svg viewBox="0 0 24 24"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>
+          </div>
+          <div class="header-headline">上下文窗口大小</div>
+          <div class="header-desc">当前保留最近 10 轮完整对话。<br>修改后会在下一次发送消息时生效。</div>
+        </div>
+      </div>
+
+      <!-- 推理后端 -->
+      <div class="section">
+        <div class="section-title-row">
+          <svg viewBox="0 0 24 24"><path d="M19 9l1.25-2.75L23 5l-2.75-1.25L19 1l-1.25 2.75L15 5l2.75 1.25L19 9zm-7.5.5L9 4 6.5 9.5 1 12l5.5 2.5L9 20l2.5-5.5L17 12l-5.5-2.5zM19 15l-1.25 2.75L15 19l2.75 1.25L19 23l1.25-2.75L23 19l-2.75-1.25L19 15z"/></svg>
+          <span class="section-title">推理后端</span>
+        </div>
+        <div class="radio-group" data-group="backend">
+          <div class="radio-option selected" onclick="selectRadio(this)">
+            <div class="radio-dot"></div>
+            <div>
+              <div class="radio-label">llama.cpp GGUF</div>
+              <div class="radio-desc">默认文本后端，读取外部 GGUF uncensor 模型。</div>
+            </div>
+          </div>
+          <div class="radio-option" onclick="selectRadio(this)">
+            <div class="radio-dot"></div>
+            <div>
+              <div class="radio-label">LiteRT-LM</div>
+              <div class="radio-desc">可选多模态后端，继续支持图片输入链路。</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Model Parameters -->
+      <div class="section">
+        <div class="section-title-row">
+          <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.488.488 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+          <span class="section-title">模型参数</span>
+        </div>
+
+        <div class="form-group">
+          <div class="form-label">模型路径</div>
+          <input type="text" class="form-input" value="/sdcard/Download/model.gguf">
+          <div class="form-helper">留空使用默认路径：/data/user/0/com.companion.chat/files/models/default.gguf</div>
+          <div class="form-helper success">图片 projector：已就绪</div>
+          <div class="form-helper">/data/user/0/com.companion.chat/files/models/mmproj.gguf</div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <div class="form-label">Context Size</div>
+            <input type="text" class="form-input" value="4096">
+          </div>
+          <div class="form-group">
+            <div class="form-label">Max Tokens</div>
+            <input type="text" class="form-input" value="512">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <div class="form-label">Temperature</div>
+            <input type="text" class="form-input" value="0.7">
+          </div>
+          <div class="form-group">
+            <div class="form-label">Top K</div>
+            <input type="text" class="form-input" value="40">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <div class="form-label">Top P</div>
+            <input type="text" class="form-input" value="0.9">
+          </div>
+          <div class="form-group"></div>
+        </div>
+      </div>
+
+      <!-- Apply Button -->
+      <button class="btn-primary">应用模型配置</button>
+
+      <!-- 上下文窗口大小 -->
+      <div class="section" style="margin-top: 14px;">
+        <div class="section-title-row">
+          <svg viewBox="0 0 24 24"><path d="M4 6h18V4H4c-1.1 0-2 .9-2 2v11H0v3h14v-3H4V6zm19 2h-6c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h6c.55 0 1-.45 1-1V9c0-.55-.45-1-1-1zm-1 9h-4v-7h4v7z"/></svg>
+          <span class="section-title">上下文窗口大小</span>
+        </div>
+        <div class="radio-group" data-group="context">
+          <div class="radio-option" onclick="selectRadio(this)">
+            <div class="radio-dot"></div>
+            <div>
+              <div class="radio-label">保留最近 3 轮</div>
+              <div class="radio-desc">压缩阈值约为 16 条消息</div>
+            </div>
+          </div>
+          <div class="radio-option" onclick="selectRadio(this)">
+            <div class="radio-dot"></div>
+            <div>
+              <div class="radio-label">保留最近 5 轮</div>
+              <div class="radio-desc">压缩阈值约为 20 条消息</div>
+            </div>
+          </div>
+          <div class="radio-option selected" onclick="selectRadio(this)">
+            <div class="radio-dot"></div>
+            <div>
+              <div class="radio-label">保留最近 10 轮</div>
+              <div class="radio-desc">压缩阈值约为 30 条消息</div>
+            </div>
+          </div>
+          <div class="radio-option" onclick="selectRadio(this)">
+            <div class="radio-dot"></div>
+            <div>
+              <div class="radio-label">保留最近 15 轮</div>
+              <div class="radio-desc">压缩阈值约为 40 条消息</div>
+            </div>
+          </div>
+          <div class="radio-option" onclick="selectRadio(this)">
+            <div class="radio-dot"></div>
+            <div>
+              <div class="radio-label">保留最近 20 轮</div>
+              <div class="radio-desc">压缩阈值约为 50 条消息</div>
+            </div>
+          </div>
+        </div>
+        <div class="info-text">建议范围 3~20。轮数越大，保留原始上下文越多；轮数越小，越早触发压缩。</div>
+      </div>
+
+      <!-- 图片生成 Provider -->
+      <div class="section">
+        <div class="section-title-row">
+          <svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+          <span class="section-title">图片生成 Provider 配置</span>
+        </div>
+        <div class="radio-group" data-group="imageProvider">
+          <div class="radio-option selected" onclick="selectRadio(this)">
+            <div class="radio-dot"></div>
+            <div>
+              <div class="radio-label">HTTP 联网生成</div>
+              <div class="radio-desc">使用通用 HTTP 图片接口，配置可实生成图片</div>
+            </div>
+          </div>
+          <div class="radio-option" onclick="selectRadio(this)">
+            <div class="radio-dot"></div>
+            <div>
+              <div class="radio-label">本地 SD1.5 Hyper-SD</div>
+              <div class="radio-desc">stable-diffusion.cpp + Vulkan，本地私有出图</div>
+            </div>
+          </div>
+          <div class="radio-option" onclick="selectRadio(this)">
+            <div class="radio-dot"></div>
+            <div>
+              <div class="radio-label">本地 DreamLite</div>
+              <div class="radio-desc">端侧接入框架已准备，等待官方权重/端侧包</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Image Config Fields -->
+      <div class="section">
+        <div class="section-title-row">
+          <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.488.488 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+          <span class="section-title">图片配置参数</span>
+        </div>
+
+        <div class="form-group">
+          <div class="form-label">本地模型路径</div>
+          <input type="text" class="form-input" value="" placeholder="">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <div class="form-label">本地宽度</div>
+            <input type="text" class="form-input" value="512">
+          </div>
+          <div class="form-group">
+            <div class="form-label">本地高度</div>
+            <input type="text" class="form-input" value="512">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <div class="form-label">本地 Steps</div>
+            <input type="text" class="form-input" value="20">
+          </div>
+          <div class="form-group">
+            <div class="form-label">本地 CFG Scale</div>
+            <input type="text" class="form-input" value="7.0">
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label">本地 Seed（留空随机）</div>
+          <input type="text" class="form-input" value="">
+        </div>
+        <div class="check-row" onclick="toggleCheck(this)">
+          <div class="checkbox">
+            <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+          </div>
+          <span class="check-label">启用 Vulkan</span>
+        </div>
+
+        <div style="height:1px;background:var(--outline-light);margin:12px 0;"></div>
+
+        <div class="form-group">
+          <div class="form-label">Base URL</div>
+          <input type="text" class="form-input" value="">
+        </div>
+        <div class="form-group">
+          <div class="form-label">API Key</div>
+          <input type="text" class="form-input" value="">
+        </div>
+        <div class="form-group">
+          <div class="form-label">Model</div>
+          <input type="text" class="form-input" value="">
+        </div>
+        <div class="form-group">
+          <div class="form-label">Request Template</div>
+          <textarea class="form-input" rows="3"></textarea>
+        </div>
+        <div class="form-group">
+          <div class="form-label">Response Image Field Path</div>
+          <input type="text" class="form-input" value="">
+        </div>
+        <div class="form-group">
+          <div class="form-label">Timeout Millis</div>
+          <input type="text" class="form-input" value="30000">
+        </div>
+
+        <div class="info-text">模板支持 {{model}} 与 {{prompt}}。响应字段示例：data.0.url 或 data.0.b64_json。</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ PHONE 2: 语音设置 ═══════════════ -->
+<div class="phone-col">
+  <span class="phone-label">语音设置</span>
+  <div class="phone-frame">
+    <div class="status-bar">
+      <span class="status-time">9:41</span>
+      <div class="status-icons">
+        <svg viewBox="0 0 24 24"><path d="M2 17h2v4H2zm4-3h2v7H6zm4-3h2v10h-2zm4-3h2v13h-2zm4-3h2v16h-2z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3a4.24 4.24 0 00-6 0zm-4-4l2 2a7.07 7.07 0 0110 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+      </div>
+    </div>
+    <div class="top-bar">
+      <div class="back-btn"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></div>
+      <span class="top-bar-title">语音设置</span>
+      <div class="top-bar-spacer"></div>
+    </div>
+    <div class="content">
+
+      <!-- Header -->
+      <div class="section">
+        <div class="header-block">
+          <div class="header-icon green" style="width:80px;height:80px;border-radius:24px;">
+            <svg viewBox="0 0 24 24" style="width:44px;height:44px;"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+          </div>
+          <div class="header-headline">语音设置</div>
+          <div class="header-desc">语音输入默认使用本地 SenseVoice。默认使用 moss-tts-nano ONNX 模型进行语音克隆，缺模型或缺参考音频时自动回退系统 TTS。</div>
+        </div>
+      </div>
+
+      <!-- Key-Value Card -->
+      <div class="section" style="padding: 0;">
+        <div class="kv-card">
+          <div class="kv-row">
+            <span class="kv-label">识别模式</span>
+            <span class="kv-value">本地</span>
+          </div>
+          <div class="kv-row">
+            <span class="kv-label">识别后端</span>
+            <span class="kv-value">本地 SenseVoice ASR</span>
+          </div>
+          <div class="kv-row">
+            <span class="kv-label">模型目录</span>
+            <span class="kv-value">/sdcard/.../sensevoice</span>
+          </div>
+          <div class="kv-row">
+            <span class="kv-label">模型状态</span>
+            <span class="kv-value success">完整</span>
+          </div>
+          <div class="kv-row">
+            <span class="kv-label">云 ASR</span>
+            <span class="kv-value muted">未配置</span>
+          </div>
+          <div class="kv-row">
+            <span class="kv-label">云响应字段</span>
+            <span class="kv-value muted">—</span>
+          </div>
+          <div class="kv-row">
+            <span class="kv-label">MOSS 目录</span>
+            <span class="kv-value muted">未配置</span>
+          </div>
+          <div class="kv-row">
+            <span class="kv-label">MOSS 状态</span>
+            <span class="kv-value muted">moss-tts-nano 模型未配置</span>
+          </div>
+          <div class="kv-row">
+            <span class="kv-label">本地克隆</span>
+            <span class="kv-value success">MOSS TTS Nano（默认引擎）</span>
+          </div>
+          <div class="kv-row">
+            <span class="kv-label">输出模式</span>
+            <span class="kv-value success">MOSS 本地克隆（默认）</span>
+          </div>
+          <div class="kv-row">
+            <span class="kv-label">默认音色</span>
+            <span class="kv-value success">moss_default_voice.wav</span>
+          </div>
+          <div class="kv-row">
+            <span class="kv-label">角色语音</span>
+            <span class="kv-value muted">在角色管理中配置参考音频 URI、模式和显示名称</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ PHONE 3: 深色模式 + 语言 + 关于 ═══════════════ -->
+<div class="phone-col">
+  <span class="phone-label">深色模式 / 语言 / 关于</span>
+  <div class="phone-frame">
+    <div class="status-bar">
+      <span class="status-time">9:41</span>
+      <div class="status-icons">
+        <svg viewBox="0 0 24 24"><path d="M2 17h2v4H2zm4-3h2v7H6zm4-3h2v10h-2zm4-3h2v13h-2zm4-3h2v16h-2z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3a4.24 4.24 0 00-6 0zm-4-4l2 2a7.07 7.07 0 0110 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+      </div>
+    </div>
+    <div class="top-bar">
+      <div class="back-btn"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></div>
+      <span class="top-bar-title">设置</span>
+      <div class="top-bar-spacer"></div>
+    </div>
+    <div class="content">
+
+      <!-- 深色模式 -->
+      <div class="section">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+          <div style="width:36px;height:36px;border-radius:10px;background:var(--secondary-container);display:flex;align-items:center;justify-content:center;">
+            <svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:var(--secondary);"><path d="M12 3a9 9 0 109 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 01-4.4 2.26 5.403 5.403 0 01-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/></svg>
+          </div>
+          <div style="flex:1;">
+            <div style="font-size:15px;font-weight:600;color:var(--on-surface);">深色模式</div>
+          </div>
+          <span class="tag coming">即将上线</span>
+        </div>
+        <div class="radio-group" data-group="theme">
+          <div class="radio-option selected" onclick="selectRadio(this)">
+            <div class="radio-dot"></div>
+            <div><div class="radio-label">跟随系统</div></div>
+          </div>
+          <div class="radio-option" onclick="selectRadio(this)">
+            <div class="radio-dot"></div>
+            <div><div class="radio-label">浅色</div></div>
+          </div>
+          <div class="radio-option" onclick="selectRadio(this)">
+            <div class="radio-dot"></div>
+            <div><div class="radio-label">深色</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 语言设置 -->
+      <div class="section">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+          <div style="width:36px;height:36px;border-radius:10px;background:#D8F5E3;display:flex;align-items:center;justify-content:center;">
+            <svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:var(--success);"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm6.93 6h-2.95a15.65 15.65 0 00-1.38-3.56A8.03 8.03 0 0118.92 8zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2s.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56A7.987 7.987 0 015.08 16zm2.95-8H5.08a7.987 7.987 0 014.33-3.56A15.65 15.65 0 008.03 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.32-.16-2s.07-1.35.16-2h4.68c.09.65.16 1.32.16 2s-.07 1.34-.16 2zm.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 01-4.33 3.56zM16.36 14c.08-.66.14-1.32.14-2s-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z"/></svg>
+          </div>
+          <div style="flex:1;">
+            <div style="font-size:15px;font-weight:600;color:var(--on-surface);">语言设置</div>
+            <div style="font-size:12px;color:var(--outline);margin-top:1px;">选择界面语言</div>
+          </div>
+          <span class="tag coming">即将上线</span>
+        </div>
+        <div class="radio-group" data-group="lang">
+          <div class="radio-option selected" onclick="selectRadio(this)">
+            <div class="radio-dot"></div>
+            <div><div class="radio-label">中文</div></div>
+          </div>
+          <div class="radio-option" style="opacity:0.5;pointer-events:none;">
+            <div class="radio-dot"></div>
+            <div><div class="radio-label">English</div></div>
+          </div>
+          <div class="radio-option" style="opacity:0.5;pointer-events:none;">
+            <div class="radio-dot"></div>
+            <div><div class="radio-label">日本語</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 关于 -->
+      <div class="section">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+          <div style="width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,var(--primary),var(--primary-light));display:flex;align-items:center;justify-content:center;">
+            <svg viewBox="0 0 24 24" style="width:26px;height:26px;fill:#fff;"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+          </div>
+          <div>
+            <div style="font-size:17px;font-weight:700;color:var(--on-surface);">CompanionChat</div>
+            <div style="font-size:12px;color:var(--outline);margin-top:2px;line-height:1.5;">你的私人 AI 伙伴<br>基于 LiteRT-LM 本地推理引擎</div>
+          </div>
+        </div>
+
+        <div class="kv-card" style="margin:0;">
+          <div class="kv-row">
+            <span class="kv-label">版本</span>
+            <span class="kv-value">0.1.0</span>
+          </div>
+          <div class="kv-row">
+            <span class="kv-label">构建</span>
+            <span class="kv-value">2025.06.02</span>
+          </div>
+          <div class="kv-row">
+            <span class="kv-label">协议</span>
+            <span class="kv-value link">用户协议</span>
+          </div>
+          <div class="kv-row">
+            <span class="kv-label">隐私</span>
+            <span class="kv-value link">隐私政策</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+</div><!-- /phones-row -->
+
+<script>
+function selectRadio(option) {
+  const group = option.closest('.radio-group');
+  group.querySelectorAll('.radio-option').forEach(o => o.classList.remove('selected'));
+  option.classList.add('selected');
+}
+
+function toggleCheck(row) {
+  const cb = row.querySelector('.checkbox');
+  cb.classList.toggle('checked');
+}
+</script>
+
+</body>
+</html>

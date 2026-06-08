@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CompanionChat - 对话框组件</title>
+<style>
+:root {
+  --primary: #7C5CBF;
+  --primary-light: #A88DE0;
+  --primary-container: #EDE5FF;
+  --secondary: #D4688C;
+  --secondary-container: #FFE0EB;
+  --on-primary: #FFFFFF;
+  --surface: #FFFFFF;
+  --surface-dim: #F7F5FA;
+  --surface-container: #F2EFF6;
+  --background: #FDFCFE;
+  --on-surface: #1C1B1F;
+  --on-surface-variant: #49454F;
+  --outline: #79747E;
+  --outline-variant: #CAC4D0;
+  --outline-light: #E8E4EC;
+  --error: #B3261E;
+  --error-container: #F9DEDC;
+  --success: #2E7D52;
+  --font: -apple-system, 'PingFang SC', 'Noto Sans SC', 'Helvetica Neue', Arial, sans-serif;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: var(--font);
+  background: linear-gradient(135deg, #E8E4EC 0%, #F0ECF4 50%, #E4E0EC 100%);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 20px;
+  -webkit-font-smoothing: antialiased;
+}
+
+.phone-frame {
+  width: 390px; height: 844px;
+  border-radius: 44px;
+  background: var(--background);
+  overflow: hidden; position: relative;
+  box-shadow: 0 0 0 2px #1a1a1a, 0 0 0 5px #3a3a3a, 0 25px 60px rgba(0,0,0,0.18), 0 8px 20px rgba(0,0,0,0.10);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+/* Status bar */
+.status-bar {
+  height: 54px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0 28px 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--on-surface);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 5;
+}
+.status-bar-left { font-variant-numeric: tabular-nums; }
+.status-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.status-bar-right svg { width: 16px; height: 16px; }
+
+/* Background settings page (dimmed) */
+.bg-page {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.bg-content {
+  padding: 0 16px;
+  filter: blur(2px);
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.bg-top-bar {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--on-surface);
+  margin-bottom: 8px;
+}
+
+.bg-section {
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+}
+
+.bg-section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--on-surface-variant);
+  margin-bottom: 10px;
+  letter-spacing: 0.3px;
+}
+
+.bg-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--outline-light);
+}
+.bg-row:last-child { border-bottom: none; }
+.bg-row-label { font-size: 14px; color: var(--on-surface); }
+.bg-row-value { font-size: 14px; color: var(--outline); }
+
+/* Dark overlay */
+.dialog-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(20, 18, 28, 0.45);
+  z-index: 10;
+}
+
+/* Dialogs container */
+.dialogs-stack {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  padding: 8px 18px 20px;
+  gap: 10px;
+  justify-content: flex-start;
+}
+
+/* Dialog base */
+.dialog {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.12);
+  overflow: hidden;
+  opacity: 0;
+  animation: dialogIn 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.2) forwards;
+}
+.dialog:nth-child(1) { animation-delay: 0.1s; }
+.dialog:nth-child(2) { animation-delay: 0.3s; }
+.dialog:nth-child(3) { animation-delay: 0.5s; }
+
+@keyframes dialogIn {
+  from { opacity: 0; transform: scale(0.92) translateY(6px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid var(--outline-light);
+}
+
+.dialog-title {
+  font-size: 15px;
+  font-weight: 650;
+  color: var(--on-surface);
+}
+
+.dialog-close {
+  width: 28px; height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  color: var(--outline);
+}
+.dialog-close:hover { background: var(--surface-container); color: var(--on-surface-variant); }
+.dialog-close:active { transform: scale(0.9); }
+
+.dialog-body {
+  padding: 12px 16px 14px;
+}
+
+.dialog-footer {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding: 0 16px 14px;
+}
+
+/* Form fields */
+.field-group {
+  margin-bottom: 10px;
+}
+.field-group:last-child { margin-bottom: 0; }
+
+.field-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--on-surface-variant);
+  margin-bottom: 5px;
+  letter-spacing: 0.2px;
+}
+
+.field-select {
+  width: 100%;
+  height: 34px;
+  border: 1.5px solid var(--outline-variant);
+  border-radius: var(--radius-sm);
+  padding: 0 10px;
+  font-size: 13px;
+  color: var(--on-surface);
+  background: var(--surface);
+  font-family: var(--font);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2379747E' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 28px;
+}
+.field-select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(124,92,191,0.12);
+}
+
+.field-textarea {
+  width: 100%;
+  border: 1.5px solid var(--outline-variant);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  font-size: 13px;
+  color: var(--on-surface);
+  background: var(--surface);
+  font-family: var(--font);
+  resize: none;
+  line-height: 1.5;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.field-textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(124,92,191,0.12);
+}
+
+.field-input {
+  width: 100%;
+  height: 34px;
+  border: 1.5px solid var(--outline-variant);
+  border-radius: var(--radius-sm);
+  padding: 0 10px;
+  font-size: 13px;
+  color: var(--on-surface);
+  background: var(--surface);
+  font-family: var(--font);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.field-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(124,92,191,0.12);
+}
+
+/* Buttons */
+.btn {
+  height: 34px;
+  padding: 0 18px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  font-family: var(--font);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+.btn:active { transform: scale(0.95); }
+
+.btn-primary {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+.btn-primary:hover { background: #6E4FB0; }
+
+.btn-text {
+  background: transparent;
+  color: var(--on-surface-variant);
+}
+.btn-text:hover { background: var(--surface-container); }
+
+.btn-outlined {
+  background: transparent;
+  border: 1.5px solid var(--outline-variant);
+  color: var(--on-surface-variant);
+}
+.btn-outlined:hover { background: var(--surface-container); border-color: var(--outline); }
+
+.btn-error {
+  background: var(--error);
+  color: var(--on-primary);
+}
+.btn-error:hover { background: #9E2019; }
+
+/* Tabs */
+.dialog-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--outline-light);
+  padding: 0 16px;
+}
+
+.dialog-tab {
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--outline);
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+}
+.dialog-tab:hover { color: var(--on-surface-variant); }
+.dialog-tab.active {
+  color: var(--primary);
+  font-weight: 600;
+}
+.dialog-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 14px;
+  right: 14px;
+  height: 2.5px;
+  background: var(--primary);
+  border-radius: var(--radius-full);
+}
+
+/* Delete dialog */
+.delete-dialog-body {
+  text-align: center;
+  padding: 16px 16px 8px;
+}
+
+/* Voice clips in dialog */
+.voice-clip-mini {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--surface-dim);
+  border-radius: var(--radius-sm);
+  margin-bottom: 6px;
+  border: 1.5px solid transparent;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+.voice-clip-mini:hover { background: var(--surface-container); border-color: var(--outline-variant); }
+.voice-clip-mini.selected { border-color: var(--primary); background: var(--primary-container); }
+.voice-clip-mini-play {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--primary);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.voice-clip-mini-play svg { width: 12px; height: 12px; fill: white; }
+.voice-clip-mini-info { flex: 1; min-width: 0; }
+.voice-clip-mini-name { font-size: 12px; font-weight: 500; color: var(--on-surface); }
+.voice-clip-mini-dur { font-size: 10px; color: var(--outline); }
+.voice-clip-mini-check { color: var(--primary); opacity: 0; transition: opacity 0.2s; }
+.voice-clip-mini.selected .voice-clip-mini-check { opacity: 1; }
+.voice-upload-mini {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 8px; margin-top: 4px;
+  border: 1.5px dashed var(--outline-variant); border-radius: var(--radius-sm);
+  font-size: 12px; color: var(--outline); cursor: pointer;
+  transition: all 0.2s; background: none; font-family: var(--font); width: 100%;
+}
+.voice-upload-mini:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-container); }
+.voice-upload-mini svg { width: 14px; height: 14px; fill: currentColor; }
+
+.delete-icon {
+  width: 44px; height: 44px;
+  border-radius: var(--radius-full);
+  background: var(--error-container);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 10px;
+  color: var(--error);
+}
+
+.delete-text {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--on-surface-variant);
+}
+
+.delete-footer {
+  display: flex;
+  gap: 8px;
+  padding: 0 16px 16px;
+  justify-content: center;
+}
+.delete-footer .btn { flex: 1; }
+
+/* Two-col row for small dialogs */
+.field-row {
+  display: flex;
+  gap: 10px;
+}
+.field-row .field-group { flex: 1; }
+
+/* Home indicator */
+.home-indicator {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 134px;
+  height: 5px;
+  background: var(--on-surface);
+  border-radius: var(--radius-full);
+  opacity: 0.18;
+  z-index: 30;
+}
+</style>
+</head>
+<body>
+
+<div class="phone-frame">
+  <!-- Status bar -->
+  <div class="status-bar">
+    <div class="status-bar-left">9:41</div>
+    <div class="status-bar-right">
+      <svg viewBox="0 0 18 12" fill="currentColor"><path d="M1 3.5C1 2.67 1.67 2 2.5 2h1C4.33 2 5 2.67 5 3.5v5C5 9.33 4.33 10 3.5 10h-1C1.67 10 1 9.33 1 8.5v-5zM6.5 5h1C8.33 5 9 5.67 9 6.5v2C9 9.33 8.33 10 7.5 10h-1C5.67 10 5 9.33 5 8.5v-2C5 5.67 5.67 5 6.5 5zM10 1.5C10 .67 10.67 0 11.5 0h1C13.33 0 14 .67 14 1.5v7C14 9.33 13.33 10 12.5 10h-1C10.67 10 10 9.33 10 8.5v-7zM15 4h1.5c.83 0 1.5.67 1.5 1.5v3c0 .83-.67 1.5-1.5 1.5H15c-.83 0-1.5-.67-1.5-1.5v-3C13.5 4.67 14.17 4 15 4z"/></svg>
+      <svg viewBox="0 0 16 12" fill="currentColor"><path d="M8 1.6L14.5 8H12L8 4.2 4 8H1.5z"/><path d="M8 5.6L12.5 10h-9z"/></svg>
+      <svg viewBox="0 0 25 12" fill="currentColor"><rect x="0" y="0.5" width="21" height="11" rx="2.5" ry="2.5" stroke="currentColor" stroke-width="1" fill="none" opacity="0.35"/><rect x="1.5" y="2" width="15" height="8" rx="1" fill="currentColor"/><path d="M23 4v4c.83-.5 1.5-1.34 1.5-2s-.67-1.5-1.5-2z" opacity="0.4"/></svg>
+    </div>
+  </div>
+
+  <!-- Background settings page -->
+  <div class="bg-page">
+    <div class="bg-content">
+      <div class="bg-top-bar">设置</div>
+      <div class="bg-section">
+        <div class="bg-section-title">通用设置</div>
+        <div class="bg-row"><span class="bg-row-label">语言</span><span class="bg-row-value">中文</span></div>
+        <div class="bg-row"><span class="bg-row-label">主题</span><span class="bg-row-value">跟随系统</span></div>
+        <div class="bg-row"><span class="bg-row-label">通知</span><span class="bg-row-value">已开启</span></div>
+      </div>
+      <div class="bg-section">
+        <div class="bg-section-title">隐私与安全</div>
+        <div class="bg-row"><span class="bg-row-label">数据同步</span><span class="bg-row-value">已开启</span></div>
+        <div class="bg-row"><span class="bg-row-label">聊天记录备份</span><span class="bg-row-value">自动</span></div>
+      </div>
+      <div class="bg-section">
+        <div class="bg-section-title">关于</div>
+        <div class="bg-row"><span class="bg-row-label">版本</span><span class="bg-row-value">v2.1.0</span></div>
+        <div class="bg-row"><span class="bg-row-label">用户协议</span><span class="bg-row-value"></span></div>
+      </div>
+    </div>
+
+    <!-- Dark overlay -->
+    <div class="dialog-overlay"></div>
+
+    <!-- Dialogs stack -->
+    <div class="dialogs-stack">
+
+      <!-- Dialog 1: Memory Editor -->
+      <div class="dialog">
+        <div class="dialog-header">
+          <span class="dialog-title">编辑记忆</span>
+          <div class="dialog-close">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </div>
+        </div>
+        <div class="dialog-body">
+          <div class="field-row">
+            <div class="field-group">
+              <div class="field-label">分类</div>
+              <select class="field-select">
+                <option selected>事实</option>
+                <option>偏好</option>
+                <option>事件</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <div class="field-label">层级</div>
+              <select class="field-select">
+                <option selected>长期</option>
+                <option>短期</option>
+              </select>
+            </div>
+          </div>
+          <div class="field-group">
+            <div class="field-label">内容</div>
+            <textarea class="field-textarea" rows="2">用户喜欢阅读科幻小说，尤其是刘慈欣的作品</textarea>
+          </div>
+        </div>
+        <div class="dialog-footer">
+          <button class="btn btn-text">取消</button>
+          <button class="btn btn-primary">保存</button>
+        </div>
+      </div>
+
+      <!-- Dialog 2: Role Card Editor -->
+      <div class="dialog">
+        <div class="dialog-header">
+          <span class="dialog-title">编辑角色卡</span>
+          <div class="dialog-close">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </div>
+        </div>
+        <div class="dialog-tabs">
+          <div class="dialog-tab active" onclick="selectTab(this, 'editor2')">基础</div>
+          <div class="dialog-tab" onclick="selectTab(this, 'editor2')">人设</div>
+          <div class="dialog-tab" onclick="selectTab(this, 'editor2')">图片</div>
+          <div class="dialog-tab" onclick="selectTab(this, 'editor2')">语音</div>
+        </div>
+        <div class="dialog-body editor2-panel" id="editor2-p0">
+          <div class="field-row">
+            <div class="field-group" style="flex: 1.2;">
+              <div class="field-label">名称</div>
+              <input class="field-input" type="text" value="小夏">
+            </div>
+            <div class="field-group" style="flex: 0.8;">
+              <div class="field-label">头像/图标</div>
+              <input class="field-input" type="text" value="person">
+            </div>
+          </div>
+          <div class="field-group">
+            <div class="field-label">简介</div>
+            <textarea class="field-textarea" rows="2">温柔治愈的邻家女孩</textarea>
+          </div>
+          <div class="field-group">
+            <div class="field-label">开场白</div>
+            <textarea class="field-textarea" rows="2">你好呀~今天想聊什么呢？</textarea>
+          </div>
+        </div>
+        <div class="dialog-body editor2-panel" id="editor2-p1" style="display:none;">
+          <div class="field-group">
+            <div class="field-label">人设描述</div>
+            <textarea class="field-textarea" rows="3">温柔体贴的邻家女孩，总是带着温暖的微笑。善于倾听，会在你需要安慰时给你拥抱。</textarea>
+          </div>
+          <div class="field-group">
+            <div class="field-label">性格标签</div>
+            <input class="field-input" type="text" value="温柔, 治愈, 倾听">
+          </div>
+        </div>
+        <div class="dialog-body editor2-panel" id="editor2-p2" style="display:none;">
+          <div class="field-group">
+            <div class="field-label">图片风格</div>
+            <textarea class="field-textarea" rows="2">日系动漫风格，暖色调，柔和光线</textarea>
+          </div>
+        </div>
+        <div class="dialog-body editor2-panel" id="editor2-p3" style="display:none;">
+          <div style="font-size:11px;font-weight:600;color:var(--outline);margin-bottom:8px;letter-spacing:0.5px;">语音片段</div>
+          <div class="voice-clip-mini selected" onclick="selectMiniClip(this)">
+            <div class="voice-clip-mini-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+            <div class="voice-clip-mini-info">
+              <div class="voice-clip-mini-name">小夏-甜美</div>
+              <div class="voice-clip-mini-dur">0:12 · 默认</div>
+            </div>
+            <div class="voice-clip-mini-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></div>
+          </div>
+          <div class="voice-clip-mini" onclick="selectMiniClip(this)">
+            <div class="voice-clip-mini-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+            <div class="voice-clip-mini-info">
+              <div class="voice-clip-mini-name">小夏-温柔</div>
+              <div class="voice-clip-mini-dur">0:08</div>
+            </div>
+            <div class="voice-clip-mini-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></div>
+          </div>
+          <div class="voice-clip-mini" onclick="selectMiniClip(this)">
+            <div class="voice-clip-mini-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+            <div class="voice-clip-mini-info">
+              <div class="voice-clip-mini-name">moss_sample_01</div>
+              <div class="voice-clip-mini-dur">0:15</div>
+            </div>
+            <div class="voice-clip-mini-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></div>
+          </div>
+          <button class="voice-upload-mini">
+            <svg viewBox="0 0 24 24"><path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/></svg>
+            上传新语音片段
+          </button>
+        </div>
+        <div class="dialog-footer">
+          <button class="btn btn-text">取消</button>
+          <button class="btn btn-primary">保存</button>
+        </div>
+      </div>
+
+      <!-- Dialog 3: Delete Confirmation -->
+      <div class="dialog">
+        <div class="delete-dialog-body">
+          <div class="delete-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          </div>
+          <div class="dialog-title" style="margin-bottom:6px;">删除确认</div>
+          <div class="delete-text">确认删除这条记忆吗？此操作不可撤销。</div>
+        </div>
+        <div class="delete-footer">
+          <button class="btn btn-outlined">取消</button>
+          <button class="btn btn-error">删除</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="home-indicator"></div>
+</div>
+
+<script>
+function selectTab(el, groupId) {
+  const tabs = el.parentElement.querySelectorAll('.dialog-tab');
+  let index = 0;
+  tabs.forEach((t, i) => {
+    t.classList.remove('active');
+    if (t === el) index = i;
+  });
+  el.classList.add('active');
+
+  // Switch panels if groupId is provided
+  if (groupId) {
+    for (let i = 0; i < 4; i++) {
+      const panel = document.getElementById(groupId + '-p' + i);
+      if (panel) panel.style.display = (i === index) ? '' : 'none';
+    }
+  }
+}
+
+function selectMiniClip(clipEl) {
+  const siblings = clipEl.parentElement.querySelectorAll('.voice-clip-mini');
+  siblings.forEach(c => c.classList.remove('selected'));
+  clipEl.classList.add('selected');
+}
+</script>
+</body>
+</html>

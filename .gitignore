@@ -1,0 +1,71 @@
+# Models (large files, distributed separately)
+models/
+hf-cache/
+
+# SDK / NDK / Runtime
+sdk/
+onnxruntime-win-x64-1.21.0/
+onnxruntime-android/
+
+# Reference source code (not part of the project)
+reference/
+stable-diffusion.cpp-master/
+CompanionChat/LiteRT-LM-main/
+
+# Experiments
+experiments/
+
+# Temp files
+temp_*/
+litertlm_inspect/
+testimagedata/
+vidioandimage/
+
+# Android build artifacts
+*.apk
+*.aab
+*.dex
+*.class
+*.jar
+
+# AAR (except libs/)
+*.aar
+!CompanionChat/app/libs/*.aar
+
+# Gradle
+.gradle/
+build/
+local.properties
+captures/
+*.hprof
+
+# Android Studio
+*.iml
+.idea/
+.DS_Store
+Thumbs.db
+
+# CompanionChat build
+CompanionChat/app/build/
+CompanionChat/.gradle/
+CompanionChat/build/
+CompanionChat/local.properties
+CompanionChat/*.hprof
+
+# Logs
+*.log
+logcat_*.txt
+full_log.txt
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# OneDrive
+*.lnk
+*.zip
+
+# Temp output
+dont_update/
+moss_tts_output/
