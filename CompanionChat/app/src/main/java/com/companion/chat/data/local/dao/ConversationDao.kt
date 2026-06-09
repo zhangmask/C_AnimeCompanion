@@ -15,6 +15,9 @@ interface ConversationDao {
     @Query("SELECT * FROM conversations ORDER BY createdAt DESC")
     suspend fun getAllConversationsWithMessages(): List<ConversationWithMessages>
 
+    @Query("SELECT * FROM conversations WHERE roleCardId = :roleCardId LIMIT 1")
+    suspend fun getConversationByRoleCardId(roleCardId: Long): ConversationEntity?
+
     @Query("SELECT COUNT(*) FROM conversations")
     suspend fun getConversationCount(): Int
 

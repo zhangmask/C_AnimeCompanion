@@ -11,6 +11,8 @@ import com.companion.chat.data.image.ImageGenerationConfigRepository
 import com.companion.chat.data.image.ImageGenerationEngineSelector
 import com.companion.chat.data.image.LocalImageGenerationEngine
 import com.companion.chat.data.local.CompanionDatabase
+import com.companion.chat.data.embedding.OnnxEmbeddingEngine
+import com.companion.chat.data.embedding.VectorRetriever
 import com.companion.chat.data.memory.MemoryPromptBuilder
 import com.companion.chat.data.memory.MemoryRepository
 import com.companion.chat.data.preferences.PreferenceMemoryDeriver
@@ -91,10 +93,15 @@ class AppContainer(
         )
     }
 
-    val contextManager: DefaultContextManager by lazy { DefaultContextManager() }
+    val embeddingEngine: OnnxEmbeddingEngine by lazy { OnnxEmbeddingEngine(application) }
+    val vectorRetriever: VectorRetriever by lazy { VectorRetriever(embeddingEngine) }
+
+    val contextManager: DefaultContextManager by lazy {
+        DefaultContextManager(inferenceEngineProvider = null)
+    }
     val promptAssembler: PromptAssembler by lazy { PromptAssembler() }
     val roleCardPromptBuilder: RoleCardPromptBuilder by lazy { RoleCardPromptBuilder() }
-    val memoryPromptBuilder: MemoryPromptBuilder by lazy { MemoryPromptBuilder() }
+    val memoryPromptBuilder: MemoryPromptBuilder by lazy { MemoryPromptBuilder(vectorRetriever) }
     val unifiedExtractionPromptBuilder: UnifiedExtractionPromptBuilder by lazy {
         UnifiedExtractionPromptBuilder()
     }

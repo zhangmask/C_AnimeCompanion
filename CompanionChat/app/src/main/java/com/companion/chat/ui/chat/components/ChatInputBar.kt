@@ -72,8 +72,7 @@ fun ChatInputBar(
         color = Color.White,
         border = BorderStroke(1.dp, BrandOutlineLight),
         modifier = modifier
-            .fillMaxWidth()
-            .imePadding()
+        .fillMaxWidth()
     ) {
         Surface(
             modifier = Modifier

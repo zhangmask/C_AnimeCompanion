@@ -1,13 +1,24 @@
 package com.companion.chat.data.context
 
+import com.companion.chat.data.engine.InferenceEngine
 import com.companion.chat.data.model.ChatMessage
 import com.companion.chat.data.model.MessageRole
 import kotlinx.coroutines.withTimeoutOrNull
 
 class DefaultContextManager(
     private val promptAssembler: PromptAssembler = PromptAssembler(),
-    private val summaryGenerator: SummaryGenerator = RuleBasedSummaryGenerator()
+    private val summaryGenerator: SummaryGenerator = RuleBasedSummaryGenerator(),
+    private val inferenceEngineProvider: (() -> InferenceEngine?)? = null
 ) : ContextManager {
+
+    fun withLlmSummary(): DefaultContextManager {
+        val llmProvider = inferenceEngineProvider ?: return this
+        return DefaultContextManager(
+            promptAssembler = promptAssembler,
+            summaryGenerator = LlmSummaryGenerator(llmProvider),
+            inferenceEngineProvider = llmProvider
+        )
+    }
 
     override fun shouldCompress(messages: List<ChatMessage>, settings: ContextSettings): Boolean {
         return messages.size > settings.compressionThreshold

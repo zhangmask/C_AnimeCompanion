@@ -67,8 +67,10 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil3.compose.AsyncImage
 import com.companion.chat.data.model.ConversationSession
 import com.companion.chat.ui.chat.DateFilter
 import com.companion.chat.ui.theme.AvatarGradients
@@ -108,11 +110,16 @@ fun ConversationDrawerSheet(
     onCancelEditing: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    val filteredSessions = remember(sessions, searchQuery, dateFilter) {
+    val roleCardMap = remember(roleCards) { roleCards.associateBy { it.id } }
+
+    val filteredSessions = remember(sessions, searchQuery, dateFilter, roleCardMap) {
         val searchFiltered = if (searchQuery.isBlank()) sessions
-        else sessions.filter {
-            it.title.contains(searchQuery, ignoreCase = true) ||
-            it.messages.any { msg -> msg.content.contains(searchQuery, ignoreCase = true) }
+        else sessions.filter { session ->
+            session.title.contains(searchQuery, ignoreCase = true) ||
+            session.messages.any { msg -> msg.content.contains(searchQuery, ignoreCase = true) } ||
+            session.roleCardId?.let { roleId ->
+                roleCardMap[roleId]?.name?.contains(searchQuery, ignoreCase = true)
+            } == true
         }
         filterByDate(searchFiltered, dateFilter)
     }
@@ -392,6 +399,10 @@ fun ConversationDrawerSheet(
                                 visible = visible,
                                 enter = fadeIn() + slideInVertically { it / 4 }
                             ) {
+                                val roleAvatarUri = session.roleCardId?.let { roleId ->
+                                    roleCardMap[roleId]?.avatarImageUri
+                                }.orEmpty()
+
                                 SessionItem(
                                     session = session,
                                     index = index,
@@ -399,6 +410,7 @@ fun ConversationDrawerSheet(
                                     isEditing = session.id == editingSessionId,
                                     editingTitle = editingTitle,
                                     showActions = actionsVisibleIndex == index,
+                                    roleCardAvatarUri = roleAvatarUri,
                                     onClick = {
                                         actionsVisibleIndex = -1
                                         onSessionClick(session.id)
@@ -725,6 +737,7 @@ private fun SessionItem(
     isEditing: Boolean,
     editingTitle: String,
     showActions: Boolean,
+    roleCardAvatarUri: String = "",
     onClick: () -> Unit,
     onLongPress: () -> Unit,
     onStartEditing: () -> Unit,
@@ -770,22 +783,33 @@ private fun SessionItem(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // ── Avatar: 46dp gradient circle with initial letter ──
+            // ── Avatar: 46dp circle with role image or initial letter ──
             Box(contentAlignment = Alignment.Center) {
-                val gradient = AvatarGradients[index % 5]
-                Box(
-                    modifier = Modifier
-                        .size(46.dp)
-                        .clip(CircleShape)
-                        .background(gradient),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = session.title.first().toString(),
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
+                if (roleCardAvatarUri.isNotBlank()) {
+                    AsyncImage(
+                        model = roleCardAvatarUri,
+                        contentDescription = session.title,
+                        modifier = Modifier
+                            .size(46.dp)
+                            .clip(CircleShape),
+                        contentScale = ContentScale.Crop
                     )
+                } else {
+                    val gradient = AvatarGradients[index % 5]
+                    Box(
+                        modifier = Modifier
+                            .size(46.dp)
+                            .clip(CircleShape)
+                            .background(gradient),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = session.title.first().toString(),
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
                 }
                 // Online dot: only for the active session
                 if (isActive) {

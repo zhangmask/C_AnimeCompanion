@@ -10,6 +10,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -170,10 +171,15 @@ fun MainApp() {
             }
         }
     ) { innerPadding ->
+        val chatBottomBarHeight = innerPadding.calculateBottomPadding()
         NavHost(
             navController = navController,
             startDestination = Screen.HOME.route,
-            modifier = Modifier.padding(innerPadding)
+            modifier = if (currentRoute == Screen.CHAT.route) {
+                Modifier.padding(top = innerPadding.calculateTopPadding())
+            } else {
+                Modifier.padding(innerPadding)
+            }
         ) {
             composable(Screen.HOME.route) {
                 HomeScreen(
@@ -191,8 +197,8 @@ fun MainApp() {
                     roleId = roleId,
                     viewModel = discoverViewModel,
                     onBack = { navController.popBackStack() },
-                    onEditRole = { _ ->
-                        navController.navigate(SettingsRoutes.CHARACTER)
+                    onEditRole = { importedRoleId ->
+                        navController.navigate(SettingsRoutes.editCharacter(importedRoleId))
                     },
                     onStartChat = { importedRoleId ->
                         coroutineScope.launch {
@@ -208,7 +214,7 @@ fun MainApp() {
                     }
                 )
             }
-            composable(Screen.CHAT.route) { ChatScreen(viewModel = chatViewModel) }
+            composable(Screen.CHAT.route) { ChatScreen(viewModel = chatViewModel, bottomBarHeight = chatBottomBarHeight) }
             composable(Screen.MEMORY.route) {
                 MemoryScreen(memoryViewModel = viewModel(factory = viewModelFactory))
             }
@@ -242,6 +248,30 @@ fun MainApp() {
                             }
                         }
                     }
+                )
+            }
+            composable(
+                route = SettingsRoutes.EDIT_CHARACTER,
+                arguments = listOf(navArgument("roleId") { type = NavType.LongType })
+            ) { entry ->
+                val editRoleId = entry.arguments?.getLong("roleId") ?: 0L
+                CharacterManagementScreen(
+                    onBack = { navController.popBackStack() },
+                    onActivateRoleCard = { roleId -> chatViewModel.activateRoleCard(roleId) },
+                    roleManagementViewModel = viewModel(factory = viewModelFactory),
+                    onStartChat = { roleId ->
+                        coroutineScope.launch {
+                            chatViewModel.startRoleConversation(roleId)
+                            navController.navigate(Screen.CHAT.route) {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        }
+                    },
+                    editRoleId = editRoleId
                 )
             }
             composable(SettingsRoutes.SKILLS) {

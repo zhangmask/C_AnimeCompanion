@@ -26,8 +26,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -43,7 +48,9 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.SmartToy
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -51,8 +58,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -67,8 +76,12 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.companion.chat.data.engine.InferenceState
@@ -94,12 +107,17 @@ import kotlinx.coroutines.flow.collect
 @Composable
 fun ChatScreen(
     modifier: Modifier = Modifier,
-    viewModel: ChatViewModel = viewModel()
+    viewModel: ChatViewModel = viewModel(),
+    bottomBarHeight: androidx.compose.ui.unit.Dp = 0.dp
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
+    val userProfileRepository = remember(context) {
+        (context.applicationContext as com.companion.chat.CompanionChatApplication).appContainer.userProfileRepository
+    }
+    val userProfile by userProfileRepository.profileFlow.collectAsStateWithLifecycle()
 
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickMultipleVisualMedia(maxItems = 4)
@@ -144,6 +162,20 @@ fun ChatScreen(
         }
     }
 
+    // Refresh system prompt when screen resumes (e.g., returning from settings)
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.refreshSystemPromptOnResume()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
     // 监听 TTS 回退事件，显示 Toast
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
@@ -163,6 +195,7 @@ fun ChatScreen(
 
     Scaffold(
         modifier = modifier,
+        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             CenterAlignedTopAppBar(
@@ -227,10 +260,15 @@ fun ChatScreen(
             )
         }
     ) { paddingValues ->
+        val isImeVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+                .then(
+                    if (isImeVisible) Modifier.imePadding()
+                    else Modifier.padding(bottom = bottomBarHeight)
+                )
         ) {
             // 消息列表
             if (uiState.currentSessionId.isBlank() && uiState.messages.isEmpty()) {
@@ -248,6 +286,35 @@ fun ChatScreen(
                     )
                 }
             } else {
+                // Compression status indicator
+                if (uiState.isCompressingContext) {
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 4.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        color = MaterialTheme.colorScheme.secondaryContainer
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                strokeWidth = 2.dp,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                text = uiState.compressionMessage.ifBlank { "正在压缩上下文..." },
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer
+                            )
+                        }
+                    }
+                }
+
                 val lastAssistantIndex = uiState.messages.indexOfLast { it.role == MessageRole.ASSISTANT && !it.isStreaming }
 
                 // reverseLayout = true: 消息从底部向上排列，最新消息自然在底部
@@ -316,7 +383,11 @@ fun ChatScreen(
                             enter = fadeIn(animationSpec = tween(350, easing = EaseOut)) +
                                     slideInVertically(animationSpec = tween(350, easing = EaseOut)) { it / 4 }
                         ) {
-                            MessageBubble(message = message)
+                            MessageBubble(
+                                message = message,
+                                assistantAvatarUri = uiState.assistantAvatarUri.ifBlank { null },
+                                userAvatarUri = userProfile.avatarUri.ifBlank { null }
+                            )
                         }
                     }
                 }

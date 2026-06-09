@@ -12,7 +12,7 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,12 +23,22 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import kotlinx.coroutines.delay
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowUp
@@ -40,6 +50,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -58,6 +69,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -82,6 +94,7 @@ import com.companion.chat.ui.theme.BrandSecondaryContainer
 import com.companion.chat.ui.theme.BrandOutline
 import com.companion.chat.ui.theme.BrandOutlineVariant
 import com.companion.chat.ui.theme.BrandOnSurfaceVariant
+import com.companion.chat.ui.theme.BrandSurfaceContainer
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -166,6 +179,7 @@ fun MemoryScreen(
             var memorySearchQuery by remember { mutableStateOf("") }
             var showFilterDialog by remember { mutableStateOf(false) }
             var layerFilter by remember { mutableStateOf("all") }  // "all", "short_term", "long_term"
+            var selectedRoleCardId by remember { mutableStateOf<Long?>(null) }
 
             Row(
                 modifier = Modifier
@@ -192,7 +206,7 @@ fun MemoryScreen(
                         .size(48.dp)
                         .clip(androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
                         .background(
-                            if (uiState.filter != MemoryFilter.ALL || layerFilter != "all")
+                            if (uiState.filter != MemoryFilter.ALL || layerFilter != "all" || selectedRoleCardId != null)
                                 BrandPrimaryContainer
                             else
                                 MaterialTheme.colorScheme.surfaceContainerLow
@@ -203,7 +217,7 @@ fun MemoryScreen(
                     Icon(
                         imageVector = Icons.Default.Psychology,
                         contentDescription = "筛选",
-                        tint = if (uiState.filter != MemoryFilter.ALL || layerFilter != "all")
+                        tint = if (uiState.filter != MemoryFilter.ALL || layerFilter != "all" || selectedRoleCardId != null)
                             BrandPrimary
                         else
                             MaterialTheme.colorScheme.onSurfaceVariant,
@@ -213,11 +227,15 @@ fun MemoryScreen(
             }
 
             // Show active filter summary
-            val hasFilter = uiState.filter != MemoryFilter.ALL || layerFilter != "all"
+            val hasFilter = uiState.filter != MemoryFilter.ALL || layerFilter != "all" || selectedRoleCardId != null
             if (hasFilter) {
                 val filterParts = mutableListOf<String>()
                 if (uiState.filter != MemoryFilter.ALL) filterParts.add(filterLabel(uiState.filter))
                 if (layerFilter != "all") filterParts.add(layerLabel(layerFilter))
+                if (selectedRoleCardId != null) {
+                    val roleName = uiState.roleCards.find { it.id == selectedRoleCardId }?.name ?: "未知角色"
+                    filterParts.add("角色: $roleName")
+                }
                 Text(
                     text = "筛选: ${filterParts.joinToString(" · ")}",
                     style = MaterialTheme.typography.labelSmall,
@@ -229,82 +247,254 @@ fun MemoryScreen(
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            // Filter popup dialog
+            // Filter bottom sheet dialog with tabs
             if (showFilterDialog) {
                 var tempCategoryFilter by remember { mutableStateOf(uiState.filter) }
                 var tempLayerFilter by remember { mutableStateOf(layerFilter) }
+                var tempRoleCardId by remember { mutableStateOf(selectedRoleCardId) }
+                var selectedTab by remember { mutableIntStateOf(0) }
+                val tabs = listOf("分类", "层级", "角色")
 
-                AlertDialog(
+                Dialog(
                     onDismissRequest = { showFilterDialog = false },
-                    title = { Text("筛选记忆") },
-                    text = {
-                        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                            // Category section
-                            Text("分类", fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.labelLarge)
-                            FlowRow(
-                                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                    properties = DialogProperties(usePlatformDefaultWidth = false)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color(0x59000000))
+                            .clickable { showFilterDialog = false },
+                        contentAlignment = Alignment.BottomCenter
+                    ) {
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable(enabled = false) { },
+                            shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
+                            color = Color.White
+                        ) {
+                            Column(
+                                modifier = Modifier.fillMaxWidth()
                             ) {
-                                MemoryFilter.entries.forEach { filter ->
-                                    val isSelected = tempCategoryFilter == filter
-                                    FilterChip(
-                                        selected = isSelected,
-                                        onClick = { tempCategoryFilter = filter },
-                                        label = { Text(filterLabel(filter)) },
-                                        colors = androidx.compose.material3.FilterChipDefaults.filterChipColors(
-                                            selectedContainerColor = BrandPrimary,
-                                            selectedLabelColor = Color.White,
-                                            containerColor = Color.White,
-                                            labelColor = BrandOnSurfaceVariant
-                                        ),
-                                        border = if (isSelected) null
-                                            else androidx.compose.material3.FilterChipDefaults.filterChipBorder(
-                                                borderColor = BrandOutlineVariant, enabled = true, selected = false
-                                            )
+                                // ── Header ──
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(start = 20.dp, end = 12.dp, top = 16.dp, bottom = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "筛选记忆",
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.weight(1f)
                                     )
+                                    Box(
+                                        modifier = Modifier
+                                            .size(32.dp)
+                                            .clip(CircleShape)
+                                            .background(BrandSurfaceContainer)
+                                            .clickable { showFilterDialog = false },
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Close,
+                                            "关闭",
+                                            tint = Color(0xFF49454F),
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
                                 }
-                            }
 
-                            // Layer section
-                            Text("层级", fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.labelLarge)
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                listOf("all" to "全部", "short_term" to "短期", "long_term" to "长期").forEach { (value, label) ->
-                                    val isSelected = tempLayerFilter == value
-                                    FilterChip(
-                                        selected = isSelected,
-                                        onClick = { tempLayerFilter = value },
-                                        label = { Text(label) },
-                                        modifier = Modifier.weight(1f),
-                                        colors = androidx.compose.material3.FilterChipDefaults.filterChipColors(
-                                            selectedContainerColor = BrandPrimary,
-                                            selectedLabelColor = Color.White,
-                                            containerColor = Color.White,
-                                            labelColor = BrandOnSurfaceVariant
-                                        ),
-                                        border = if (isSelected) null
-                                            else androidx.compose.material3.FilterChipDefaults.filterChipBorder(
-                                                borderColor = BrandOutlineVariant, enabled = true, selected = false
+                                // ── Tabs ──
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 20.dp)
+                                ) {
+                                    tabs.forEachIndexed { index, tab ->
+                                        val isSelected = selectedTab == index
+                                        Column(
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .clickable { selectedTab = index },
+                                            horizontalAlignment = Alignment.CenterHorizontally
+                                        ) {
+                                            Text(
+                                                text = tab,
+                                                fontSize = 14.sp,
+                                                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                                color = if (isSelected) BrandPrimary else BrandOutline
                                             )
-                                    )
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            Box(
+                                                modifier = Modifier
+                                                    .width(if (isSelected) 32.dp else 0.dp)
+                                                    .height(2.5.dp)
+                                                    .clip(RoundedCornerShape(2.dp))
+                                                    .background(if (isSelected) BrandPrimary else Color.Transparent)
+                                            )
+                                        }
+                                    }
+                                }
+
+                                // Divider
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(1.dp)
+                                        .background(Color(0xFFE8E4EC))
+                                )
+
+                                // ── Tab Content ──
+                                when (selectedTab) {
+                                    0 -> {
+                                        // Category tab - horizontal scrollable chips
+                                        LazyRow(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 20.dp),
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                            contentPadding = PaddingValues(horizontal = 20.dp)
+                                        ) {
+                                            items(MemoryFilter.entries.size) { index ->
+                                                val filter = MemoryFilter.entries[index]
+                                                val isSelected = tempCategoryFilter == filter
+                                                FilterChip(
+                                                    selected = isSelected,
+                                                    onClick = { tempCategoryFilter = filter },
+                                                    label = { Text(filterLabel(filter)) },
+                                                    colors = FilterChipDefaults.filterChipColors(
+                                                        selectedContainerColor = BrandPrimary,
+                                                        selectedLabelColor = Color.White,
+                                                        containerColor = Color.White,
+                                                        labelColor = BrandOnSurfaceVariant
+                                                    ),
+                                                    border = if (isSelected) null
+                                                        else FilterChipDefaults.filterChipBorder(
+                                                            borderColor = BrandOutlineVariant, enabled = true, selected = false
+                                                        )
+                                                )
+                                            }
+                                        }
+                                    }
+                                    1 -> {
+                                        // Layer tab - horizontal scrollable chips
+                                        LazyRow(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 20.dp),
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                            contentPadding = PaddingValues(horizontal = 20.dp)
+                                        ) {
+                                            val layerOptions = listOf("all" to "全部", "short_term" to "短期", "long_term" to "长期")
+                                            items(layerOptions.size) { index ->
+                                                val (value, label) = layerOptions[index]
+                                                val isSelected = tempLayerFilter == value
+                                                FilterChip(
+                                                    selected = isSelected,
+                                                    onClick = { tempLayerFilter = value },
+                                                    label = { Text(label) },
+                                                    colors = FilterChipDefaults.filterChipColors(
+                                                        selectedContainerColor = BrandPrimary,
+                                                        selectedLabelColor = Color.White,
+                                                        containerColor = Color.White,
+                                                        labelColor = BrandOnSurfaceVariant
+                                                    ),
+                                                    border = if (isSelected) null
+                                                        else FilterChipDefaults.filterChipBorder(
+                                                            borderColor = BrandOutlineVariant, enabled = true, selected = false
+                                                        )
+                                                )
+                                            }
+                                        }
+                                    }
+                                    2 -> {
+                                        // Role tab - horizontal scrollable chips
+                                        LazyRow(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 20.dp),
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                            contentPadding = PaddingValues(horizontal = 20.dp)
+                                        ) {
+                                            item {
+                                                FilterChip(
+                                                    selected = tempRoleCardId == null,
+                                                    onClick = { tempRoleCardId = null },
+                                                    label = { Text("全部角色") },
+                                                    colors = FilterChipDefaults.filterChipColors(
+                                                        selectedContainerColor = BrandPrimary,
+                                                        selectedLabelColor = Color.White,
+                                                        containerColor = Color.White,
+                                                        labelColor = BrandOnSurfaceVariant
+                                                    ),
+                                                    border = if (tempRoleCardId == null) null
+                                                        else FilterChipDefaults.filterChipBorder(
+                                                            borderColor = BrandOutlineVariant, enabled = true, selected = false
+                                                        )
+                                                )
+                                            }
+                                            items(uiState.roleCards.size) { index ->
+                                                val roleCard = uiState.roleCards[index]
+                                                val isSelected = tempRoleCardId == roleCard.id
+                                                FilterChip(
+                                                    selected = isSelected,
+                                                    onClick = { tempRoleCardId = roleCard.id },
+                                                    label = { Text(roleCard.name) },
+                                                    colors = FilterChipDefaults.filterChipColors(
+                                                        selectedContainerColor = BrandPrimary,
+                                                        selectedLabelColor = Color.White,
+                                                        containerColor = Color.White,
+                                                        labelColor = BrandOnSurfaceVariant
+                                                    ),
+                                                    border = if (isSelected) null
+                                                        else FilterChipDefaults.filterChipBorder(
+                                                            borderColor = BrandOutlineVariant, enabled = true, selected = false
+                                                        )
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // ── Confirm Button ──
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 20.dp, vertical = 16.dp)
+                                ) {
+                                    Surface(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(48.dp)
+                                            .clickable {
+                                                memoryViewModel.setFilter(tempCategoryFilter)
+                                                layerFilter = tempLayerFilter
+                                                selectedRoleCardId = tempRoleCardId
+                                                memoryViewModel.setRoleCardFilter(tempRoleCardId)
+                                                showFilterDialog = false
+                                            },
+                                        shape = RoundedCornerShape(12.dp),
+                                        color = BrandPrimary
+                                    ) {
+                                        Box(
+                                            modifier = Modifier.fillMaxSize(),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(
+                                                text = "确认筛选",
+                                                fontSize = 15.sp,
+                                                fontWeight = FontWeight.Medium,
+                                                color = Color.White
+                                            )
+                                        }
+                                    }
                                 }
                             }
-                        }
-                    },
-                    confirmButton = {
-                        TextButton(onClick = {
-                            memoryViewModel.setFilter(tempCategoryFilter)
-                            layerFilter = tempLayerFilter
-                            showFilterDialog = false
-                        }) {
-                            Text("确认")
-                        }
-                    },
-                    dismissButton = {
-                        TextButton(onClick = { showFilterDialog = false }) {
-                            Text("取消")
                         }
                     }
-                )
+                }
             }
 
             when {
@@ -382,7 +572,8 @@ fun MemoryScreen(
                     memoryViewModel.updateMemory(
                         memoryId = editingMemory!!.id,
                         content = draftContent,
-                        category = draftCategory
+                        category = draftCategory,
+                        layer = draftLayer
                     )
                 }
                 showEditor = false

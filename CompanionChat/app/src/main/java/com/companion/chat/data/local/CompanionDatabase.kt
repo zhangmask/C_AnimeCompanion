@@ -29,7 +29,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         Skill::class,
         RoleCard::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -55,7 +55,7 @@ abstract class CompanionDatabase : RoomDatabase() {
                     CompanionDatabase::class.java,
                     DATABASE_NAME
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                     .addCallback(DatabaseInitializationCallback())
                     .build()
                     .also { instance = it }
@@ -142,6 +142,15 @@ abstract class CompanionDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE role_cards ADD COLUMN voiceProfileUri TEXT NOT NULL DEFAULT ''")
                 db.execSQL("ALTER TABLE role_cards ADD COLUMN voiceMode TEXT NOT NULL DEFAULT 'SYSTEM_TTS'")
                 db.execSQL("ALTER TABLE role_cards ADD COLUMN voiceDisplayName TEXT NOT NULL DEFAULT ''")
+            }
+        }
+
+        private val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE conversations ADD COLUMN roleCardId INTEGER")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_conversations_roleCardId ON conversations(roleCardId)")
+                db.execSQL("ALTER TABLE memories ADD COLUMN roleCardId INTEGER")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_memories_roleCardId ON memories(roleCardId)")
             }
         }
 

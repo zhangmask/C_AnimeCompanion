@@ -51,6 +51,7 @@ object DiscoverRoutes {
 
 object SettingsRoutes {
     const val CHARACTER = "settings/character"
+    const val EDIT_CHARACTER = "settings/character/{roleId}"
     const val SKILLS = "settings/skills"
     const val MODEL = "settings/model"
     const val VOICE = "settings/voice"
@@ -58,4 +59,6 @@ object SettingsRoutes {
     const val DARK_MODE = "settings/dark_mode"
     const val ABOUT = "settings/about"
     const val PROFILE = "settings/profile"
+
+    fun editCharacter(roleId: Long): String = "settings/character/$roleId"
 }

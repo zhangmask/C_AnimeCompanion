@@ -11,17 +11,18 @@ class MemoryRepository(
     private val nowProvider: () -> Long = { System.currentTimeMillis() }
 ) {
 
-    suspend fun extractAndStoreMemories(userMessage: String, sessionId: String): List<Memory> {
+    suspend fun extractAndStoreMemories(userMessage: String, sessionId: String, roleCardId: Long? = null): List<Memory> {
         val extractedMemories = extractor.extract(
             userMessage = userMessage,
             sessionId = sessionId
         )
-        return storeExtractedMemories(extractedMemories, sessionId)
+        return storeExtractedMemories(extractedMemories, sessionId, roleCardId)
     }
 
     suspend fun extractAndStoreMemoriesFromMessages(
         userMessages: List<String>,
-        sessionId: String
+        sessionId: String,
+        roleCardId: Long? = null
     ): List<Memory> {
         val extractedMemories = userMessages.flatMap { message ->
             extractor.extract(
@@ -29,22 +30,36 @@ class MemoryRepository(
                 sessionId = sessionId
             )
         }
-        return storeExtractedMemories(extractedMemories, sessionId)
+        return storeExtractedMemories(extractedMemories, sessionId, roleCardId)
     }
 
     suspend fun storeModelExtractedMemories(
         extractedMemories: List<ExtractedMemory>,
-        sessionId: String
+        sessionId: String,
+        roleCardId: Long? = null
     ): List<Memory> {
-        return storeExtractedMemories(extractedMemories, sessionId)
+        return storeExtractedMemories(extractedMemories, sessionId, roleCardId)
     }
 
-    suspend fun retrieveRelevantMemories(userMessage: String): List<Memory> {
-        return retriever.retrieveRelevantMemories(userMessage)
+    suspend fun retrieveRelevantMemories(userMessage: String, roleCardId: Long? = null): List<Memory> {
+        return if (roleCardId != null) {
+            // Return memories for this role + global memories (roleCardId IS NULL)
+            memoryDao.getPersistentMemoriesForRole(roleCardId)
+        } else {
+            retriever.retrieveRelevantMemories(userMessage)
+        }
     }
 
     suspend fun getPersistentMemories(): List<Memory> {
         return memoryDao.getPersistentMemories()
+    }
+
+    suspend fun getPersistentMemoriesForRole(roleCardId: Long): List<Memory> {
+        return memoryDao.getPersistentMemoriesForRole(roleCardId)
+    }
+
+    suspend fun getGlobalPersistentMemories(): List<Memory> {
+        return memoryDao.getGlobalPersistentMemories()
     }
 
     suspend fun getAllMemories(): List<Memory> {
@@ -55,7 +70,7 @@ class MemoryRepository(
         return memoryDao.observeAll()
     }
 
-    suspend fun addManualMemory(content: String, category: String): Memory {
+    suspend fun addManualMemory(content: String, category: String, roleCardId: Long? = null): Memory {
         val now = nowProvider()
         val memory = Memory(
             content = content.trim(),
@@ -64,6 +79,7 @@ class MemoryRepository(
             source = MANUAL_SOURCE,
             referenceCount = 0,
             sessionId = null,
+            roleCardId = roleCardId,
             createdAt = now,
             updatedAt = now,
             expiresAt = null
@@ -89,6 +105,10 @@ class MemoryRepository(
         return memoryDao.promoteToLongTerm(memoryId, now) > 0
     }
 
+    suspend fun promoteMemoryToGlobal(memoryId: Long, now: Long = nowProvider()): Boolean {
+        return memoryDao.promoteToGlobal(memoryId, now) > 0
+    }
+
     suspend fun cleanupExpiredShortTerm(now: Long = nowProvider()): Int {
         return memoryDao.cleanupExpiredShortTerm(now)
     }
@@ -101,7 +121,8 @@ class MemoryRepository(
 
     private suspend fun storeExtractedMemories(
         extractedMemories: List<ExtractedMemory>,
-        sessionId: String
+        sessionId: String,
+        roleCardId: Long? = null
     ): List<Memory> {
         if (extractedMemories.isEmpty()) {
             return emptyList()
@@ -129,6 +150,7 @@ class MemoryRepository(
                 source = extractedMemory.source,
                 referenceCount = 0,
                 sessionId = sessionId,
+                roleCardId = roleCardId,
                 createdAt = now,
                 updatedAt = now,
                 expiresAt = extractedMemory.expiresAt ?: now + SHORT_TERM_TTL_MILLIS

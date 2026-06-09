@@ -1,5 +1,6 @@
 package com.companion.chat.ui.settings
 
+import android.util.Log
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -10,24 +11,30 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.Upload
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
@@ -45,9 +52,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import coil3.compose.AsyncImage
 import com.companion.chat.data.local.entity.RoleCard
+import com.companion.chat.data.role.RoleAvatarStore
 import com.companion.chat.data.voice.VoiceClipScanner
 
 private enum class RoleEditorSection(val label: String) {
@@ -100,34 +110,51 @@ fun RoleCardEditorDialog(
     var voiceMode by remember(roleCard) { mutableStateOf(roleCard?.voiceMode ?: "CLONE") }
     var voiceDisplayName by remember(roleCard) { mutableStateOf(roleCard?.voiceDisplayName.orEmpty()) }
     val sections = RoleEditorSection.entries
+    val canSave = name.isNotBlank() && persona.isNotBlank()
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = if (roleCard == null) "新建角色卡" else "编辑角色卡",
-                style = MaterialTheme.typography.titleLarge
-            )
-        },
-        text = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(max = 540.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(24.dp),
+            tonalElevation = 6.dp,
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(max = 640.dp)
+        ) {
+            Column(modifier = Modifier.padding(20.dp)) {
+                // Title bar
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = if (roleCard == null) "新建角色卡" else "编辑角色卡",
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                    IconButton(onClick = onDismiss) {
+                        Icon(Icons.Default.Close, "关闭")
+                    }
+                }
+
+                Spacer(Modifier.height(8.dp))
+
+                // Tabs
                 TabRow(selectedTabIndex = selectedSectionIndex) {
                     sections.forEachIndexed { index, section ->
                         Tab(
                             selected = selectedSectionIndex == index,
                             onClick = { selectedSectionIndex = index },
-                            text = { Text(section.label) }
+                            text = { Text(section.label, fontSize = MaterialTheme.typography.labelMedium.fontSize) }
                         )
                     }
                 }
+
+                Spacer(Modifier.height(8.dp))
+
+                // Scrollable content
                 Column(
                     modifier = Modifier
-                        .fillMaxWidth()
+                        .weight(1f, fill = false)
                         .verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
@@ -174,41 +201,36 @@ fun RoleCardEditorDialog(
                         )
                     }
                 }
-            }
-        },
-        confirmButton = {
-            TextButton(
-                enabled = name.isNotBlank() && persona.isNotBlank(),
-                onClick = {
-                    onSave(
-                        name,
-                        description,
-                        avatar,
-                        persona,
-                        speakingStyle,
-                        background,
-                        rules,
-                        taboos,
-                        openingMessage,
-                        exampleDialogue,
-                        avatarImageUri,
-                        galleryImageUris.lines().map { it.trim() }.filter { it.isNotBlank() },
-                        imageStylePrompt,
-                        voiceProfileUri,
-                        voiceMode,
-                        voiceDisplayName
-                    )
+
+                Spacer(Modifier.height(12.dp))
+
+                // Buttons
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(onClick = onDismiss) {
+                        Text("取消")
+                    }
+                    Spacer(Modifier.width(8.dp))
+                    TextButton(
+                        enabled = canSave,
+                        onClick = {
+                            Log.d("RoleCardEditor", "Save clicked: name=$name, persona=${persona.take(20)}")
+                            onSave(
+                                name, description, avatar, persona, speakingStyle, background,
+                                rules, taboos, openingMessage, exampleDialogue,
+                                avatarImageUri, galleryImageUris.lines().map { it.trim() }.filter { it.isNotBlank() },
+                                imageStylePrompt, voiceProfileUri, voiceMode, voiceDisplayName
+                            )
+                        }
+                    ) {
+                        Text("保存")
+                    }
                 }
-            ) {
-                Text("保存")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("取消")
             }
         }
-    )
+    }
 }
 
 @Composable
@@ -260,7 +282,90 @@ private fun ImageSection(
     imageStylePrompt: String,
     onImageStylePromptChange: (String) -> Unit
 ) {
-    RoleCardField("头像图片 URI", avatarImageUri, onAvatarImageUriChange)
+    val context = LocalContext.current
+    val avatarStore = remember(context) { RoleAvatarStore(context) }
+    val avatarPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        if (uri != null) {
+            val persisted = avatarStore.persistUri(uri)
+            if (persisted != null) {
+                onAvatarImageUriChange(persisted)
+            }
+        }
+    }
+
+    Text(
+        text = "头像图片",
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(start = 4.dp)
+    )
+
+    if (avatarImageUri.isNotBlank()) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(max = 160.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)),
+            contentAlignment = Alignment.Center
+        ) {
+            AsyncImage(
+                model = avatarImageUri,
+                contentDescription = "头像预览",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp)),
+                contentScale = androidx.compose.ui.layout.ContentScale.Crop
+            )
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(8.dp)
+                    .size(28.dp)
+                    .clip(CircleShape)
+                    .background(Color(0x88000000))
+                    .clickable { onAvatarImageUriChange("") },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    Icons.Default.Close,
+                    "移除头像",
+                    tint = Color.White,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+        }
+    } else {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .border(
+                    1.5.dp,
+                    MaterialTheme.colorScheme.outlineVariant,
+                    RoundedCornerShape(12.dp)
+                )
+                .clickable { avatarPickerLauncher.launch("image/*") }
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                Icons.Default.Add,
+                null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(20.dp)
+            )
+            Text(
+                text = "  选择头像图片",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+    }
+
     RoleCardField("图库图片 URI（一行一个）", galleryImageUris, onGalleryImageUrisChange, minLines = 4)
     RoleCardField("图片风格提示词", imageStylePrompt, onImageStylePromptChange, minLines = 3)
 }
@@ -290,11 +395,12 @@ private fun VoiceSection(
     val filePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
+        Log.d("RoleCardEditor", "File picker returned: uri=$uri")
         if (uri != null) {
             val imported = scanner.importClipFromUri(uri)
+            Log.d("RoleCardEditor", "Import result: $imported")
             if (imported != null) {
                 clips = scanner.scanClips()
-                // Auto-select the newly imported clip
                 val newIndex = clips.indexOfFirst { it.uri == imported.uri }
                 if (newIndex >= 0) {
                     selectedIndex = newIndex
@@ -374,7 +480,6 @@ private fun VoiceSection(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Play/Pause button
             Box(
                 modifier = Modifier
                     .size(36.dp)
@@ -396,7 +501,6 @@ private fun VoiceSection(
                 )
             }
 
-            // Clip info
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = clip.displayName,
@@ -411,7 +515,6 @@ private fun VoiceSection(
                 )
             }
 
-            // Selected check
             if (isSelected) {
                 Icon(
                     imageVector = Icons.Default.Check,
@@ -433,7 +536,10 @@ private fun VoiceSection(
                 MaterialTheme.colorScheme.outlineVariant,
                 RoundedCornerShape(12.dp)
             )
-            .clickable { filePickerLauncher.launch("audio/*") }
+            .clickable {
+                Log.d("RoleCardEditor", "Upload button clicked, launching file picker")
+                filePickerLauncher.launch("audio/*")
+            }
             .padding(12.dp),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically

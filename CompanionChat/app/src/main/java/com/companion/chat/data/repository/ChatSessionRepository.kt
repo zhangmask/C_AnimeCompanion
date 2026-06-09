@@ -36,6 +36,12 @@ class ChatSessionRepository(
         return conversationDao.getAllConversationsWithMessages().map { it.toDomainModel() }
     }
 
+    suspend fun getSessionByRoleCardId(roleCardId: Long): ConversationSession? {
+        val entity = conversationDao.getConversationByRoleCardId(roleCardId) ?: return null
+        val messages = messageDao.getMessagesForConversation(entity.id)
+        return ConversationWithMessages(entity, messages).toDomainModel()
+    }
+
     suspend fun replaceAllSessions(sessions: List<ConversationSession>) {
         database.withTransaction {
             messageDao.deleteAllMessages()
@@ -86,6 +92,7 @@ private fun ConversationWithMessages.toDomainModel(): ConversationSession {
     return ConversationSession(
         id = conversation.id,
         title = conversation.title,
+        roleCardId = conversation.roleCardId,
         messages = messages
             .sortedBy { it.position }
             .map { it.toDomainModel() },
@@ -98,6 +105,7 @@ private fun ConversationEntity.toDomainModel(): ConversationSession {
     return ConversationSession(
         id = id,
         title = title,
+        roleCardId = roleCardId,
         createdAt = createdAt,
         updatedAt = updatedAt
     )
@@ -107,6 +115,7 @@ private fun ConversationSession.toEntity(): ConversationEntity {
     return ConversationEntity(
         id = id,
         title = title,
+        roleCardId = roleCardId,
         createdAt = createdAt,
         updatedAt = updatedAt
     )

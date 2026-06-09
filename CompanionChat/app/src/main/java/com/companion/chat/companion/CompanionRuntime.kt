@@ -8,6 +8,7 @@ import com.companion.chat.data.model.ChatMessage
 import com.companion.chat.data.model.MessageRole
 import com.companion.chat.data.memory.MemoryPromptBuilder
 import com.companion.chat.data.memory.MemoryRepository
+import com.companion.chat.data.profile.UserProfileRepository
 import com.companion.chat.data.role.RoleCardPromptBuilder
 import com.companion.chat.data.role.RoleCardRepository
 import com.companion.chat.data.preferences.PreferenceRepository
@@ -20,6 +21,7 @@ class CompanionRuntime(
     private val skillRepository: SkillRepository,
     private val preferenceRepository: PreferenceRepository? = null,
     private val memoryRepository: MemoryRepository? = null,
+    private val userProfileRepository: UserProfileRepository? = null,
     private val contextManager: ContextManager? = null,
     private val inferenceEngineProvider: () -> InferenceEngine? = { null },
     private val postTurnLearning: CompanionPostTurnLearning? = null,
@@ -32,6 +34,7 @@ class CompanionRuntime(
     suspend fun refreshBasePrompt(): String {
         val rolePrompt = roleCardPromptBuilder.build(roleCardRepository.getActiveRoleCard())
         val skillPrompt = skillRepository.getActiveSkill()?.systemPrompt?.trim().orEmpty()
+        val userProfilePrompt = buildUserProfilePrompt()
 
         return buildList {
             add(defaultBasePrompt)
@@ -41,7 +44,42 @@ class CompanionRuntime(
             if (skillPrompt.isNotBlank()) {
                 add(skillPrompt)
             }
+            if (userProfilePrompt.isNotBlank()) {
+                add(userProfilePrompt)
+            }
         }.joinToString(separator = "\n\n")
+    }
+
+    private fun buildUserProfilePrompt(): String {
+        val repository = userProfileRepository ?: return ""
+        val profile = repository.getProfile()
+        val parts = mutableListOf<String>()
+
+        if (profile.nickname.isNotBlank()) {
+            parts.add("用户昵称：${profile.nickname}")
+        }
+        if (profile.gender.isNotBlank()) {
+            parts.add("性别：${profile.gender}")
+        }
+        if (profile.age.isNotBlank()) {
+            parts.add("年龄：${profile.age}")
+        }
+        if (profile.introduction.isNotBlank()) {
+            parts.add("个人介绍：${profile.introduction}")
+        }
+        if (profile.importantInfo.isNotBlank()) {
+            parts.add("重要信息：${profile.importantInfo}")
+        }
+        if (profile.interestTags.isNotBlank()) {
+            parts.add("兴趣标签：${profile.interestTags}")
+        }
+
+        if (parts.isEmpty()) return ""
+
+        return buildString {
+            appendLine("关于当前用户的基本信息（请自然地融入对话，不要刻意提及你知道这些）：")
+            parts.forEach { appendLine("- $it") }
+        }.trim()
     }
 
     suspend fun activateRoleCardAndRefreshPrompt(roleCardId: Long): String {
@@ -67,16 +105,36 @@ class CompanionRuntime(
         }.trim()
     }
 
-    suspend fun buildMemoryContext(userInput: String): CompanionMemoryContext {
+    suspend fun buildMemoryContext(userInput: String, roleCardId: Long? = null): CompanionMemoryContext {
         val repository = memoryRepository ?: return CompanionMemoryContext()
-        val persistentMemories = repository.getPersistentMemories()
-        val relevantMemories = repository.retrieveRelevantMemories(userInput)
+        val persistentMemories = if (roleCardId != null) {
+            repository.getPersistentMemoriesForRole(roleCardId)
+        } else {
+            repository.getPersistentMemories()
+        }
+
+        // 更新 BM25 索引（如果需要）
+        updateMemoryIndexIfNeeded(repository, roleCardId)
+
+        // 使用 BM25 检索相关记忆
+        val relevantMemories = memoryPromptBuilder.retrieveRelevant(userInput, topK = 5)
+
         return CompanionMemoryContext(
             persistentPrompt = memoryPromptBuilder.buildPersistent(persistentMemories),
             retrievedPrompt = memoryPromptBuilder.build(relevantMemories),
             persistentMemoryCount = persistentMemories.size,
             retrievedMemoryCount = relevantMemories.size
         )
+    }
+
+    private suspend fun updateMemoryIndexIfNeeded(repository: MemoryRepository, roleCardId: Long?) {
+        // 获取所有记忆用于构建索引
+        val allMemories = if (roleCardId != null) {
+            repository.getAllMemories().filter { it.roleCardId == roleCardId || it.roleCardId == null }
+        } else {
+            repository.getAllMemories()
+        }
+        memoryPromptBuilder.updateIndex(allMemories)
     }
 
     suspend fun rebuildConversationWithContext(

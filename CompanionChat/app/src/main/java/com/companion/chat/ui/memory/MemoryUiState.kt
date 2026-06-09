@@ -16,6 +16,7 @@ enum class MemoryFilter(val category: String?) {
 data class MemoryUiState(
     val memories: List<Memory> = emptyList(),
     val filter: MemoryFilter = MemoryFilter.ALL,
+    val selectedRoleCardId: Long? = null,
     val isLoading: Boolean = true,
     val roleCards: List<RoleCard> = emptyList()
 )

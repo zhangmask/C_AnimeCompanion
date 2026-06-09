@@ -9,8 +9,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Chat
@@ -29,6 +31,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,11 +40,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil3.compose.AsyncImage
 import com.companion.chat.data.local.entity.RoleCard
+import com.companion.chat.ui.chat.components.RoleCardEditorSheet
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -51,13 +58,26 @@ fun CharacterManagementScreen(
     onBack: () -> Unit = {},
     onActivateRoleCard: suspend (Long) -> Unit = {},
     onStartChat: (Long) -> Unit = {},
-    roleManagementViewModel: RoleManagementViewModel = viewModel()
+    roleManagementViewModel: RoleManagementViewModel = viewModel(),
+    editRoleId: Long? = null
 ) {
     val uiState by roleManagementViewModel.uiState.collectAsState()
     val scope = rememberCoroutineScope()
     var editingRoleCard by remember { mutableStateOf<RoleCard?>(null) }
     var showCreateDialog by remember { mutableStateOf(false) }
     var deletingRoleCard by remember { mutableStateOf<RoleCard?>(null) }
+    var hasAutoOpenedForEdit by remember { mutableStateOf(false) }
+
+    LaunchedEffect(editRoleId, uiState.roleCards) {
+        if (editRoleId != null && editRoleId > 0 && !hasAutoOpenedForEdit) {
+            val roleCard = uiState.roleCards.find { it.id == editRoleId }
+                ?: uiState.activeRoleCard?.takeIf { it.id == editRoleId }
+            if (roleCard != null) {
+                editingRoleCard = roleCard
+                hasAutoOpenedForEdit = true
+            }
+        }
+    }
 
     Scaffold(
         modifier = modifier,
@@ -151,12 +171,9 @@ fun CharacterManagementScreen(
     }
 
     if (showCreateDialog) {
-        RoleCardEditorDialog(
+        RoleCardEditorSheet(
             onDismiss = { showCreateDialog = false },
             onSave = { name, description, avatar, persona, speakingStyle, background, rules, taboos, openingMessage, exampleDialogue, avatarImageUri, galleryImageUris, imageStylePrompt, voiceProfileUri, voiceMode, voiceDisplayName ->
-                if (name.isBlank() || persona.isBlank()) {
-                    return@RoleCardEditorDialog
-                }
                 roleManagementViewModel.createRoleCard(
                     name = name,
                     description = description,
@@ -181,13 +198,9 @@ fun CharacterManagementScreen(
     }
 
     editingRoleCard?.let { roleCard ->
-        RoleCardEditorDialog(
-            roleCard = roleCard,
+        RoleCardEditorSheet(
             onDismiss = { editingRoleCard = null },
             onSave = { name, description, avatar, persona, speakingStyle, background, rules, taboos, openingMessage, exampleDialogue, avatarImageUri, galleryImageUris, imageStylePrompt, voiceProfileUri, voiceMode, voiceDisplayName ->
-                if (name.isBlank() || persona.isBlank()) {
-                    return@RoleCardEditorDialog
-                }
                 roleManagementViewModel.updateRoleCard(
                     id = roleCard.id,
                     name = name,
@@ -208,7 +221,28 @@ fun CharacterManagementScreen(
                     voiceDisplayName = voiceDisplayName
                 )
                 editingRoleCard = null
-            }
+                // If we came from discover page to edit a specific role, go back after saving
+                if (editRoleId != null && editRoleId > 0) {
+                    onBack()
+                }
+            },
+            existingName = roleCard.name,
+            existingDescription = roleCard.description,
+            existingAvatar = roleCard.avatar,
+            existingPersona = roleCard.persona,
+            existingSpeakingStyle = roleCard.speakingStyle,
+            existingBackground = roleCard.background,
+            existingRules = roleCard.rules,
+            existingTaboos = roleCard.taboos,
+            existingOpeningMessage = roleCard.openingMessage,
+            existingExampleDialogue = roleCard.exampleDialogue,
+            existingAvatarImageUri = roleCard.avatarImageUri,
+            existingGalleryImageUris = roleCard.galleryImageUris,
+            existingImageStylePrompt = roleCard.imageStylePrompt,
+            existingVoiceProfileUri = roleCard.voiceProfileUri,
+            existingVoiceMode = roleCard.voiceMode,
+            existingVoiceDisplayName = roleCard.voiceDisplayName,
+            isEditing = true
         )
     }
 
@@ -271,17 +305,33 @@ private fun RoleCardItem(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = roleCard.name,
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                    if (roleCard.description.isNotBlank()) {
-                        Text(
-                            text = roleCard.description,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                Row(
+                    modifier = Modifier.weight(1f),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (roleCard.avatarImageUri.isNotBlank()) {
+                        AsyncImage(
+                            model = roleCard.avatarImageUri,
+                            contentDescription = roleCard.name,
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(RoundedCornerShape(12.dp)),
+                            contentScale = ContentScale.Crop
                         )
+                    }
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = roleCard.name,
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        if (roleCard.description.isNotBlank()) {
+                            Text(
+                                text = roleCard.description,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 }
                 Row(

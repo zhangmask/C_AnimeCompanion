@@ -25,6 +25,7 @@ data class ChatMessage(
 data class ConversationSession(
     val id: String = UUID.randomUUID().toString(),
     val title: String = DEFAULT_SESSION_TITLE,
+    val roleCardId: Long? = null,
     val messages: List<ChatMessage> = emptyList(),
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = createdAt

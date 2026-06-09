@@ -64,6 +64,11 @@ class MemoryViewModel(
         publishMemories()
     }
 
+    fun setRoleCardFilter(roleCardId: Long?) {
+        _uiState.update { it.copy(selectedRoleCardId = roleCardId) }
+        publishMemories()
+    }
+
     fun addMemory(content: String, category: String) {
         if (content.isBlank()) {
             return
@@ -74,13 +79,14 @@ class MemoryViewModel(
         }
     }
 
-    fun updateMemory(memoryId: Long, content: String, category: String) {
+    fun updateMemory(memoryId: Long, content: String, category: String, layer: String) {
         val existing = allMemories.firstOrNull { it.id == memoryId } ?: return
         workerScope.launch {
             memoryRepository.updateMemory(
                 existing.copy(
                     content = content,
-                    category = category
+                    category = category,
+                    layer = layer
                 )
             )
             refreshMemories()
@@ -117,12 +123,19 @@ class MemoryViewModel(
 
     private fun publishMemories(isLoading: Boolean = _uiState.value.isLoading) {
         val filter = _uiState.value.filter
+        val selectedRoleCardId = _uiState.value.selectedRoleCardId
         val visibleMemories = when (filter) {
             MemoryFilter.ALL -> allMemories
             MemoryFilter.RELATION -> allMemories.filter {
                 it.category == "relation" || it.category == "relationship"
             }
             else -> allMemories.filter { it.category == filter.category }
+        }.let { memories ->
+            if (selectedRoleCardId != null) {
+                memories.filter { it.roleCardId == selectedRoleCardId }
+            } else {
+                memories
+            }
         }
         _uiState.update {
             it.copy(

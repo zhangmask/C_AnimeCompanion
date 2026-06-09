@@ -13,7 +13,9 @@ import com.companion.chat.companion.PreferenceLearningCoordinator
 import com.companion.chat.companion.PreferenceLearningAdapter
 import com.companion.chat.data.context.ContextConfigRepository
 import com.companion.chat.data.context.ContextManager
+import com.companion.chat.data.context.DefaultContextManager
 import com.companion.chat.data.context.ContextSettings
+import com.companion.chat.data.embedding.OnnxEmbeddingEngine
 import com.companion.chat.data.engine.InferenceState
 import com.companion.chat.data.engine.VoiceInputEvent
 import com.companion.chat.data.engine.VoiceOutputState
@@ -73,7 +75,10 @@ data class ChatUiState(
     val dateFilter: DateFilter = DateFilter.ALL,
     val editingSessionId: String = "",
     val editingTitle: String = "",
-    val availableRoleCards: List<RoleCard> = emptyList()
+    val availableRoleCards: List<RoleCard> = emptyList(),
+    val assistantAvatarUri: String = "",
+    val isCompressingContext: Boolean = false,
+    val compressionMessage: String = ""
 ) {
     val hasSpeakableAssistantMessage: Boolean
         get() = messages.any { message ->
@@ -96,6 +101,11 @@ class ChatViewModel(
     private val _uiState = MutableStateFlow(ChatUiState())
     val uiState: StateFlow<ChatUiState> = _uiState.asStateFlow()
 
+    private val currentRoleCardId: Long?
+        get() = _uiState.value.sessions
+            .firstOrNull { it.id == _uiState.value.currentSessionId }
+            ?.roleCardId
+
     /** 一次性 UI 事件流 */
     private val _events = MutableSharedFlow<ChatUiEvent>()
     val events: SharedFlow<ChatUiEvent> = _events.asSharedFlow()
@@ -106,7 +116,14 @@ class ChatViewModel(
         private set
     val voiceInputEngine = container.voiceInputEngine
     private val contextConfigRepository = container.contextConfigRepository
-    private val contextManager: ContextManager = container.contextManager
+    private val contextManager: ContextManager by lazy {
+        val baseManager = container.contextManager
+        if (baseManager is DefaultContextManager) {
+            baseManager.withLlmSummary()
+        } else {
+            baseManager
+        }
+    }
     private val promptAssembler = container.promptAssembler
     private val sessionRepository = container.chatSessionRepository
     private val memoryRepository = container.memoryRepository
@@ -144,6 +161,7 @@ class ChatViewModel(
         skillRepository = container.skillRepository,
         preferenceRepository = preferenceRepository,
         memoryRepository = memoryRepository,
+        userProfileRepository = container.userProfileRepository,
         contextManager = contextManager,
         inferenceEngineProvider = { inferenceEngine },
         postTurnLearning = PreferenceLearningAdapter(preferenceLearningCoordinator),
@@ -176,11 +194,27 @@ class ChatViewModel(
         loadSessionsFromStorage()
         loadAvailableRoles()
         voiceInputEngine.warmUp()
+        initializeEmbeddingEngine()
 
         viewModelScope.launch {
             refreshBaseSystemPrompt()
             logToFile("ChatViewModel 初始化完成，开始自动初始化引擎")
             initializeEngine(systemPrompt = baseSystemPrompt)
+        }
+    }
+
+    private fun initializeEmbeddingEngine() {
+        viewModelScope.launch {
+            try {
+                val engine = container.embeddingEngine
+                engine.initialize(
+                    OnnxEmbeddingEngine.DEFAULT_MODEL_PATH,
+                    OnnxEmbeddingEngine.DEFAULT_VOCAB_PATH
+                )
+                logToFile("嵌入引擎初始化完成")
+            } catch (e: Exception) {
+                logToFile("嵌入引擎初始化失败: ${e.message}")
+            }
         }
     }
 
@@ -214,6 +248,14 @@ class ChatViewModel(
 
     private suspend fun refreshBaseSystemPrompt() {
         baseSystemPrompt = companionRuntime.refreshBasePrompt()
+    }
+
+    fun refreshSystemPromptOnResume() {
+        viewModelScope.launch {
+            refreshBaseSystemPrompt()
+            logToFile("系统提示已刷新（页面恢复），准备重建对话上下文")
+            rebuildConversationForPromptChange(reason = "页面恢复后刷新用户信息")
+        }
     }
 
     internal fun debugBaseSystemPrompt(): String = baseSystemPrompt
@@ -637,7 +679,7 @@ $conversationSummary"""
     private suspend fun buildMemoryContext(userInput: String): MemoryContext {
         return try {
             val confirmedPreferencePrompt = buildConfirmedPreferencePrompt()
-            val companionMemoryContext = companionRuntime.buildMemoryContext(userInput)
+            val companionMemoryContext = companionRuntime.buildMemoryContext(userInput, currentRoleCardId)
             val persistentPrompt = companionMemoryContext.persistentPrompt
             val memoryPrompt = companionMemoryContext.retrievedPrompt
             if (confirmedPreferencePrompt.isNotBlank()) {
@@ -679,7 +721,8 @@ $conversationSummary"""
             val sessionId = _uiState.value.currentSessionId.ifBlank { return }
             val insertedMemories = memoryRepository.extractAndStoreMemories(
                 userMessage = userMessage.content,
-                sessionId = sessionId
+                sessionId = sessionId,
+                roleCardId = currentRoleCardId
             )
             if (insertedMemories.isNotEmpty()) {
                 logToFile("规则兜底记忆写入成功: count=${insertedMemories.size}")
@@ -987,7 +1030,37 @@ $conversationSummary"""
         }
         roleCardRepository.activateRoleCard(roleId)
         val roleCard = roleCardRepository.getRoleCard(roleId)
+        val avatarUri = roleCard?.avatarImageUri.orEmpty()
         refreshBaseSystemPrompt()
+
+        // Check if this role already has a conversation
+        val existingSession = sessionRepository.getSessionByRoleCardId(roleId)
+        if (existingSession != null) {
+            _uiState.update {
+                it.copy(
+                    currentSessionId = existingSession.id,
+                    messages = existingSession.messages,
+                    assistantAvatarUri = avatarUri,
+                    showSessionDrawer = false,
+                    sessionSearchQuery = "",
+                    inputText = "",
+                    selectedImages = emptyList(),
+                    sessions = it.sessions.toMutableList().apply {
+                        // Move existing session to top if not already there
+                        val idx = indexOfFirst { s -> s.id == existingSession.id }
+                        if (idx > 0) {
+                            removeAt(idx)
+                            add(0, existingSession)
+                        } else if (idx < 0) {
+                            add(0, existingSession)
+                        }
+                    }
+                )
+            }
+            rebuildConversationForPromptChange(reason = "切换到已有角色对话")
+            loadAvailableRoles()
+            return
+        }
 
         val openingMessage = roleCard?.openingMessage
             ?.trim()
@@ -996,6 +1069,7 @@ $conversationSummary"""
         val now = System.currentTimeMillis()
         val newSession = ConversationSession(
             title = roleCard?.name?.takeIf { it.isNotBlank() } ?: DEFAULT_SESSION_TITLE,
+            roleCardId = roleId,
             messages = listOf(
                 ChatMessage(
                     role = MessageRole.ASSISTANT,
@@ -1011,6 +1085,7 @@ $conversationSummary"""
                 sessions = listOf(newSession) + it.sessions,
                 currentSessionId = newSession.id,
                 messages = newSession.messages,
+                assistantAvatarUri = avatarUri,
                 showSessionDrawer = false,
                 sessionSearchQuery = "",
                 inputText = "",
@@ -1124,10 +1199,18 @@ $conversationSummary"""
         )
         saveCurrentSession()
         val session = state.sessions.find { it.id == sessionId } ?: return
+        val avatarUri = if (session.roleCardId != null) {
+            viewModelScope.launch {
+                val roleCard = roleCardRepository.getRoleCard(session.roleCardId)
+                _uiState.update { it.copy(assistantAvatarUri = roleCard?.avatarImageUri.orEmpty()) }
+            }
+            "" // Will be updated asynchronously
+        } else ""
         _uiState.update {
             it.copy(
                 currentSessionId = sessionId,
                 messages = session.messages,
+                assistantAvatarUri = avatarUri,
                 showSessionDrawer = false,
                 sessionSearchQuery = "",
                 inputText = "",
@@ -1194,11 +1277,15 @@ $conversationSummary"""
                 val sessions = sessionRepository.getAllSessions()
                 val existing = sessions.firstOrNull()
                 if (existing != null) {
+                    val avatarUri = if (existing.roleCardId != null) {
+                        roleCardRepository.getRoleCard(existing.roleCardId)?.avatarImageUri.orEmpty()
+                    } else ""
                     _uiState.update {
                         it.copy(
                             sessions = sessions,
                             messages = existing.messages,
-                            currentSessionId = existing.id
+                            currentSessionId = existing.id,
+                            assistantAvatarUri = avatarUri
                         )
                     }
                 } else {
@@ -1206,7 +1293,8 @@ $conversationSummary"""
                         it.copy(
                             sessions = emptyList(),
                             currentSessionId = "",
-                            messages = emptyList()
+                            messages = emptyList(),
+                            assistantAvatarUri = ""
                         )
                     }
                 }
@@ -1216,7 +1304,8 @@ $conversationSummary"""
                     it.copy(
                         sessions = emptyList(),
                         currentSessionId = "",
-                        messages = emptyList()
+                        messages = emptyList(),
+                        assistantAvatarUri = ""
                     )
                 }
             }
@@ -1280,43 +1369,66 @@ $conversationSummary"""
         reason: String
     ) {
         contextSettings = contextConfigRepository.getSettings()
-        val rebuildResult = companionRuntime.rebuildConversationWithContext(
-            stableMessages = stableMessages,
-            baseSystemPrompt = baseSystemPrompt,
-            settings = contextSettings,
-            userPreferences = userPreferences,
-            persistentMemoryPrompt = persistentMemoryPrompt,
-            memoryPrompt = memoryPrompt,
-            forceRebuild = forceRebuild
-        )
-        if (!rebuildResult.rebuildAttempted) {
-            logToFile(
-                "发送前上下文检查: 未触发压缩, " +
-                    "messageCount=${stableMessages.size}, threshold=${contextSettings.compressionThreshold}, " +
-                    "contextInjected=false"
+        val shouldCompress = stableMessages.size > contextSettings.compressionThreshold
+
+        if (shouldCompress) {
+            _uiState.update {
+                it.copy(
+                    isCompressingContext = true,
+                    compressionMessage = "正在压缩上下文，请稍候..."
+                )
+            }
+        }
+
+        try {
+            val rebuildResult = companionRuntime.rebuildConversationWithContext(
+                stableMessages = stableMessages,
+                baseSystemPrompt = baseSystemPrompt,
+                settings = contextSettings,
+                userPreferences = userPreferences,
+                persistentMemoryPrompt = persistentMemoryPrompt,
+                memoryPrompt = memoryPrompt,
+                forceRebuild = forceRebuild
             )
-            return
-        }
 
-        logToFile(
-            "$reason: recentMessages=${rebuildResult.recentMessageCount}, " +
-                "summaryEmpty=${rebuildResult.historySummaryEmpty}, " +
-                "preferenceInjected=${rebuildResult.preferenceInjected}, " +
-                "persistentMemoryInjected=${rebuildResult.persistentMemoryInjected}, " +
-                "memoryInjected=${rebuildResult.memoryInjected}"
-        )
+            if (!rebuildResult.rebuildAttempted) {
+                logToFile(
+                    "发送前上下文检查: 未触发压缩, " +
+                        "messageCount=${stableMessages.size}, threshold=${contextSettings.compressionThreshold}, " +
+                        "contextInjected=false"
+                )
+                return
+            }
 
-        if (rebuildResult.rebuildSucceeded == false) {
-            logToFile("$reason: Conversation 重建失败")
-            return
-        }
+            logToFile(
+                "$reason: recentMessages=${rebuildResult.recentMessageCount}, " +
+                    "summaryEmpty=${rebuildResult.historySummaryEmpty}, " +
+                    "preferenceInjected=${rebuildResult.preferenceInjected}, " +
+                    "persistentMemoryInjected=${rebuildResult.persistentMemoryInjected}, " +
+                    "memoryInjected=${rebuildResult.memoryInjected}"
+            )
 
-        if (rebuildResult.replaySucceeded == true) {
-            logToFile("$reason: 最近消息回放成功")
-        } else if (rebuildResult.replaySucceeded == false && rebuildResult.fallbackSucceeded == true) {
-            logToFile("$reason: 最近消息回放失败，降级摘要注入成功")
-        } else if (rebuildResult.replaySucceeded == false) {
-            logToFile("$reason: 最近消息回放失败，降级摘要注入失败")
+            if (rebuildResult.rebuildSucceeded == false) {
+                logToFile("$reason: Conversation 重建失败")
+                return
+            }
+
+            if (rebuildResult.replaySucceeded == true) {
+                logToFile("$reason: 最近消息回放成功")
+            } else if (rebuildResult.replaySucceeded == false && rebuildResult.fallbackSucceeded == true) {
+                logToFile("$reason: 最近消息回放失败，降级摘要注入成功")
+            } else if (rebuildResult.replaySucceeded == false) {
+                logToFile("$reason: 最近消息回放失败，降级摘要注入失败")
+            }
+        } finally {
+            if (shouldCompress) {
+                _uiState.update {
+                    it.copy(
+                        isCompressingContext = false,
+                        compressionMessage = ""
+                    )
+                }
+            }
         }
     }
 

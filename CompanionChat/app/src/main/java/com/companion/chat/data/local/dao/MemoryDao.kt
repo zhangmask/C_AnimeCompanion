@@ -38,6 +38,12 @@ interface MemoryDao {
     @Query("SELECT * FROM memories WHERE layer = 'long_term' ORDER BY updatedAt DESC")
     suspend fun getPersistentMemories(): List<Memory>
 
+    @Query("SELECT * FROM memories WHERE (roleCardId = :roleCardId OR roleCardId IS NULL) AND layer = 'long_term' ORDER BY updatedAt DESC")
+    suspend fun getPersistentMemoriesForRole(roleCardId: Long): List<Memory>
+
+    @Query("SELECT * FROM memories WHERE roleCardId IS NULL AND layer = 'long_term' ORDER BY updatedAt DESC")
+    suspend fun getGlobalPersistentMemories(): List<Memory>
+
     @Query("SELECT * FROM memories WHERE category = :category ORDER BY updatedAt DESC")
     suspend fun getByCategory(category: String): List<Memory>
 
@@ -58,6 +64,9 @@ interface MemoryDao {
 
     @Query("UPDATE memories SET layer = 'long_term', updatedAt = :now WHERE id = :id")
     suspend fun promoteToLongTerm(id: Long, now: Long = System.currentTimeMillis()): Int
+
+    @Query("UPDATE memories SET roleCardId = NULL, updatedAt = :now WHERE id = :id")
+    suspend fun promoteToGlobal(id: Long, now: Long = System.currentTimeMillis()): Int
 
     @Query("DELETE FROM memories WHERE layer = 'short_term' AND expiresAt IS NOT NULL AND expiresAt < :now")
     suspend fun cleanupExpiredShortTerm(now: Long): Int

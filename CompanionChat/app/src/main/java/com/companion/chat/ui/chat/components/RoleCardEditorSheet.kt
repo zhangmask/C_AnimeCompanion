@@ -58,6 +58,8 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.platform.LocalContext
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import coil3.compose.AsyncImage
+import com.companion.chat.data.role.RoleAvatarStore
 import com.companion.chat.ui.theme.AvatarGradients
 import com.companion.chat.ui.theme.BrandOutline
 import com.companion.chat.ui.theme.BrandOutlineLight
@@ -131,6 +133,18 @@ fun RoleCardEditorSheet(
             )
         )
     }
+    val avatarStore = remember(sheetContext) { RoleAvatarStore(sheetContext) }
+    val avatarPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        if (uri != null) {
+            val persisted = avatarStore.persistUri(uri)
+            if (persisted != null) {
+                avatarImageUri = persisted
+            }
+        }
+    }
+
     val sheetFilePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
@@ -297,7 +311,16 @@ fun RoleCardEditorSheet(
                                             .background(AvatarGradients[0]),
                                         contentAlignment = Alignment.Center
                                     ) {
-                                        if (name.isNotBlank()) {
+                                        if (avatarImageUri.isNotBlank()) {
+                                            AsyncImage(
+                                                model = avatarImageUri,
+                                                contentDescription = "头像",
+                                                modifier = Modifier
+                                                    .fillMaxSize()
+                                                    .clip(RoundedCornerShape(16.dp)),
+                                                contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                                            )
+                                        } else if (name.isNotBlank()) {
                                             Text(
                                                 text = name.first().toString(),
                                                 fontSize = 22.sp,
@@ -378,41 +401,81 @@ fun RoleCardEditorSheet(
 
                             2 -> {
                                 // ── 图片 Tab ──
-                                FormField(
-                                    label = "头像图片 URI",
-                                    value = avatarImageUri,
-                                    onValueChange = { avatarImageUri = it },
-                                    placeholder = "content://media/... 或 https://..."
+                                Text(
+                                    text = "头像图片",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Color(0xFF49454F),
+                                    modifier = Modifier.padding(start = 2.dp)
                                 )
 
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(100.dp)
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .border(
-                                            width = 1.5.dp,
-                                            color = BrandOutlineVariant,
-                                            shape = RoundedCornerShape(12.dp)
-                                        )
-                                        .clickable { /* TODO: pick image */ },
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Column(
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                                if (avatarImageUri.isNotBlank()) {
+                                    // Show selected avatar with remove option
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(160.dp)
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .background(Color(0xFFF7F5FA)),
+                                        contentAlignment = Alignment.Center
                                     ) {
-                                        Icon(
-                                            Icons.Default.Add,
-                                            null,
-                                            tint = BrandPrimary,
-                                            modifier = Modifier.size(28.dp)
+                                        AsyncImage(
+                                            model = avatarImageUri,
+                                            contentDescription = "头像预览",
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .clip(RoundedCornerShape(12.dp)),
+                                            contentScale = androidx.compose.ui.layout.ContentScale.Crop
                                         )
-                                        Text(
-                                            text = "选择头像图片",
-                                            fontSize = 13.sp,
-                                            color = BrandPrimary
-                                        )
+                                        // Remove button
+                                        Box(
+                                            modifier = Modifier
+                                                .align(Alignment.TopEnd)
+                                                .padding(8.dp)
+                                                .size(28.dp)
+                                                .clip(CircleShape)
+                                                .background(Color(0x88000000))
+                                                .clickable { avatarImageUri = "" },
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                Icons.Default.Close,
+                                                "移除头像",
+                                                tint = Color.White,
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                        }
+                                    }
+                                } else {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(100.dp)
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .border(
+                                                width = 1.5.dp,
+                                                color = BrandOutlineVariant,
+                                                shape = RoundedCornerShape(12.dp)
+                                            )
+                                            .clickable { avatarPickerLauncher.launch("image/*") },
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                                        ) {
+                                            Icon(
+                                                Icons.Default.Add,
+                                                null,
+                                                tint = BrandPrimary,
+                                                modifier = Modifier.size(28.dp)
+                                            )
+                                            Text(
+                                                text = "选择头像图片",
+                                                fontSize = 13.sp,
+                                                color = BrandPrimary
+                                            )
+                                        }
                                     }
                                 }
 

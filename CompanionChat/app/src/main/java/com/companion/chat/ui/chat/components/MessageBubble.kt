@@ -50,7 +50,9 @@ import java.util.Locale
 @Composable
 fun MessageBubble(
     message: ChatMessage,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    assistantAvatarUri: String? = null,
+    userAvatarUri: String? = null
 ) {
     val isUser = message.role == MessageRole.USER
     var showFullScreenImage by remember { mutableStateOf<android.net.Uri?>(null) }
@@ -63,7 +65,7 @@ fun MessageBubble(
         verticalAlignment = Alignment.Top
     ) {
         if (!isUser) {
-            AvatarIcon(isUser = false)
+            AvatarIcon(isUser = false, avatarUri = assistantAvatarUri)
             Column(
                 modifier = Modifier
                     .padding(start = 8.dp)
@@ -91,7 +93,7 @@ fun MessageBubble(
                     onImageClick = { showFullScreenImage = it }
                 )
             }
-            AvatarIcon(isUser = true)
+            AvatarIcon(isUser = true, avatarUri = userAvatarUri)
         }
     }
 
@@ -116,7 +118,7 @@ fun MessageBubble(
 }
 
 @Composable
-private fun AvatarIcon(isUser: Boolean) {
+private fun AvatarIcon(isUser: Boolean, avatarUri: String? = null) {
     Box(
         modifier = Modifier
             .size(30.dp)
@@ -127,16 +129,27 @@ private fun AvatarIcon(isUser: Boolean) {
             ),
         contentAlignment = Alignment.Center
     ) {
-        Icon(
-            imageVector = if (isUser) Icons.Default.Person else Icons.Default.SmartToy,
-            contentDescription = if (isUser) "用户" else "AI",
-            tint = if (isUser) {
-                MaterialTheme.colorScheme.onPrimaryContainer
-            } else {
-                MaterialTheme.colorScheme.onSurfaceVariant
-            },
-            modifier = Modifier.size(17.dp)
-        )
+        if (!avatarUri.isNullOrBlank()) {
+            AsyncImage(
+                model = avatarUri,
+                contentDescription = if (isUser) "用户头像" else "AI头像",
+                modifier = Modifier
+                    .size(30.dp)
+                    .clip(CircleShape),
+                contentScale = ContentScale.Crop
+            )
+        } else {
+            Icon(
+                imageVector = if (isUser) Icons.Default.Person else Icons.Default.SmartToy,
+                contentDescription = if (isUser) "用户" else "AI",
+                tint = if (isUser) {
+                    MaterialTheme.colorScheme.onPrimaryContainer
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
+                modifier = Modifier.size(17.dp)
+            )
+        }
     }
 }
 

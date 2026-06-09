@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.foundation.background
@@ -47,13 +48,16 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.runtime.mutableStateOf
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import coil3.compose.AsyncImage
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -62,6 +66,7 @@ import androidx.compose.foundation.border
 import androidx.compose.ui.text.font.FontWeight
 import com.companion.chat.CompanionChatApplication
 import com.companion.chat.data.context.ContextConfigRepository
+import com.companion.chat.data.profile.UserAvatarStore
 import com.companion.chat.ui.theme.BrandPrimary
 import com.companion.chat.ui.theme.BrandPrimaryContainer
 import com.companion.chat.ui.theme.BrandSecondaryContainer
@@ -128,6 +133,12 @@ fun SettingsScreen(
                 age = userProfile.age,
                 rawBio = userProfile.bio,
                 interestTags = userProfile.interestTags,
+                avatarUri = userProfile.avatarUri,
+                onAvatarUriChange = { newUri ->
+                    appContainer.userProfileRepository.updateProfile(
+                        userProfile.copy(avatarUri = newUri)
+                    )
+                },
                 onEditClick = onNavigateToProfile
             )
 
@@ -396,8 +407,23 @@ private fun ProfileCard(
     age: String,
     rawBio: String,
     interestTags: String,
+    avatarUri: String = "",
+    onAvatarUriChange: (String) -> Unit = {},
     onEditClick: () -> Unit
 ) {
+    val context = LocalContext.current
+    val avatarStore = remember(context) { UserAvatarStore(context) }
+    val avatarPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        if (uri != null) {
+            val persisted = avatarStore.persistUri(uri)
+            if (persisted != null) {
+                onAvatarUriChange(persisted)
+            }
+        }
+    }
+
     Surface(
         modifier = Modifier
             .fillMaxWidth()
@@ -425,12 +451,23 @@ private fun ProfileCard(
                             .border(3.dp, Color.White, CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = nickname.firstOrNull()?.toString() ?: "U",
-                            fontSize = 26.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = BrandPrimary
-                        )
+                        if (avatarUri.isNotBlank()) {
+                            AsyncImage(
+                                model = avatarUri,
+                                contentDescription = "用户头像",
+                                modifier = Modifier
+                                    .size(64.dp)
+                                    .clip(CircleShape),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            Text(
+                                text = nickname.firstOrNull()?.toString() ?: "U",
+                                fontSize = 26.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = BrandPrimary
+                            )
+                        }
                     }
                     // Camera badge
                     Box(
@@ -438,7 +475,8 @@ private fun ProfileCard(
                             .align(Alignment.BottomEnd)
                             .size(22.dp)
                             .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primary),
+                            .background(MaterialTheme.colorScheme.primary)
+                            .clickable { avatarPickerLauncher.launch("image/*") },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -525,53 +563,8 @@ private fun ProfileCard(
                     )
                 }
             }
-
-            // Profile fields
-            Spacer(modifier = Modifier.height(8.dp))
-            ProfileFieldRow(label = "昵称", value = nickname)
-            HorizontalDivider(modifier = Modifier.padding(vertical = 2.dp))
-            ProfileFieldRow(label = "性别", value = gender)
-            HorizontalDivider(modifier = Modifier.padding(vertical = 2.dp))
-            ProfileFieldRow(label = "年龄", value = age)
-            HorizontalDivider(modifier = Modifier.padding(vertical = 2.dp))
-            ProfileFieldRow(label = "个性签名", value = rawBio)
-            HorizontalDivider(modifier = Modifier.padding(vertical = 2.dp))
-            ProfileFieldRow(label = "兴趣标签", value = interestTags.ifBlank { "动漫、科技、旅行" })
         }
     }
 }
 
-@Composable
-private fun ProfileFieldRow(label: String, value: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { }
-            .padding(vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.width(72.dp)
-        )
-        Text(
-            text = value.ifBlank { "未设置" },
-            style = MaterialTheme.typography.bodySmall,
-            color = if (value.isBlank()) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                   else MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.weight(1f),
-            textAlign = TextAlign.End,
-            maxLines = 1
-        )
-        Icon(
-            imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
-            contentDescription = null,
-            modifier = Modifier
-                .size(14.dp)
-                .padding(start = 4.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
-        )
-    }
-}
+

@@ -11,7 +11,10 @@ data class UserProfile(
     val gender: String = "",
     val age: String = "",
     val bio: String = "",
-    val interestTags: String = ""
+    val interestTags: String = "",
+    val avatarUri: String = "",
+    val introduction: String = "",
+    val importantInfo: String = ""
 )
 
 class UserProfileRepository(
@@ -34,7 +37,10 @@ class UserProfileRepository(
             gender = sharedPreferences.getString(KEY_GENDER, "") ?: "",
             age = sharedPreferences.getString(KEY_AGE, "") ?: "",
             bio = sharedPreferences.getString(KEY_BIO, "") ?: "",
-            interestTags = sharedPreferences.getString(KEY_INTEREST_TAGS, "") ?: ""
+            interestTags = sharedPreferences.getString(KEY_INTEREST_TAGS, "") ?: "",
+            avatarUri = sharedPreferences.getString(KEY_AVATAR_URI, "") ?: "",
+            introduction = sharedPreferences.getString(KEY_INTRODUCTION, "") ?: "",
+            importantInfo = sharedPreferences.getString(KEY_IMPORTANT_INFO, "") ?: ""
         )
     }
 
@@ -45,6 +51,9 @@ class UserProfileRepository(
             .putString(KEY_AGE, profile.age)
             .putString(KEY_BIO, profile.bio)
             .putString(KEY_INTEREST_TAGS, profile.interestTags)
+            .putString(KEY_AVATAR_URI, profile.avatarUri)
+            .putString(KEY_INTRODUCTION, profile.introduction)
+            .putString(KEY_IMPORTANT_INFO, profile.importantInfo)
             .apply()
         _profileFlow.value = profile
     }
@@ -76,5 +85,8 @@ class UserProfileRepository(
         private const val KEY_AGE = "age"
         private const val KEY_BIO = "bio"
         private const val KEY_INTEREST_TAGS = "interest_tags"
+        private const val KEY_AVATAR_URI = "avatar_uri"
+        private const val KEY_INTRODUCTION = "introduction"
+        private const val KEY_IMPORTANT_INFO = "important_info"
     }
 }
