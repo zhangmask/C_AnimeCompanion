@@ -1,384 +1,170 @@
 # Anime Companion
 
-> **Make AI more than something that answers you. Make it remember you, grow with you, and truly accompany you.**
+> 端侧关系型 AI 基础设施——让每个人都拥有一个真正认识自己、永远在身边、且绝对私密的 AI 伴侣
 
-![Android](https://img.shields.io/badge/Platform-Android%2028+-green)
-![Kotlin](https://img.shields.io/badge/Language-Kotlin-purple)
-![Jetpack Compose](https://img.shields.io/badge/UI-Jetpack%20Compose-blue)
-![License](https://img.shields.io/badge/License-Private-red)
+## 这是什么
 
-**Anime Companion** is a local, privacy-first, continuously evolving AI companion for Android. It is not another cloud-moderated chatbot. It is an attempt to build a real companion: one that remembers you, grows with you, and supports more expressive private interaction — all running on your own device.
+Anime Companion 是一款100%完全运行在你手机本地的AI伴侣应用。和所有需要上传对话到云端处理的AI产品不同，它的所有计算、推理、存储都在你自己的设备上完成——你的聊天记录、专属记忆、个人偏好、语音聊天、生图等永远只会算、存在你的手机里，不会用到或上传到任何外部服务器，彻底避免隐私泄露风险。
 
-This repository contains the complete Android application, including on-device LLM inference, voice interaction, memory systems, role cards, skill management, image generation, and a discover catalog.
+不同于市面上那些简单把大模型移植到本地、仅能实现基础对话的简陋应用，我们通过自研的双运行时推理调度、动态上下文压缩、分层记忆引擎、功耗控制等核心技术，把原本只有云端才能支撑的长期关系型AI能力，完整压缩优化到普通智能手机上，不仅能实现流畅的本地交互，更打造了一套可复用的端侧AI基础设施，让私人AI伴侣从小众玩家的玩具，变成每个人都能日常使用的通用工具。
 
-![screenshot](./screenshot.png)
+它不是市面上千篇一律的通用聊天机器人，而是真正能和你建立长期稳定关系的专属伴侣，会记住你的喜好和共同经历，越聊越懂你，能真正陪你一起成长，不会频繁失忆。未来我们的这套端侧关系型AI能力还会开放成为基础设施，让老年陪伴、儿童早教、心理健康、车载交互等所有需要长期私密陪伴的场景，都能快速接入这套成熟的本地AI能力，让专属AI伴侣走进更多人的日常生活。
 
----
+## 为什么要做这个产品
 
-## Why This Exists
+现在市场上的AI产品分为两类，都无法真正满足用户对长期陪伴的需求：
 
-Most AI products today break in the same places:
+### 市面AI的两大核心痛点
+现在主流的AI产品都无法满足长期陪伴的核心需求，分成两类问题：
+#### 云端AI的天生硬伤
+所有数据必须上传服务器，三个核心缺陷无解：
+- **隐私本质无保障**：对话、偏好、隐私全交第三方保管，不管厂商承诺如何，都有泄露、滥用的风险
+- **关系无法持续**：即使厂商保存了你的历史对话，数据也归平台所有，用户无法自由导出和跨应用迁移，换个服务就要重新建立所有记忆，关系永远绑定在单个平台上，无法真正陪你"越聊越懂你"走过不同的产品周期
+- **使用场景受限**：必须联网才能用，没信号就用不了，还受审查限制，无法形成专属于你的独特人格
 
-| Problem | How Anime Companion Addresses It |
-|---|---|
-| The model forgets who you are | Long-term memory with extraction, retrieval, and lifecycle management |
-| Personality resets between sessions | Role card system defines persistent companion identity |
-| Privacy-sensitive dialogue leaves the device | Fully local inference via LiteRT-LM or llama.cpp |
-| Interaction shaped by platform moderation | User-controlled boundaries, local model flexibility |
-| The assistant behaves like a tool | Companionship-first design with relationship growth |
+#### 本地应用的能力缺陷
+少数尝试本地运行的产品，也只是把大模型简单移植到手机，只能做基础对话，离真正的陪伴AI差距极大：
+- **无长期记忆能力**：只会堆叠对话历史，越聊越卡还容易失忆，存不下你的偏好、习惯和共同经历
+- **无功耗控制**：原始推理让设备发烫掉电快，根本没法日常用，只能是极客玩家的玩具
+- **无人格统一性**：所有用户用同一个模型，不支持专属设定，对话千篇一律，形成不了稳定一致的伴侣人格
 
-This project explores a new product category: a **private, edge-native, relationship-oriented AI companion**.
+### 我们的解决方案
+一个真正合格的陪伴AI，必须同时满足四个核心要求：永久保存你的重要信息、拥有稳定一致的人格、对话绝对私密、功耗可控随时随地可用。而我们通过自研的端侧AI基础设施，把原本只有云端才能支撑的关系型AI能力，完整压缩优化到普通智能手机上，第一次让这四个要求同时成为可能，让专属AI伴侣真正走进每个人的日常。
 
----
+## 核心特点
 
-## Core Features
+### 越聊越懂你
 
-### Dual Inference Backends
+系统把记忆分成短期和长期两层。短期记忆保持最近几轮对话的连贯性，长期记忆则提取你提到过的偏好、习惯、重要时刻，分门别类地保存下来。记忆的提取和整理在后台自动进行，不会打断你当前的对话。你反复提到的称呼、你们的纪念日、你在意的事情——这些都会被记住，并在之后的对话中自然地体现出来。
 
-- **LiteRT-LM**: Google's on-device inference framework, `.litertlm` format
-- **llama.cpp GGUF**: Native GGUF model support via JNI, CPU-only runtime
-- Switchable at runtime from the settings screen
+### 长对话不会越来越慢
 
-### Voice-First Interaction
+普通聊天应用把越来越长的历史一股脑塞给模型，越聊越卡。Anime Companion 使用动态上下文机制：最近的对话保持原样，更早的历史会被压缩重建，只保留当前真正需要的部分。
 
-- **Local ASR**: sherpa-onnx + SenseVoiceSmall int8, no Google dependency
-- **Silero VAD**: On-device voice activity detection for natural speech segmentation
-- **Voice Clone**: Local MOSS-TTS-Nano ONNX synthesis with system TTS fallback
-- **Cloud ASR**: Optional HTTP backend for environments where local ASR is insufficient
+### 完全离线，未经审查
 
-### Memory & Preference Learning
+使用 Gemma-4-E2B-Uncensored 作为核心模型，没有审查过滤。断网、坐地铁、在没有信号的地方——随时都能聊。其他asr、tts、生图模型等组件都在本地运行，不依赖云端服务。
 
-- Extracts memories from user messages (facts, preferences, events, relationships)
-- Short-term and long-term memory lifecycle with automatic promotion
-- FTS-based memory retrieval before each generation
-- Background preference extraction with confidence-based confirmation
-- Confirmed preferences injected into the system prompt
+### 自定义角色
 
-### Role Cards & Skills
+支持角色卡系统，每个角色有独立的人格设定、说话风格、记忆和与你的关系。还可以为不同角色克隆专属声音。
 
-- **Role Cards**: Define who the companion is — persona, speaking style, background, boundaries
-- **Skills**: Task-oriented behavior templates (built-in: Translator)
-- One active role card + one active skill can work together
-- Role cards include avatar images, galleries, image style prompts, voice mode, and voice references
+### 智能对话管理
 
-### Image Generation
+支持临时对话分支。当你需要在聊天中插入一个简短的问题（比如问路），系统会内部自动分出临时对话，不会打断主对话的上下文。问完之后自然回到原来的陪伴对话。
 
-- **HTTP Provider**: Connect to any compatible image generation API
-- **Local DreamLite**: Package checking and readiness validation
-- **Local SD1.5 Hyper-SD**: On-device generation via stable-diffusion.cpp
-- Role editor supports avatar images, galleries, and image style prompts
+### 语音对话
 
-### Discover Catalog
+使用 SenseVoice 进行本地语音识别，MOSS TTS 进行本地语音合成，还可以为不同角色克隆专属声音。整个语音链路都在手机上完成，不需要打字，直接说话就能交流。
+### 本地图片生成
 
-- Browse and import pre-seeded companion characters
-- Search by name, author, and tags
-- Filter by content rating, sort by hot/new/name
-- Favorite, unlock, inspect details, and import into your role library
+基于 Stable Diffusion 的本地推理，可以为你的 AI 伴侣生成专属形象，不需要联网。
 
-### Context Management
+### 手机适配与功耗管理
 
-- Automatic context compression for long conversations
-- Summary injection + recent message replay
-- Configurable context window size
+针对智能手机硬件做深度适配，多种策略平衡流畅度与续航。推理进程动态调节算力占用，记忆整理仅在后台闲置时启动，避免日常使用发烫掉电。
 
----
+## 核心技术创新
 
-## Tech Stack
+- **双运行时推理**：高端设备用 llama.cpp 追求吞吐，主流设备用 LiteRT-LM 优先流畅和散热
+- **功耗控制**：动态上下文压缩降低推理计算量，RepetitionGuard 提前停止无意义生成
+- **前后台分离**：前景只做响应用户，记忆写回和偏好学习在后台延迟进行，不与前台争资源
+- **分层记忆系统**：FTS4 全文检索 + 语义归一化 + 规则/LLM 双通道提取 + 引用次数自动提升
+- **角色感知语音**：RoleAwareVoiceOutputEngine 根据角色卡自动选择系统 TTS 或 MOSS 语音克隆
+- **四阶段偏好学习**：规则即时提取 → LLM 后台异步提取 → 置信度合并 → 已确认偏好注入对话
+- **模板 Token 净化**：TemplateTokenSanitizer 处理跨 token 边界的标记匹配，输出干净无模板标记
+- **任务打断隔离**：临时对话分支不打断主陪伴线索，完成后自动恢复原始上下文
+- **多模态支持**：llama.cpp mmproj 和 LiteRT Content.ImageBytes 双路径图片输入
+- **安卓深度适配**：推理绑定前台服务防杀，协程调度安全挂起，arm64-v8a Native 优化，触发器同步
 
-| Layer | Technology |
-|---|---|
-| Language | Kotlin |
-| UI | Jetpack Compose + Material 3 + Navigation Compose |
-| Database | Room + KSP |
-| Inference | LiteRT-LM Android, llama.cpp (JNI) |
-| ASR | sherpa-onnx + SenseVoiceSmall int8 + Silero VAD |
-| TTS | Android TextToSpeech, MOSS-TTS-Nano (ONNX) |
-| Image Gen | stable-diffusion.cpp (JNI), HTTP API |
-| Image Loading | Coil 3 |
-| Native Build | CMake + Ninja |
+## 性能优化
 
----
+### GPU 加速 (LiteRT-LM)
 
-## Project Structure
+在 `AndroidManifest.xml` 的 `<application>` 标签内添加：
 
-```text
-app/
-  src/main/
-    java/com/companion/chat/
-      companion/           # runtime orchestration, preference learning coordinator
-      data/
-        context/           # context window, prompt assembly, summary flow
-        discover/          # discover role seeds, favorites, unlock state
-        image/             # image generation config, provider routing, local engines
-        local/             # Room database, DAOs, entities (conversations, messages,
-                           #   memories, preferences, role_cards, skills)
-        memory/            # memory extraction, retrieval, lifecycle management
-        migration/         # JSON-to-Room data migration
-        model/             # chat message model
-        preferences/       # preference extraction, merge, prompt injection
-        repository/        # chat session persistence
-        role/              # role card repository and prompt builder
-        skill/             # skill repository
-        voice/             # ASR/TTS/voice clone config and fallback selection
-      engine/              # inference engines (LiteRT-LM, llama.cpp), voice engines,
-                           #   SherpaOnnx SenseVoice/VAD, MOSS TTS, audio utilities
-      ui/
-        chat/              # chat screen, ChatViewModel, message components
-        home/              # discover catalog, role details, favorites
-        memory/            # memory management UI
-        navigation/        # app navigation graph
-        settings/          # settings, role management, skills management, model config,
-                           #   voice settings, dark mode, language, about
-        theme/             # Material 3 color, typography, theme
-    cpp/
-      CMakeLists.txt       # native build for llama.cpp and stable-diffusion.cpp
-      llama_jni.cpp        # llama.cpp JNI bridge
-      stable_diffusion_jni.cpp  # stable-diffusion.cpp JNI bridge
-    res/                   # Android resources
-  libs/
-    sherpa-onnx-1.13.0.aar  # sherpa-onnx AAR (not committed, see .gitignore)
-
-third_party/
-  llama.cpp/               # llama.cpp (pinned commit, submodule)
-  stable-diffusion.cpp/    # stable-diffusion.cpp (submodule)
-  DreamLite/               # DreamLite image model (submodule)
-  MOSS-TTS-Nano-Reader/    # MOSS TTS reference code (submodule)
-  Vulkan-Headers/          # Vulkan headers (submodule)
-  SPIRV-Headers/           # SPIRV headers (submodule)
-
-docs/
-  plans/                   # design and implementation documents
-  agents/                  # development workflow docs
+```xml
+<uses-native-library android:name="libvndksupport.so" android:required="false" />
+<uses-native-library android:name="libOpenCL.so" android:required="false" />
+<uses-native-library android:name="libOpenCL-pixel.so" android:required="false" />
 ```
 
----
+**性能对比 (Gemma 4 E2B)：**
 
-## Getting Started
+| 后端 | 平均延迟 | 加速比 |
+|------|----------|--------|
+| CPU | ~16秒 | 1x |
+| GPU (OpenCL) | ~5秒 | 3x |
 
-### Prerequisites
+GPU 加速可在 设置 → 模型配置 中开关。
 
-| Requirement | Version |
-|---|---|
-| JDK | 17 |
-| Android SDK | compileSdk 35, minSdk 28 |
-| Gradle | 8.7 (wrapper included) |
-| ADB | Any recent version |
-| Ninja | On PATH (Android SDK CMake includes one) |
+### llama.cpp 优化
 
-### Build
+| 优化项 | 状态 | 说明 |
+|--------|------|------|
+| GPU 层 offload | 可配置 | `n_gpu_layers` |
+| Flash Attention | 已启用 | 减少内存使用 |
+| KV Cache 量化 | 已启用 | Q8_0 量化 |
+| KV Cache GPU Offload | 可配置 | `offload_kqv` |
 
-```bash
-# Clone with submodules
-git clone --recurse-submodules https://github.com/Yrd980/gemma_hackthon.git
-cd gemma_hackthon
+### 内置优化 (LiteRT-LM)
 
-# Place sherpa-onnx AAR
-# Download sherpa-onnx-1.13.0.aar from https://github.com/k2-fsa/sherpa-onnx/releases
-cp sherpa-onnx-1.13.0.aar app/libs/
+- **XNNPACK**：CPU 推理优化
+- **KV Cache 管理**：跨轮次复用注意力状态
+- **Prompt Caching**：复用预填充计算
+- **Zero-copy GPU**：最小化 CPU-GPU 数据传输
+- **Fused Kernels**：融合内核减少内存往返
 
-# Build debug APK
-./gradlew :app:assembleDebug
-```
+## 产品愿景：三个阶段
 
-On Windows:
+**第一阶段：App** — 手机上的 AI 伴侣，验证端侧推理、记忆系统、语音克隆在真实场景中的表现。今天 Anime Companion 已经在手机上完整运行。
 
-```powershell
-.\gradlew.bat :app:assembleDebug
-```
+**第二阶段：终端** — 手机是计算中心，智能头盔、耳机、眼镜是交互终端。同一个伴侣系统，不同的体验形态。骑行时耳边传来"前面那个路口左转，你上次说喜欢那家咖啡店"。
 
-### Install
+**第三阶段：基础设施** — 底层的关系引擎、记忆系统、角色运行时开放为基础设施。老年人陪伴、儿童早教、心理健康、语言学习、车载伴侣——每一个需要私密、便携、随身陪伴的场景都将是我们的一部分。我们不是在做一个 App，我们在定义端侧关系型 AI 的技术栈。
 
-```bash
-adb uninstall com.companion.chat 2>/dev/null
-adb push app/build/outputs/apk/debug/app-debug.apk /data/local/tmp/companionchat.apk
-adb shell pm install -r -t --user 0 /data/local/tmp/companionchat.apk
+## 商业逻辑
 
-# Launch once to create app directories
-adb shell am start -n com.companion.chat/.MainActivity
-```
+**C 端免费，B 端变现。** C 端用户免费使用全部功能，建立用户基础和社区。B 端客户为关系引擎 + 记忆系统 + 隐私架构的完整基础设施付费——老年护理、儿童教育、心理健康、智能硬件、车载系统等行业通过 SDK 授权接入。
 
-### Push Models
+创作者可以以 $6/月发布自己的角色卡片到社区，提前体验 Beta 版本，优质角色享受 7 折。
 
-The repository does **not** include model files. You need to prepare and push them manually.
+隐私是物理保证，不是政策承诺。功耗控制是移动端的核心壁垒。记忆系统的质量决定了陪伴的质量。这些是 B 端客户选择我们的根本原因。
 
-#### Text Model (LiteRT-LM)
+## 用了什么
 
-```bash
-adb push <path-to>/gemma-4-E2B-it.litertlm \
-  /sdcard/Android/data/com.companion.chat/files/models/gemma-4-E2B-it.litertlm
-```
+- **Gemma-4-E2B-Uncensored** — 核心对话模型，负责陪伴式生成和角色表达
+- **SenseVoice + Sherpa-ONNX** — 本地语音识别
+- **MOSS TTS Nano** — 本地语音合成与角色声音复刻
+- **Stable Diffusion** — 本地图像生成
+- **LiteRT-LM** — Google 端侧推理框架，优化手机性能和功耗
 
-#### Text Model (llama.cpp GGUF)
+## 致谢
 
-```bash
-adb push <path-to>/Gemma-4-E2B-Uncensored-HauhauCS-Aggressive-Q4_K_P.gguf \
-  /sdcard/Android/data/com.companion.chat/files/models/Gemma-4-E2B-Uncensored-HauhauCS-Aggressive-Q4_K_P.gguf
+感谢 [Gemma 4](https://ai.google.dev/gemma)、[llama.cpp](https://github.com/ggerganov/llama.cpp)、[LiteRT-LM](https://ai.google.dev/edge/litertlm)、[sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx)、[MOSS-TTS](https://github.com/OpenMOSS/MOSS-TTS)、[stable-diffusion.cpp](https://github.com/leejet/stable-diffusion.cpp) 等开源项目。
 
-# Optional: multimodal projector
-adb push <path-to>/mmproj-Gemma-4-E2B-Uncensored-HauhauCS-Aggressive-f16.gguf \
-  /sdcard/Android/data/com.companion.chat/files/models/mmproj-Gemma-4-E2B-Uncensored-HauhauCS-Aggressive-f16.gguf
-```
-
-#### Local ASR (SenseVoice + Silero VAD)
-
-```bash
-adb shell mkdir -p /sdcard/Android/data/com.companion.chat/files/models/asr/sensevoice
-
-adb push <path-to>/model.int8.onnx \
-  /sdcard/Android/data/com.companion.chat/files/models/asr/sensevoice/model.int8.onnx
-adb push <path-to>/tokens.txt \
-  /sdcard/Android/data/com.companion.chat/files/models/asr/sensevoice/tokens.txt
-adb push <path-to>/silero_vad.onnx \
-  /sdcard/Android/data/com.companion.chat/files/models/asr/sensevoice/silero_vad.onnx
-```
-
-#### Voice Clone (MOSS-TTS-Nano, optional)
-
-```bash
-adb push <path-to>/moss-tts-nano/ \
-  /sdcard/Android/data/com.companion.chat/files/models/tts/moss-tts-nano/
-```
-
-#### Local Image Generation (SD1.5 Hyper-SD, optional)
-
-```bash
-adb shell mkdir -p /sdcard/Android/data/com.companion.chat/files/models/image/sd15-hypersd
-adb push <path-to>/sd15-hypersd/ \
-  /sdcard/Android/data/com.companion.chat/files/models/image/sd15-hypersd/
-```
-
-### Verify
-
-After pushing models, restart the app and check logs:
-
-```bash
-adb shell run-as com.companion.chat cat files/viewmodel_log.txt
-```
-
-You should see:
-
-```
-文件存在 = true
-文件大小 = <correct size> bytes
-engine.initialize 返回, state = Ready
-```
+灵感来自 [OpenClaw](https://github.com/OpenClaw) 和 [Hermes](https://github.com/NanmiCoder/Hermes) 的角色管理和长期记忆设计。
 
 ---
 
-## Runtime Requirements
+## 文档目录
 
-### Minimum
+| 文档 | 说明 |
+|------|------|
+| [ARCHITECTURE.md](./REDEME/ARCHITECTURE.md) | 技术架构文档。涵盖系统总览、模块结构、28 个核心机制详解（推理引擎、记忆系统、偏好学习、上下文管理、TTS/ASR、角色卡等），每个机制配有 Mermaid 流程图。 |
+| [DEPLOYMENT.md](./REDEME/DEPLOYMENT.md) | 部署指南。环境配置、编译命令、ADB 安装、所有模型的推送步骤、常见问题排查。 |
+| [VISION.md](./REDEME/VISION.md) | 产品愿景。三个阶段（App → 终端 → 基础设施）、端侧推理哲学、功耗控制、记忆系统设计理念、市场上限。 |
+| [BUSINESS.md](./REDEME/BUSINESS.md) | 商业逻辑。ToB 基础设施授权模式、竞品格局、核心差异化、角色市场生态、行业应用场景。 |
+| [MODEL_CARD.md](./REDEME/MODEL_CARD.md) | 模型卡片。项目使用的各个模型详情、来源、许可证、文件大小。 |
+| [PRIVACY.md](./REDEME/PRIVACY.md) | 隐私声明。数据不出设备的物理保证、端侧推理架构、隐私保护机制。 |
 
-- Android 9+ (API 28)
-- ARM64 device
-- 4 GB RAM (for LiteRT-LM with small models)
-- Storage for model files (2-4 GB depending on model)
+## 队伍情况
+张择擅：负责安卓开发，模型推理，架构设计
+章游松林：负责安卓开发，模型优化，模型部署测试
+张振尧：负责硬件开发
+袁榞：负责前端设计
+韩月：负责前端优化和动效以及路演
 
-### Recommended
-
-- 6+ GB RAM for comfortable llama.cpp GGUF inference
-- Modern ARM64 SoC for acceptable generation speed
-- Local ASR model files on device for offline voice input
-
----
-
-## Current Status
-
-The project has completed implementation for:
-
-| Stage | Scope | Status |
-|---|---|---|
-| Stage 0-1 | Room foundation, session migration | Done |
-| Stage 2 | Context management, compression, replay | Done |
-| Stage 3 | Memory extraction, retrieval, lifecycle | Done |
-| Stage 4 | Preference learning, prompt injection | Done |
-| Stage 5 | Role card and skills separation | Done |
-| Stage 6 | Discover catalog, image generation, voice clone | Done |
-| Stage 7 | UI refresh, Material 3 chat input | Done |
-| Stage 8 | Chat hardening, role session isolation | Done |
-
----
-
-## Documentation
-
-| Document | Description |
-|---|---|
-| [README_CN.md](./README_CN.md) | Chinese README |
-| [PRODUCT.md](./PRODUCT.md) | Product positioning and design principles |
-| [DESIGN.md](./DESIGN.md) | UI/UX design guidelines |
-| [CONTEXT.md](./CONTEXT.md) | Domain language and concept relationships |
-| [docs/gguf-llama-runtime.md](./docs/gguf-llama-runtime.md) | llama.cpp GGUF runtime integration guide |
-| [docs/plans/](./docs/plans/) | Design and implementation documents |
-| [jindu.md](./jindu.md) | Development progress log |
-
----
-
-## Design Philosophy
-
-This project is not just "put an LLM into an app." It explores a larger direction:
-
-- **From cloud dependence to personal ownership** — your AI lives on your device
-- **From generic assistants to persistent characters** — role cards define who the companion is
-- **From stateless replies to relationship continuity** — memory and preference learning over time
-- **From moderated behavior to user-controlled interaction** — local models, local boundaries
-- **From phone-only to wearable companionship** — the hardware vision is a smart helmet
-
-The ceiling of this direction is much higher than a chat app:
-
-- A companion that becomes more familiar with you over time
-- An AI relationship that feels continuous rather than episodic
-- A wearable device that hosts private, expressive, emotionally persistent interaction
-- A new product category for edge-native companion intelligence
-
----
-
-## Business Potential
-
-Anime Companion sells not "an AI that answers questions" but a **long-term, private, immersive, increasingly personalized companionship experience**.
-
-Target users:
-
-- Anime and character-companion enthusiasts
-- Privacy-conscious personal AI users
-- People with strong companionship needs during solo time, commuting, or late-night use
-- Users who care about voice interaction, relationship growth, and personalized character dynamics
-- Early adopters willing to pay for a new kind of wearable AI experience
-
-Monetization layers:
-
-| Tier | Form |
-|---|---|
-| Software | Local AI companion app — validates engagement and retention |
-| Hardware | Smart helmet / wearable companion device — amplifies immersion and differentiation |
-| Premium | Role packs, curated skills, character settings, enhanced memory, advanced models |
-
----
-
-## Hardware Vision
-
-Anime Companion does not treat the phone as the final form. The phone is the local intelligence hub; the helmet is the immersive interaction layer.
-
-The hardware concept includes:
-
-- **Noise-reduction headphones** for immersive voice playback
-- **Closed microphone** for private speech capture in public spaces
-- **One-way glass AR** for character overlays and visual atmosphere
-- **Camera** for environment understanding and future multimodal interaction
-
-The goal is a premium, private, wearable companion product where AI is no longer just a screen-based chat box, but a persistent presence carried with the user.
-
----
-
-## License
-
-This repository is for hackathon and demonstration purposes. See repository terms for details.
-
----
-
-## Links
-
-- [gemma_hackthon on GitHub](https://github.com/Yrd980/gemma_hackthon)
-- [LiteRT-LM](https://github.com/google-ai-edge/LiteRT-LM)
-- [llama.cpp](https://github.com/ggml-org/llama.cpp)
-- [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx)
-- [stable-diffusion.cpp](https://github.com/leejet/stable-diffusion.cpp)
+## 演示视频
+"\vidioandimage\vidio\vidio_submit.mp4"
+或https://youtu.be/gspJs8E5dHY

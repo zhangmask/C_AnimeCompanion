@@ -13,9 +13,10 @@ internal object LlamaCppNative {
 
     external fun loadModel(
         modelPath: String,
-        mmprojPath: String,
+        mmprojPath: String?,
         contextSize: Int,
-        systemPrompt: String
+        systemPrompt: String,
+        useGpu: Boolean = false
     ): Long
 
     external fun generate(

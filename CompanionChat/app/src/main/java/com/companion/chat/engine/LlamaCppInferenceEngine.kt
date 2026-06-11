@@ -152,7 +152,8 @@ class LlamaCppInferenceEngine(private val context: Context) : InferenceEngine {
                 resolvedConfig.modelPath,
                 resolvedConfig.mmprojPath,
                 resolvedConfig.contextSize,
-                resolvedConfig.systemPrompt
+                resolvedConfig.systemPrompt,
+                resolvedConfig.useGpu
             )
             currentConfig = resolvedConfig
             _state.value = InferenceState.Ready

@@ -77,6 +77,15 @@ import com.companion.chat.ui.theme.IconGradientGreen
 import com.companion.chat.ui.theme.IconGradientPink
 import com.companion.chat.ui.theme.IconGradientPurple
 
+/**
+ * ModelConfigScreen 的跳转目标
+ */
+enum class ModelConfigScrollTarget {
+    DEFAULT,
+    CONTEXT_WINDOW,
+    IMAGE_GENERATION
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
@@ -84,7 +93,7 @@ fun SettingsScreen(
     onNavigateToCharacter: () -> Unit = {},
     onNavigateToSkills: () -> Unit = {},
     onNavigateToMemory: () -> Unit = {},
-    onNavigateToModel: () -> Unit = {},
+    onNavigateToModel: (ModelConfigScrollTarget) -> Unit = { _ -> },
     onNavigateToVoice: () -> Unit = {},
     onNavigateToLanguage: () -> Unit = {},
     onNavigateToDarkMode: () -> Unit = {},
@@ -191,7 +200,7 @@ fun SettingsScreen(
                     icon = Icons.Default.Memory,
                     title = "模型配置",
                     subtitle = "选择模型、GPU/CPU 后端",
-                    onClick = onNavigateToModel,
+                    onClick = { onNavigateToModel(ModelConfigScrollTarget.DEFAULT) },
                     iconBrush = IconGradientGold
                 )
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
@@ -199,7 +208,7 @@ fun SettingsScreen(
                     icon = Icons.Default.Memory,
                     title = "上下文窗口大小",
                     subtitle = "当前保留最近 $retainedRounds 轮对话",
-                    onClick = onNavigateToModel,
+                    onClick = { onNavigateToModel(ModelConfigScrollTarget.CONTEXT_WINDOW) },
                     iconBrush = IconGradientGold
                 )
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
@@ -207,7 +216,7 @@ fun SettingsScreen(
                     icon = Icons.Default.Photo,
                     title = "图片生成",
                     subtitle = "配置联网图片生成 HTTP 接口",
-                    onClick = onNavigateToModel,
+                    onClick = { onNavigateToModel(ModelConfigScrollTarget.IMAGE_GENERATION) },
                     iconBrush = IconGradientGold
                 )
             }

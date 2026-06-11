@@ -30,15 +30,19 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.companion.chat.data.engine.BackendType
 import com.companion.chat.data.engine.ModelRuntime
 import com.companion.chat.data.image.ImageGenerationConfig
 import com.companion.chat.data.image.ImageGenerationProvider
@@ -52,6 +56,7 @@ import com.companion.chat.ui.theme.BrandSurfaceContainer
 @Composable
 fun ModelConfigScreen(
     modifier: Modifier = Modifier,
+    scrollTarget: ModelConfigScrollTarget = ModelConfigScrollTarget.DEFAULT,
     onBack: () -> Unit = {},
     onModelConfigChanged: () -> Unit = {},
     viewModel: ModelConfigViewModel = viewModel()
@@ -88,12 +93,34 @@ fun ModelConfigScreen(
             )
         }
     ) { paddingValues ->
+        val scrollState = rememberScrollState()
+        val coroutineScope = rememberCoroutineScope()
+
+        // 根据 scrollTarget 滚动到对应位置
+        LaunchedEffect(scrollTarget) {
+            if (scrollTarget != ModelConfigScrollTarget.DEFAULT) {
+                // 延迟一下等待布局完成
+                kotlinx.coroutines.delay(300)
+                when (scrollTarget) {
+                    ModelConfigScrollTarget.CONTEXT_WINDOW -> {
+                        // 滚动到上下文窗口区域（大约在页面中部）
+                        scrollState.animateScrollTo(scrollState.maxValue / 3)
+                    }
+                    ModelConfigScrollTarget.IMAGE_GENERATION -> {
+                        // 滚动到图片生成区域（大约在页面后部）
+                        scrollState.animateScrollTo(scrollState.maxValue * 2 / 3)
+                    }
+                    else -> {}
+                }
+            }
+        }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
                 .background(BrandSurfaceContainer)
-                .verticalScroll(rememberScrollState()),
+                .verticalScroll(scrollState),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Column(
@@ -163,6 +190,37 @@ fun ModelConfigScreen(
                         onModelConfigChanged()
                     }
                 )
+
+                // GPU 加速开关（仅 LiteRT 后端有效）
+                if (modelConfig.runtime == ModelRuntime.LITERT_LM) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "GPU 加速",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "使用 GPU 加速推理（LiteRT 后端）",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Switch(
+                            checked = modelConfig.backend == BackendType.GPU,
+                            onCheckedChange = { useGpu ->
+                                viewModel.setBackend(if (useGpu) BackendType.GPU else BackendType.CPU)
+                                onModelConfigChanged()
+                            }
+                        )
+                    }
+                }
+
                 ModelConfigField("模型路径", modelConfig.modelPath) {
                     viewModel.updateModelPath(it)
                 }

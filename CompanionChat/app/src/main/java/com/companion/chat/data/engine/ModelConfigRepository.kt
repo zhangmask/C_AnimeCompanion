@@ -11,7 +11,8 @@ data class ModelConfig(
     val maxTokens: Int = DefaultModelConfig.DefaultMaxTokens,
     val temperature: Float = DefaultModelConfig.DefaultTemperature,
     val topK: Int = DefaultModelConfig.DefaultTopK,
-    val topP: Float = DefaultModelConfig.DefaultTopP
+    val topP: Float = DefaultModelConfig.DefaultTopP,
+    val useGpu: Boolean = false
 )
 
 class ModelConfigRepository(
@@ -39,7 +40,8 @@ class ModelConfigRepository(
             maxTokens = sharedPreferences.getInt(KEY_MAX_TOKENS, DefaultModelConfig.DefaultMaxTokens),
             temperature = sharedPreferences.getFloat(KEY_TEMPERATURE, DefaultModelConfig.DefaultTemperature),
             topK = sharedPreferences.getInt(KEY_TOP_K, DefaultModelConfig.DefaultTopK),
-            topP = sharedPreferences.getFloat(KEY_TOP_P, DefaultModelConfig.DefaultTopP)
+            topP = sharedPreferences.getFloat(KEY_TOP_P, DefaultModelConfig.DefaultTopP),
+            useGpu = sharedPreferences.getBoolean(KEY_USE_GPU, false)
         ).normalized()
     }
 
@@ -54,6 +56,7 @@ class ModelConfigRepository(
             .putFloat(KEY_TEMPERATURE, normalized.temperature)
             .putInt(KEY_TOP_K, normalized.topK)
             .putFloat(KEY_TOP_P, normalized.topP)
+            .putBoolean(KEY_USE_GPU, normalized.useGpu)
             .apply()
     }
 
@@ -97,7 +100,8 @@ class ModelConfigRepository(
             temperature = normalized.temperature,
             topK = normalized.topK,
             topP = normalized.topP,
-            systemPrompt = systemPrompt
+            systemPrompt = systemPrompt,
+            useGpu = normalized.useGpu
         )
     }
 
@@ -122,5 +126,6 @@ class ModelConfigRepository(
         private const val KEY_TEMPERATURE = "temperature"
         private const val KEY_TOP_K = "top_k"
         private const val KEY_TOP_P = "top_p"
+        private const val KEY_USE_GPU = "use_gpu"
     }
 }

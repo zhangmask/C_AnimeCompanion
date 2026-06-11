@@ -53,6 +53,7 @@ import com.companion.chat.ui.settings.CharacterManagementScreen
 import com.companion.chat.ui.settings.DarkModeSettingsScreen
 import com.companion.chat.ui.settings.LanguageSettingsScreen
 import com.companion.chat.ui.settings.ModelConfigScreen
+import com.companion.chat.ui.settings.ModelConfigScrollTarget
 import com.companion.chat.ui.settings.SettingsScreen
 import com.companion.chat.ui.settings.SkillsManagementScreen
 import com.companion.chat.ui.settings.UserProfileScreen
@@ -223,7 +224,9 @@ fun MainApp() {
                     onNavigateToCharacter = { navController.navigate(SettingsRoutes.CHARACTER) },
                     onNavigateToSkills = { navController.navigate(SettingsRoutes.SKILLS) },
                     onNavigateToMemory = { navController.navigate(Screen.MEMORY.route) },
-                    onNavigateToModel = { navController.navigate(SettingsRoutes.MODEL) },
+                    onNavigateToModel = { target ->
+                        navController.navigate(SettingsRoutes.modelWithTarget(target.name))
+                    },
                     onNavigateToVoice = { navController.navigate(SettingsRoutes.VOICE) },
                     onNavigateToLanguage = { navController.navigate(SettingsRoutes.LANGUAGE) },
                     onNavigateToDarkMode = { navController.navigate(SettingsRoutes.DARK_MODE) },
@@ -281,8 +284,23 @@ fun MainApp() {
                     skillsManagementViewModel = viewModel(factory = viewModelFactory)
                 )
             }
-            composable(SettingsRoutes.MODEL) {
+            composable(
+                SettingsRoutes.MODEL_WITH_TARGET,
+                arguments = listOf(
+                    navArgument("scrollTarget") {
+                        type = NavType.StringType
+                        defaultValue = "DEFAULT"
+                    }
+                )
+            ) { backStackEntry ->
+                val scrollTargetName = backStackEntry.arguments?.getString("scrollTarget") ?: "DEFAULT"
+                val scrollTarget = try {
+                    ModelConfigScrollTarget.valueOf(scrollTargetName)
+                } catch (e: Exception) {
+                    ModelConfigScrollTarget.DEFAULT
+                }
                 ModelConfigScreen(
+                    scrollTarget = scrollTarget,
                     onBack = { navController.popBackStack() },
                     onModelConfigChanged = { chatViewModel.initializeEngine() },
                     viewModel = viewModel(factory = viewModelFactory)

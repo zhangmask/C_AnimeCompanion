@@ -2,6 +2,7 @@
 
 #include <android/log.h>
 #include <llama.h>
+#include <ggml.h>
 #include <mtmd.h>
 #include <mtmd-helper.h>
 
@@ -405,7 +406,8 @@ Java_com_companion_chat_engine_LlamaCppNative_loadModel(
     jstring model_path,
     jstring mmproj_path,
     jint context_size,
-    jstring system_prompt
+    jstring system_prompt,
+    jboolean use_gpu
 ) {
     try {
         std::call_once(g_backend_once, [] {
@@ -418,7 +420,9 @@ Java_com_companion_chat_engine_LlamaCppNative_loadModel(
         runtime->system_prompt = to_string(env, system_prompt);
 
         llama_model_params model_params = llama_model_default_params();
-        model_params.n_gpu_layers = 0;
+        // GPU 加速：根据参数决定是否启用
+        model_params.n_gpu_layers = use_gpu ? 99 : 0;
+        log_info(std::string("GPU 加速: ") + (use_gpu ? "启用" : "禁用"));
 
         runtime->model = llama_model_load_from_file(path.c_str(), model_params);
         if (runtime->model == nullptr) {
@@ -434,7 +438,13 @@ Java_com_companion_chat_engine_LlamaCppNative_loadModel(
         context_params.abort_callback = abort_callback;
         context_params.abort_callback_data = runtime.get();
         context_params.embeddings = false;
-        context_params.offload_kqv = false;
+        // KV 缓存 GPU Offload
+        context_params.offload_kqv = use_gpu;
+        // Flash Attention
+        context_params.flash_attn_type = LLAMA_FLASH_ATTN_TYPE_ENABLED;
+        // KV 缓存量化：使用 Q8_0 量化减少内存使用
+        context_params.type_k = GGML_TYPE_Q8_0;
+        context_params.type_v = GGML_TYPE_Q8_0;
 
         runtime->ctx = llama_init_from_model(runtime->model, context_params);
         if (runtime->ctx == nullptr) {

@@ -54,6 +54,7 @@ object SettingsRoutes {
     const val EDIT_CHARACTER = "settings/character/{roleId}"
     const val SKILLS = "settings/skills"
     const val MODEL = "settings/model"
+    const val MODEL_WITH_TARGET = "settings/model?scrollTarget={scrollTarget}"
     const val VOICE = "settings/voice"
     const val LANGUAGE = "settings/language"
     const val DARK_MODE = "settings/dark_mode"
@@ -61,4 +62,5 @@ object SettingsRoutes {
     const val PROFILE = "settings/profile"
 
     fun editCharacter(roleId: Long): String = "settings/character/$roleId"
+    fun modelWithTarget(scrollTarget: String): String = "settings/model?scrollTarget=$scrollTarget"
 }

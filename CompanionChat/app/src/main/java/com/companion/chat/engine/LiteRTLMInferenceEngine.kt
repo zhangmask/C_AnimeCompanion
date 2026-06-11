@@ -18,6 +18,8 @@ import com.google.ai.edge.litertlm.Conversation
 import com.google.ai.edge.litertlm.ConversationConfig
 import com.google.ai.edge.litertlm.Contents
 import com.google.ai.edge.litertlm.Engine
+import com.google.ai.edge.litertlm.ExperimentalApi
+import com.google.ai.edge.litertlm.ExperimentalFlags
 import com.google.ai.edge.litertlm.Message
 import com.google.ai.edge.litertlm.SamplerConfig
 import com.google.ai.edge.litertlm.EngineConfig as LiteRTConfig
@@ -278,53 +280,83 @@ class LiteRTLMInferenceEngine(private val context: Context) : InferenceEngine {
                 return@withContext
             }
 
-            val backend = when (config.backend) {
-                BackendType.GPU -> {
-                    logToFile("使用 GPU 后端")
-                    Backend.GPU()
-                }
-                else -> {
-                    logToFile("使用 CPU 后端")
-                    Backend.CPU()
+            // 尝试使用请求的后端，如果失败则回退到 CPU
+            val backendsToTry = if (config.backend == BackendType.GPU) {
+                listOf(BackendType.GPU to "GPU", BackendType.CPU to "CPU")
+            } else {
+                listOf(BackendType.CPU to "CPU")
+            }
+
+            // MTP (Multi-Token Prediction) 当前模型测试后速度反而变慢，暂时禁用
+            // @OptIn(ExperimentalApi::class)
+            // ExperimentalFlags.enableSpeculativeDecoding = true
+            // logToFile("已启用 MTP (Multi-Token Prediction)")
+
+            var lastException: Exception? = null
+            for ((backendType, backendName) in backendsToTry) {
+                try {
+                    logToFile("尝试使用 $backendName 后端...")
+                    val backend = when (backendType) {
+                        BackendType.GPU -> Backend.GPU()
+                        else -> Backend.CPU()
+                    }
+
+                    logToFile("创建 EngineConfig...")
+                    val litertConfig = LiteRTConfig(
+                        modelPath = modelPath,
+                        backend = backend,
+                        visionBackend = Backend.CPU(),
+                        maxNumImages = 4,
+                        cacheDir = context.cacheDir.absolutePath
+                    )
+                    logToFile("EngineConfig 创建成功 (含 visionBackend=CPU, maxNumImages=4)")
+
+                    logToFile("创建 Engine...")
+                    val eng = Engine(litertConfig)
+                    logToFile("Engine 创建成功")
+
+                    logToFile("Engine.initialize() 开始...")
+                    eng.initialize()
+                    logToFile("Engine.initialize() 完成")
+
+                    val systemPrompt = config.systemPrompt.ifBlank {
+                        "你是一个友善的AI助手，请用中文回答用户的问题。"
+                    }
+                    logToFile("系统提示词: ${systemPrompt.take(50)}...")
+
+                    val convConfig = createConversationConfig(systemPrompt)
+                    logToFile("ConversationConfig 创建成功")
+
+                    logToFile("创建 Conversation...")
+                    val conv = eng.createConversation(convConfig)
+                    logToFile("Conversation 创建成功")
+
+                    engine = eng
+                    conversation = conv
+                    currentConfig = config
+                    _state.value = InferenceState.Ready
+
+                    if (backendType == BackendType.CPU && config.backend == BackendType.GPU) {
+                        logToFile("⚠️ GPU 初始化失败，已自动回退到 CPU 后端")
+                    } else {
+                        logToFile("=== 引擎初始化完成，使用 $backendName 后端，状态: Ready ===")
+                    }
+                    return@withContext
+                } catch (e: Exception) {
+                    lastException = e
+                    logToFile("$backendName 后端初始化失败: ${e.message}")
+                    if (backendType == BackendType.GPU) {
+                        logToFile("将尝试回退到 CPU 后端...")
+                    }
                 }
             }
 
-            logToFile("创建 EngineConfig...")
-            val litertConfig = LiteRTConfig(
-                modelPath = modelPath,
-                backend = backend,
-                visionBackend = Backend.CPU(),
-                maxNumImages = 4,
-                cacheDir = context.cacheDir.absolutePath
-            )
-            logToFile("EngineConfig 创建成功 (含 visionBackend=CPU, maxNumImages=4)")
-
-            logToFile("创建 Engine...")
-            val eng = Engine(litertConfig)
-            logToFile("Engine 创建成功")
-
-            logToFile("Engine.initialize() 开始...")
-            eng.initialize()
-            logToFile("Engine.initialize() 完成")
-
-            val systemPrompt = config.systemPrompt.ifBlank {
-                "你是一个友善的AI助手，请用中文回答用户的问题。"
-            }
-            logToFile("系统提示词: ${systemPrompt.take(50)}...")
-
-            val convConfig = createConversationConfig(systemPrompt)
-            logToFile("ConversationConfig 创建成功")
-
-            logToFile("创建 Conversation...")
-            val conv = eng.createConversation(convConfig)
-            logToFile("Conversation 创建成功")
-
-            engine = eng
-            conversation = conv
-            currentConfig = config
-            _state.value = InferenceState.Ready
-
-            logToFile("=== 引擎初始化完成，状态: Ready ===")
+            // 所有后端都失败
+            logToFile("!!! 所有后端初始化失败 !!!")
+            logToFile("异常类型: ${lastException?.javaClass?.simpleName}")
+            logToFile("异常信息: ${lastException?.message}")
+            logToFile("堆栈: ${lastException?.stackTraceToString()?.take(500)}")
+            _state.value = InferenceState.Error("模型初始化失败: ${lastException?.message}")
         } catch (e: Exception) {
             logToFile("!!! 引擎初始化失败 !!!")
             logToFile("异常类型: ${e.javaClass.simpleName}")

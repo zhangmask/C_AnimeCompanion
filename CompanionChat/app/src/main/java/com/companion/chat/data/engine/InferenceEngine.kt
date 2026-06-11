@@ -24,7 +24,8 @@ data class EngineConfig(
     val temperature: Float = 0.7f,
     val topK: Int = 40,
     val topP: Float = 0.95f,
-    val systemPrompt: String = ""
+    val systemPrompt: String = "",
+    val useGpu: Boolean = false
 )
 
 sealed class InferenceState {
