@@ -15,7 +15,7 @@ class RuleBasedSummaryGenerator : SummaryGenerator {
 
         val normalizedLines = messages.mapNotNull { message ->
             val content = message.content.trim()
-            if (content.isEmpty()) {
+            if (content.isEmpty() && message.images.isEmpty()) {
                 return@mapNotNull null
             }
 
@@ -26,7 +26,9 @@ class RuleBasedSummaryGenerator : SummaryGenerator {
             }
 
             val clippedContent = content.take(MAX_MESSAGE_CHARS)
-            "$roleLabel：$clippedContent"
+            // 图片只给索引提示，不包含实际内容
+            val imageHint = if (message.images.isNotEmpty()) " [${message.images.size}张图片]" else ""
+            "$roleLabel：$clippedContent$imageHint"
         }
 
         if (normalizedLines.isEmpty()) {

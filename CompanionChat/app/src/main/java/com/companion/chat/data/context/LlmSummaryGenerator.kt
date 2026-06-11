@@ -54,7 +54,9 @@ class LlmSummaryGenerator(
                 MessageRole.SYSTEM -> "系统"
             }
             val content = message.content.take(200)
-            "$roleLabel：$content"
+            // 图片只给索引提示，不包含实际内容，避免超过图片数量限制
+            val imageHint = if (message.images.isNotEmpty()) " [附带${message.images.size}张图片]" else ""
+            "$roleLabel：$content$imageHint"
         }
     }
 

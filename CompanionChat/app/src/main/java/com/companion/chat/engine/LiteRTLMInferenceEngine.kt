@@ -70,15 +70,25 @@ class LiteRTLMInferenceEngine(private val context: Context) : InferenceEngine {
         )
     }
 
-    private fun toInitialMessage(message: ChatMessage): Message? {
+    private fun toInitialMessage(message: ChatMessage, loadImages: Boolean = true): Message? {
         return when (message.role) {
             MessageRole.USER -> {
                 val contentList = mutableListOf<Content>()
-                message.images.mapNotNull(::uriToImageBytes).forEach { bytes ->
-                    contentList += Content.ImageBytes(bytes)
+                // 只有当前消息才加载图片，历史消息只保留文字描述
+                if (loadImages) {
+                    message.images.mapNotNull(::uriToImageBytes).forEach { bytes ->
+                        contentList += Content.ImageBytes(bytes)
+                    }
                 }
-                if (message.content.isNotBlank()) {
-                    contentList += Content.Text(message.content)
+                val textContent = if (message.images.isNotEmpty() && !loadImages) {
+                    // 历史消息中的图片只给文字提示
+                    val imageHint = "[附带${message.images.size}张图片]"
+                    if (message.content.isNotBlank()) "${message.content} $imageHint" else imageHint
+                } else {
+                    message.content
+                }
+                if (textContent.isNotBlank()) {
+                    contentList += Content.Text(textContent)
                 }
                 if (contentList.isEmpty()) {
                     null
@@ -492,7 +502,8 @@ class LiteRTLMInferenceEngine(private val context: Context) : InferenceEngine {
             return@withContext false
         }
 
-        val initialMessages = messages.mapNotNull(::toInitialMessage)
+        // 历史消息回放时不加载图片，只保留文字描述
+        val initialMessages = messages.mapNotNull { toInitialMessage(it, loadImages = false) }
         if (initialMessages.isEmpty()) {
             logToFile("最近消息回放跳过: 转换后的初始消息为空")
             return@withContext true
