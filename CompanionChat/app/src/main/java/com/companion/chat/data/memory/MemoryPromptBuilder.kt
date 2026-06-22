@@ -127,6 +127,6 @@ class MemoryPromptBuilder(
     }
 
     companion object {
-        private const val USER_MEMORY_NOTE = "以下内容均为用户本人的记忆，不代表助手自身。"
+        private const val USER_MEMORY_NOTE = "以下内容均为用户本人的记忆，不代表助手自身。注意：不同记忆条目可能表达相同含义（如「喜欢篮球」和「爱打球」），请自行归一理解，避免重复引用。"
     }
 }

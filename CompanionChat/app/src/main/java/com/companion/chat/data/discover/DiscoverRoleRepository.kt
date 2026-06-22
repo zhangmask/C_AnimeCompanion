@@ -8,6 +8,7 @@ import com.companion.chat.data.voice.VoiceClipScanner
 class DiscoverRoleRepository(
     private val sharedPreferences: SharedPreferences,
     private val roleCardRepository: RoleCardRepository? = null,
+    // TODO: 当前使用硬编码种子数据作为占位实现，未来接入社区角色市场 API 后替换为网络获取
     private val roles: List<DiscoverRoleCard> = DiscoverRoleSeeds.roles,
     private val voiceClipScanner: VoiceClipScanner? = null
 ) {

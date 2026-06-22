@@ -46,7 +46,7 @@ class RuleBasedSummaryGenerator : SummaryGenerator {
     }
 
     private companion object {
-        const val MAX_MESSAGE_CHARS = 48
+        const val MAX_MESSAGE_CHARS = 200
         const val MIN_SUMMARY_CHARS = 1
         const val ELLIPSIS = "..."
     }

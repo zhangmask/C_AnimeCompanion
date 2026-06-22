@@ -18,7 +18,8 @@ class OnnxEmbeddingEngine(private val context: Context) {
     private var session: OrtSession? = null
     private val env = OrtEnvironment.getEnvironment()
     private var tokenizer: SimpleTokenizer? = null
-    private var isInitialized = false
+    private var _isInitialized = false
+    val isInitialized: Boolean get() = _isInitialized
 
     // 模型配置
     private val maxLength = 128  // 最大序列长度
@@ -40,18 +41,16 @@ class OnnxEmbeddingEngine(private val context: Context) {
             val modelBytes = context.assets.open(modelPath).use { it.readBytes() }
             session = env.createSession(modelBytes)
 
-            isInitialized = true
+            _isInitialized = true
             Log.d(TAG, "嵌入引擎初始化成功")
         } catch (e: Exception) {
-            Log.e(TAG, "嵌入引擎初始化失败", e)
-            isInitialized = false
+            Log.w(TAG, "嵌入引擎初始化失败，向量检索将不可用: ${e.message}")
+            _isInitialized = false
         }
     }
 
     /**
-     * 生成文本嵌入向量
-     * @param text 输入文本
-     * @return 嵌入向量，失败返回 null
+     * 嵌入引擎初始化失败时，向量检索将不可用
      */
     suspend fun embed(text: String): FloatArray? = withContext(Dispatchers.IO) {
         if (!isInitialized || session == null || tokenizer == null) {
@@ -152,7 +151,7 @@ class OnnxEmbeddingEngine(private val context: Context) {
     fun release() {
         session?.close()
         session = null
-        isInitialized = false
+        _isInitialized = false
     }
 
     companion object {

@@ -51,9 +51,11 @@ import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.Button
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -752,164 +754,236 @@ private fun MemoryEditorDialog(
 ) {
     val categories = listOf("fact", "preference", "event", "relation", "time", "other")
     val layers = listOf("short_term", "long_term")
+    val tabs = listOf("内容", "分类", "层级", "角色")
+    var selectedTab by remember { mutableIntStateOf(0) }
 
-    AlertDialog(
+    Dialog(
         onDismissRequest = onDismiss,
-        title = { Text(title) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                // Content text field
-                OutlinedTextField(
-                    value = content,
-                    onValueChange = onContentChange,
-                    label = { Text("记忆内容") },
-                    modifier = Modifier.fillMaxWidth(),
-                    minLines = 3
-                )
-
-                // Category dropdown
-                var categoryExpanded by remember { mutableStateOf(false) }
-                ExposedDropdownMenuBox(
-                    expanded = categoryExpanded,
-                    onExpandedChange = { categoryExpanded = it }
-                ) {
-                    OutlinedTextField(
-                        value = categoryLabel(category),
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("分类") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .menuAnchor(MenuAnchorType.PrimaryNotEditable),
-                        colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
-                    )
-                    ExposedDropdownMenu(
-                        expanded = categoryExpanded,
-                        onDismissRequest = { categoryExpanded = false }
-                    ) {
-                        categories.forEach { item ->
-                            DropdownMenuItem(
-                                text = { Text(categoryLabel(item)) },
-                                onClick = {
-                                    onCategoryChange(item)
-                                    categoryExpanded = false
-                                },
-                                contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
-                            )
-                        }
-                    }
-                }
-
-                // Layer dropdown
-                var layerExpanded by remember { mutableStateOf(false) }
-                ExposedDropdownMenuBox(
-                    expanded = layerExpanded,
-                    onExpandedChange = { layerExpanded = it }
-                ) {
-                    OutlinedTextField(
-                        value = layerLabel(layer),
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("层级") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = layerExpanded) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .menuAnchor(MenuAnchorType.PrimaryNotEditable),
-                        colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
-                    )
-                    ExposedDropdownMenu(
-                        expanded = layerExpanded,
-                        onDismissRequest = { layerExpanded = false }
-                    ) {
-                        layers.forEach { item ->
-                            DropdownMenuItem(
-                                text = { Text(layerLabel(item)) },
-                                onClick = {
-                                    onLayerChange(item)
-                                    layerExpanded = false
-                                },
-                                contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
-                            )
-                        }
-                    }
-                }
-
-                // Character dropdown (optional, for character-specific memories)
-                var characterExpanded by remember { mutableStateOf(false) }
-                var characterSearchQuery by remember { mutableStateOf(characterName) }
-                val filteredRoles = remember(characterSearchQuery) {
-                    if (characterSearchQuery.isBlank()) {
-                        availableRoleCards
-                    } else {
-                        availableRoleCards.filter { 
-                            it.name.contains(characterSearchQuery, ignoreCase = true) 
-                        }
-                    }
-                }
-                ExposedDropdownMenuBox(
-                    expanded = characterExpanded,
-                    onExpandedChange = { characterExpanded = it }
-                ) {
-                    OutlinedTextField(
-                        value = characterSearchQuery,
-                        onValueChange = { 
-                            characterSearchQuery = it
-                            onCharacterNameChange(it)
-                        },
-                        label = { Text("关联角色（可选）") },
-                        placeholder = { Text("留空表示全局记忆") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = characterExpanded) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .menuAnchor(MenuAnchorType.PrimaryEditable),
-                        singleLine = true,
-                        colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
-                    )
-                    ExposedDropdownMenu(
-                        expanded = characterExpanded,
-                        onDismissRequest = { characterExpanded = false }
-                    ) {
-                        // "Global" option
-                        DropdownMenuItem(
-                            text = { Text("全局记忆（不关联角色）", color = if (characterName.isBlank()) BrandPrimary else Color.Unspecified) },
-                            onClick = {
-                                characterSearchQuery = ""
-                                onCharacterNameChange("")
-                                characterExpanded = false
-                            },
-                            contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
-                        )
-                        // Role card options
-                        filteredRoles.forEach { role ->
-                            DropdownMenuItem(
-                                text = { Text(role.name) },
-                                onClick = {
-                                    characterSearchQuery = role.name
-                                    onCharacterNameChange(role.name)
-                                    characterExpanded = false
-                                },
-                                contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
-                            )
-                        }
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = onConfirm,
-                enabled = content.isNotBlank()
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(0x59000000))
+                .clickable { onDismiss() },
+            contentAlignment = Alignment.BottomCenter
+        ) {
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(enabled = false) { },
+                shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
+                color = Color.White
             ) {
-                Text("保存")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("取消")
+                Column(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    // ── Header ──
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 20.dp, end = 12.dp, top = 16.dp, bottom = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = title,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(CircleShape)
+                                .background(BrandSurfaceContainer)
+                                .clickable { onDismiss() },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                Icons.Default.Close,
+                                "关闭",
+                                tint = Color(0xFF49454F),
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+
+                    // ── Tabs ──
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp)
+                    ) {
+                        tabs.forEachIndexed { index, tab ->
+                            val isSelected = selectedTab == index
+                            Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable { selectedTab = index },
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = tab,
+                                    fontSize = 14.sp,
+                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                    color = if (isSelected) BrandPrimary else BrandOutline
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .width(if (isSelected) 32.dp else 0.dp)
+                                        .height(2.5.dp)
+                                        .clip(RoundedCornerShape(2.dp))
+                                        .background(if (isSelected) BrandPrimary else Color.Transparent)
+                                )
+                            }
+                        }
+                    }
+
+                    // Divider
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(1.dp)
+                            .background(Color(0xFFE8E4EC))
+                    )
+
+                    // ── Tab Content ──
+                    when (selectedTab) {
+                        0 -> {
+                            // Content tab
+                            OutlinedTextField(
+                                value = content,
+                                onValueChange = onContentChange,
+                                label = { Text("记忆内容") },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 20.dp, vertical = 16.dp),
+                                minLines = 4
+                            )
+                        }
+                        1 -> {
+                            // Category tab - horizontal scrollable chips
+                            LazyRow(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 20.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                contentPadding = PaddingValues(horizontal = 20.dp)
+                            ) {
+                                items(categories.size) { index ->
+                                    val cat = categories[index]
+                                    val isSelected = category == cat
+                                    FilterChip(
+                                        selected = isSelected,
+                                        onClick = { onCategoryChange(cat) },
+                                        label = { Text(categoryLabel(cat)) },
+                                        colors = FilterChipDefaults.filterChipColors(
+                                            selectedContainerColor = BrandPrimary,
+                                            selectedLabelColor = Color.White,
+                                            containerColor = BrandSurfaceContainer,
+                                            labelColor = BrandOutline
+                                        )
+                                    )
+                                }
+                            }
+                        }
+                        2 -> {
+                            // Layer tab - horizontal scrollable chips
+                            LazyRow(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 20.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                contentPadding = PaddingValues(horizontal = 20.dp)
+                            ) {
+                                items(layers.size) { index ->
+                                    val lay = layers[index]
+                                    val isSelected = layer == lay
+                                    FilterChip(
+                                        selected = isSelected,
+                                        onClick = { onLayerChange(lay) },
+                                        label = { Text(layerLabel(lay)) },
+                                        colors = FilterChipDefaults.filterChipColors(
+                                            selectedContainerColor = BrandPrimary,
+                                            selectedLabelColor = Color.White,
+                                            containerColor = BrandSurfaceContainer,
+                                            labelColor = BrandOutline
+                                        )
+                                    )
+                                }
+                            }
+                        }
+                        3 -> {
+                            // Character tab
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 20.dp, vertical = 16.dp)
+                            ) {
+                                // Global memory option
+                                FilterChip(
+                                    selected = characterName.isBlank(),
+                                    onClick = { onCharacterNameChange("") },
+                                    label = { Text("全局记忆") },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = BrandPrimary,
+                                        selectedLabelColor = Color.White,
+                                        containerColor = BrandSurfaceContainer,
+                                        labelColor = BrandOutline
+                                    )
+                                )
+                                Spacer(modifier = Modifier.height(12.dp))
+
+                                // Role cards
+                                LazyRow(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    items(availableRoleCards.size) { index ->
+                                        val role = availableRoleCards[index]
+                                        val isSelected = characterName == role.name
+                                        FilterChip(
+                                            selected = isSelected,
+                                            onClick = { onCharacterNameChange(role.name) },
+                                            label = { Text(role.name) },
+                                            colors = FilterChipDefaults.filterChipColors(
+                                                selectedContainerColor = BrandPrimary,
+                                                selectedLabelColor = Color.White,
+                                                containerColor = BrandSurfaceContainer,
+                                                labelColor = BrandOutline
+                                            )
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // ── Action Buttons ──
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = onDismiss,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("取消")
+                        }
+                        Button(
+                            onClick = onConfirm,
+                            enabled = content.isNotBlank(),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("保存")
+                        }
+                    }
+                }
             }
         }
-    )
+    }
 }
 
 @Composable

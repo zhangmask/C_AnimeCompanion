@@ -14,7 +14,9 @@ class MemoryRetriever(
             return emptyList()
         }
 
-        val ftsExpression = keywords.joinToString(separator = " OR ")
+        // FTS4 查询：每个关键词用双引号包裹，防止 FTS 语法干扰
+        val ftsTerms = keywords.map { kw -> "\"${escapeFtsTerm(kw)}\"" }
+        val ftsExpression = ftsTerms.joinToString(separator = " OR ")
         val query = SimpleSQLiteQuery(
             """
             SELECT memories.* FROM memories
@@ -23,12 +25,19 @@ class MemoryRetriever(
             """.trimIndent()
         )
 
-        val fallbackMatches = memoryDao.getAll().filter { memory ->
-            val content = memory.content.lowercase()
-            keywords.any { keyword -> content.contains(keyword) }
+        val ftsResults = memoryDao.searchByFTS(query)
+
+        // 兜底：仅在 FTS 无结果时才做全量扫描，避免双重计算
+        val fallbackMatches = if (ftsResults.isEmpty()) {
+            memoryDao.getAll().filter { memory ->
+                val content = memory.content.lowercase()
+                keywords.any { keyword -> content.contains(keyword) }
+            }
+        } else {
+            emptyList()
         }
 
-        val results = (memoryDao.searchByFTS(query) + fallbackMatches)
+        val results = (ftsResults + fallbackMatches)
             .distinctBy { it.id }
             .sortedWith(
                 compareByDescending<Memory> { it.layer == LONG_TERM_LAYER }
@@ -37,7 +46,10 @@ class MemoryRetriever(
             )
             .take(MAX_RESULTS)
 
-        results.forEach { memoryDao.incrementReference(it.id) }
+        // 只对长期记忆递增引用计数，且有上限（防止马太效应）
+        results
+            .filter { it.layer == LONG_TERM_LAYER && it.referenceCount < MAX_REFERENCE_COUNT }
+            .forEach { memoryDao.incrementReference(it.id) }
         return results
     }
 
@@ -78,9 +90,15 @@ class MemoryRetriever(
         return value.replace("'", "''")
     }
 
+    /** 转义 FTS4 查询中的特殊字符 */
+    private fun escapeFtsTerm(term: String): String {
+        return term.replace("\"", "")
+    }
+
     companion object {
         private const val LONG_TERM_LAYER = "long_term"
         private const val MAX_RESULTS = 5
+        private const val MAX_REFERENCE_COUNT = 30
         private const val MIN_LATIN_KEYWORD_LENGTH = 2
         private const val MIN_CJK_KEYWORD_LENGTH = 2
         private val TOKEN_REGEX = Regex("[a-z0-9]+|[\\u4E00-\\u9FFF]+")

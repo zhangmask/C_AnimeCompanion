@@ -14,6 +14,9 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.TimeoutCancellationException
 
 /** TTS 回退事件 */
 sealed class TtsFallbackEvent {
@@ -37,6 +40,7 @@ class RoleAwareVoiceOutputEngine(
         const val TAG = "RoleAwareVoiceOutput"
         /** 每段最大字符数，超过则按句子分段 */
         const val MAX_SEGMENT_LENGTH = 100
+        const val PLAYBACK_TIMEOUT_MILLIS = 30_000L
 
         fun safeLog(message: String, warning: Boolean = false) {
             runCatching {
@@ -177,12 +181,17 @@ class RoleAwareVoiceOutputEngine(
         }
     }
 
-    /** 等待当前音频播放完成 */
+    /** 等待当前音频播放完成，带超时保护防止永久挂起 */
     private suspend fun waitForPlaybackComplete() {
-        // 简单实现：轮询状态直到 Idle
-        // 更优雅的实现可以使用 callback 或 Flow
-        while (localAudioPlaybackEngine?.state?.value is VoiceOutputState.Speaking) {
-            kotlinx.coroutines.delay(100)
+        val playback = localAudioPlaybackEngine ?: return
+        if (playback.state.value !is VoiceOutputState.Speaking) return
+        try {
+            withTimeout(PLAYBACK_TIMEOUT_MILLIS) {
+                playback.state.first { it !is VoiceOutputState.Speaking }
+            }
+        } catch (_: TimeoutCancellationException) {
+            // 超时后强制停止，防止永久挂起
+            playback.stop()
         }
     }
 

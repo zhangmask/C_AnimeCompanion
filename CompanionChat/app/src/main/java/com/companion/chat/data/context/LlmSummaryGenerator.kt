@@ -72,7 +72,7 @@ class LlmSummaryGenerator(
                 MessageRole.ASSISTANT -> "助手"
                 MessageRole.SYSTEM -> "系统"
             }
-            val clippedContent = content.take(48)
+            val clippedContent = content.take(200)
             "$roleLabel：$clippedContent"
         }
         if (normalizedLines.isEmpty()) return ""

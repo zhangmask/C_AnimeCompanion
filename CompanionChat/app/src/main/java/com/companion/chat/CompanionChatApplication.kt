@@ -22,7 +22,7 @@ class CompanionChatApplication : Application() {
 
         val sessionRepository = appContainer.chatSessionRepository
         val memoryRepository = appContainer.memoryRepository
-        val memoryLifecycleManager = MemoryLifecycleManager(memoryRepository)
+        val memoryLifecycleManager = MemoryLifecycleManager(memoryRepository, applicationScope)
         applicationScope.launch {
             runCatching {
                 logToFile("开始 ensureInitialized")
@@ -30,6 +30,8 @@ class CompanionChatApplication : Application() {
                 logToFile("ensureInitialized 完成")
                 memoryLifecycleManager.runStartupMaintenance()
                 logToFile("记忆生命周期维护完成")
+                memoryLifecycleManager.startPeriodicMaintenance()
+                logToFile("记忆周期性维护已启动")
             }.onFailure {
                 logToFile("ensureInitialized 失败: ${it.javaClass.simpleName}: ${it.message}")
             }

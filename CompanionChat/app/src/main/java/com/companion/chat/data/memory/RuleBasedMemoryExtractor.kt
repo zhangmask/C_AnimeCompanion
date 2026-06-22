@@ -8,9 +8,19 @@ class RuleBasedMemoryExtractor : MemoryExtractor {
             return emptyList()
         }
 
+        // 知知识问题的消息不提取记忆（如"勾股定理是什么""怎么做饭"）
+        if (looksLikeKnowledgeQuery(normalizedMessage)) {
+            return emptyList()
+        }
+
         return splitToClauses(normalizedMessage)
             .flatMap { clause -> extractFromClause(clause) }
             .distinctBy { "${it.category}|${it.content}" }
+    }
+
+    /** 判断是否为知识问答（而非用户表达个人信息） */
+    private fun looksLikeKnowledgeQuery(message: String): Boolean {
+        return KNOWLEDGE_QUERY_PATTERNS.any { it.containsMatchIn(message) }
     }
 
     private fun extractFromClause(clause: String): List<ExtractedMemory> {
@@ -200,11 +210,21 @@ class RuleBasedMemoryExtractor : MemoryExtractor {
     }
 
     private fun normalizeClause(clause: String): String {
-        return clause
-            .removePrefix("也")
-            .removePrefix("而且")
-            .removePrefix("另外")
-            .trim()
+        var normalized = clause.trim()
+        // 反复去除前缀修饰词，直到无法再去除（处理"其实我也挺…"等多层前缀）
+        var changed = true
+        while (changed) {
+            changed = false
+            for (prefix in DISCOURSE_PREFIXES) {
+                if (normalized.startsWith(prefix)) {
+                    normalized = normalized.substring(prefix.length).trim()
+                    changed = true
+                }
+            }
+        }
+        // 去除句末语气词，它们不影响语义但会阻断 $ 匹配
+        normalized = normalized.trimEnd('的', '了', '吧', '呢', '啊', '呀', '嘛', '哦', '哈', '咯')
+        return normalized.trim()
     }
 
     private fun looksLikeTimeHabit(content: String): Boolean {
@@ -218,6 +238,24 @@ class RuleBasedMemoryExtractor : MemoryExtractor {
         private const val CATEGORY_OTHER = "other"
         private const val LAYER_SHORT_TERM = "short_term"
         private const val SOURCE_RULE_EXTRACTOR = "rule_extractor"
+        // 话语前缀修饰词，去除后让核心正则能匹配
+        private val DISCOURSE_PREFIXES = listOf(
+            "其实", "实际上", "说真的", "说实话", "老实说",
+            "不过", "但是", "然而", "可是", "只是",
+            "而且", "并且", "另外", "还有", "同时",
+            "也", "还", "又",
+            "我觉得", "我认为", "我感觉", "我想",
+            "对", "嗯", "啊", "哦"
+        )
+        // 知识问答模式：问知识而非表达个人信息
+        private val KNOWLEDGE_QUERY_PATTERNS = listOf(
+            Regex("什么是.+|什么叫做.+|什么叫.+"),
+            Regex(".+是什么$|.+是什么意思$"),
+            Regex("怎么.+|如何.+|怎样.+"),
+            Regex("为什么.+"),
+            Regex("请解释.+|请说明.+"),
+            Regex("勾股|定理|公式|定义|原理")
+        )
         private val TIME_HINTS = listOf(
             "早上", "上午", "中午", "下午", "晚上", "凌晨",
             "点", "周末", "周一", "周二", "周三", "周四", "周五",

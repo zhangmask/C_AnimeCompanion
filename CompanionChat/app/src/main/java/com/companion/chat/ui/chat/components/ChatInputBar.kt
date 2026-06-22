@@ -53,14 +53,17 @@ fun ChatInputBar(
     onSend: () -> Unit,
     onPickImage: () -> Unit,
     onGenerateImage: () -> Unit,
+    onSuggestReply: () -> Unit = {},
     onVoiceInput: () -> Unit,
     selectedImages: List<Uri>,
     onRemoveImage: (Uri) -> Unit,
+    inputHint: String = "输入消息...",
     isVoiceStarting: Boolean = false,
     isVoiceListening: Boolean,
     isVoiceAutoSending: Boolean = false,
     isGenerating: Boolean = false,
     isImageGenerating: Boolean = false,
+    isSuggesting: Boolean = false,
     isVoiceSpeaking: Boolean = false,
     canVoiceOutput: Boolean = false,
     onVoiceOutput: () -> Unit = {},
@@ -103,16 +106,17 @@ fun ChatInputBar(
                         contentDescription = "上传图片"
                     )
                     ChatToolIconButton(
-                        onClick = onGenerateImage,
-                        enabled = !isImageGenerating,
+                        onClick = onSuggestReply,
+                        enabled = !isSuggesting && !isGenerating,
                         icon = Icons.Default.AutoAwesome,
-                        contentDescription = if (isImageGenerating) "图片生成中" else "根据输入生成图片",
-                        active = isImageGenerating
+                        contentDescription = if (isSuggesting) "正在生成建议" else "获取对话建议",
+                        active = isSuggesting
                     )
                     Spacer(Modifier.width(2.dp))
                     BasicTextField(
                         value = inputText,
                         onValueChange = onInputChange,
+                        enabled = !isSuggesting,
                         modifier = Modifier
                             .weight(1f)
                             .heightIn(min = 44.dp, max = 112.dp)
@@ -126,11 +130,7 @@ fun ChatInputBar(
                             Box {
                                 if (inputText.isEmpty()) {
                                     Text(
-                                        text = inputPlaceholder(
-                                            isVoiceStarting = isVoiceStarting,
-                                            isVoiceListening = isVoiceListening,
-                                            isVoiceAutoSending = isVoiceAutoSending
-                                        ),
+                                        text = inputHint,
                                         style = MaterialTheme.typography.bodyLarge,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.76f)
                                     )
@@ -255,19 +255,6 @@ private fun ChatToolIconButton(
             contentDescription = contentDescription,
             modifier = Modifier.size(22.dp)
         )
-    }
-}
-
-private fun inputPlaceholder(
-    isVoiceStarting: Boolean,
-    isVoiceListening: Boolean,
-    isVoiceAutoSending: Boolean
-): String {
-    return when {
-        isVoiceStarting -> "正在启动语音识别..."
-        isVoiceListening -> "正在听..."
-        isVoiceAutoSending -> "正在发送语音..."
-        else -> "输入消息..."
     }
 }
 

@@ -143,6 +143,16 @@ class MemoryRepository(
                 return@forEach
             }
 
+            // 模糊去重：归一化后检查是否已有语义相近的记忆
+            val normalizedContent = normalizeForDedup(content)
+            val fuzzyMatch = memoryDao.getByCategory(category).firstOrNull { memory ->
+                normalizeForDedup(memory.content) == normalizedContent
+            }
+            if (fuzzyMatch != null) {
+                storedMemories += fuzzyMatch
+                return@forEach
+            }
+
             val memoryToInsert = Memory(
                 content = content,
                 category = category,
@@ -166,5 +176,15 @@ class MemoryRepository(
         private const val LONG_TERM_LAYER = "long_term"
         private const val MANUAL_SOURCE = "manual"
         const val MODEL_SOURCE = "model_extractor"
+
+        /** 去除语气词和轻量动词，归一化用于模糊去重 */
+        private val DEDUP_NOISE = listOf("打", "的", "了", "着", "过", "吧", "呢", "啊", "呀")
+        private fun normalizeForDedup(content: String): String {
+            var result = content.trim().lowercase()
+            for (noise in DEDUP_NOISE) {
+                result = result.replace(noise, "")
+            }
+            return result
+        }
     }
 }

@@ -2,7 +2,9 @@ package com.companion.chat.ui.chat
 
 import android.app.Application
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.companion.chat.AppContainer
@@ -17,6 +19,7 @@ import com.companion.chat.data.context.DefaultContextManager
 import com.companion.chat.data.context.ContextSettings
 import com.companion.chat.data.embedding.OnnxEmbeddingEngine
 import com.companion.chat.data.engine.InferenceState
+import com.companion.chat.service.InferenceForegroundService
 import com.companion.chat.data.engine.VoiceInputEvent
 import com.companion.chat.data.engine.VoiceOutputState
 import com.companion.chat.data.image.ImageGenerationPurpose
@@ -30,6 +33,7 @@ import com.companion.chat.data.model.DEFAULT_WELCOME_MESSAGE
 import com.companion.chat.data.model.MessageRole
 import com.companion.chat.data.model.createDefaultSession
 import com.companion.chat.data.preferences.SecondEngineManager
+import com.companion.chat.data.util.ImagePersistenceUtil
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -54,8 +58,10 @@ enum class DateFilter { ALL, TODAY, YESTERDAY, WEEK, MONTH }
 data class ChatUiState(
     val messages: List<ChatMessage> = emptyList(),
     val inputText: String = "",
+    val inputHint: String = "输入消息...",
     val selectedImages: List<Uri> = emptyList(),
     val isGenerating: Boolean = false,
+    val isSuggesting: Boolean = false,
     val isVoiceStarting: Boolean = false,
     val isVoiceListening: Boolean = false,
     val isVoiceWarmedUp: Boolean = false,
@@ -260,6 +266,68 @@ class ChatViewModel(
 
     internal fun debugBaseSystemPrompt(): String = baseSystemPrompt
 
+    private var inferenceForegroundServiceStarted = false
+
+    private fun startInferenceForegroundService() {
+        if (inferenceForegroundServiceStarted) return
+        try {
+            val app = getApplication<Application>()
+            val intent = Intent(app, InferenceForegroundService::class.java).apply {
+                action = InferenceForegroundService.ACTION_START
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                app.startForegroundService(intent)
+            } else {
+                app.startService(intent)
+            }
+            inferenceForegroundServiceStarted = true
+            logToFile("推理前台服务已启动")
+        } catch (e: Exception) {
+            logToFile("启动推理前台服务失败: ${e.message}")
+        }
+    }
+
+    private fun looksLikeKnowledgeQuery(message: String): Boolean {
+        val msg = message.trim()
+        return msg.contains("什么是") || msg.contains("怎么") || msg.contains("如何") ||
+            msg.contains("为什么") || msg.contains("是什么") || msg.contains("定理") ||
+            msg.contains("公式") || msg.contains("定义") || msg.contains("原理")
+    }
+
+    /** 判断最近一条用户消息是否为知识问答 */
+    private fun lastUserMessageIsKnowledgeQuery(): Boolean {
+        val lastUser = _uiState.value.messages.lastOrNull { it.role == MessageRole.USER }
+        return lastUser != null && looksLikeKnowledgeQuery(lastUser.content)
+    }
+
+    /** 自动拆分知识回答和情感承接：找到最后一个情感转折点 */
+    private fun splitKnowledgeAndEmotion(content: String): Pair<String, String>? {
+        val pivotKeywords = listOf("你对", "你最近", "说起来", "不过", "话说", "换个话题", "还是说", "是不是")
+        for (keyword in pivotKeywords) {
+            val idx = content.lastIndexOf(keyword)
+            if (idx > content.length / 3) {
+                val knowledge = content.substring(0, idx).trim()
+                val emotion = content.substring(idx).trim()
+                if (knowledge.length > 10 && emotion.length > 5) {
+                    return knowledge to emotion
+                }
+            }
+        }
+        return null
+    }
+
+    /** 过滤AI回复中的内部机制标记，不让用户看到 */
+    private fun stripInternalMarkers(content: String): String {
+        return content
+            .replace(Regex("[（(]内心切换[^）)]*[）)]"), "")
+            .replace(Regex("[（(]切换回[^）)]*[）)]"), "")
+            .replace(Regex("[（(]分支[^）)]*[）)]"), "")
+            .replace(Regex("[（(]模式[^）)]*[）)]"), "")
+            .replace(Regex("[（(]任务模式[^）)]*[）)]"), "")
+            .replace(Regex("[（(]陪伴模式[^）)]*[）)]"), "")
+            .trim()
+    }
+
     private fun collectInferenceState() {
         inferenceStateJob?.cancel()
         inferenceStateJob = viewModelScope.launch {
@@ -267,6 +335,9 @@ class ChatViewModel(
                 _uiState.update { it.copy(engineState = state) }
                 if (state is InferenceState.Idle) {
                     _uiState.update { it.copy(isGenerating = false) }
+                }
+                if (state is InferenceState.Ready) {
+                    startInferenceForegroundService()
                 }
             }
         }
@@ -598,7 +669,14 @@ $conversationSummary"""
         stopAutoTts()
 
         if (state.currentSessionId.isBlank()) {
-            val newSession = ConversationSession(messages = emptyList())
+            val activeRoleName = currentRoleCardId?.let { rid ->
+                state.availableRoleCards.firstOrNull { it.id == rid }?.name
+            }
+            val newSession = ConversationSession(
+                title = activeRoleName?.takeIf { it.isNotBlank() } ?: DEFAULT_SESSION_TITLE,
+                roleCardId = currentRoleCardId,
+                messages = emptyList()
+            )
             _uiState.update {
                 it.copy(
                     sessions = listOf(newSession) + it.sessions,
@@ -610,10 +688,18 @@ $conversationSummary"""
             state = _uiState.value
         }
 
+        // 持久化图片到私有目录
+        val persistedImages = if (state.selectedImages.isNotEmpty()) {
+            val context = getApplication<Application>()
+            ImagePersistenceUtil.persistImages(context, state.selectedImages)
+        } else {
+            emptyList()
+        }
+
         val userMessage = ChatMessage(
             role = MessageRole.USER,
             content = state.inputText.trim(),
-            images = state.selectedImages.toList()
+            images = persistedImages
         )
 
         val assistantPlaceholder = ChatMessage(
@@ -636,9 +722,8 @@ $conversationSummary"""
         generateJob?.cancel()
         shouldSpeakNextAssistantResponse = autoSpeakResponse
         generateJob = viewModelScope.launch {
-            if (!contextConfigRepository.getAutoPreferenceLearningEnabled()) {
-                storeRuleBasedMemoriesForMessage(userMessage)
-            }
+            // 阶段一：规则即时提取始终执行（零成本、即时），阶段四 LLM 异步提取作为补充
+            storeRuleBasedMemoriesForMessage(userMessage)
             generateResponse(userMessage.content.trim())
         }
     }
@@ -654,19 +739,64 @@ $conversationSummary"""
         startAutoTts()
 
         try {
-            val messages = _uiState.value.messages
-            val memoryContext = buildMemoryContext(userInput)
-            contextSettings = contextConfigRepository.getSettings()
-            companionRuntime.runTurn(
-                messages = messages,
-                baseSystemPrompt = baseSystemPrompt,
-                settings = contextSettings,
-                userPreferences = memoryContext.confirmedPreferencePrompt,
-                persistentMemoryPrompt = memoryContext.persistentPrompt,
-                memoryPrompt = memoryContext.retrievedPrompt
-            ).collect { event ->
-                when (event) {
-                    is CompanionTurnEvent.AssistantToken -> appendAssistantToken(event.token)
+            // 内在分支：知识问答用独立知识agent单轮回答，再让陪伴agent做情感承接
+            if (looksLikeKnowledgeQuery(userInput)) {
+                logToFile("内在分支: 检测到知识查询, 启动两阶段推理")
+                // 阶段一：知识agent单轮回答（纯知识prompt，不注入记忆和偏好）
+                val knowledgePrompt = "你是一个简洁准确的知识助手。请用简洁的中文回答以下问题，只回答事实，不要加任何情感或闲聊：\n$userInput"
+                val knowledgeResult = StringBuilder()
+                inferenceEngine.sendMessageStream(
+                    listOf(ChatMessage(role = MessageRole.USER, content = knowledgePrompt))
+                ).collect { token ->
+                    appendAssistantToken(token)
+                    knowledgeResult.append(token)
+                }
+                finishStreamingForBranch()
+                logToFile("内在分支: 知识回答完成: ${knowledgeResult.toString().take(80)}")
+
+                // 重建Conversation恢复陪伴上下文（清除知识agent的上下文污染）
+                val messages = _uiState.value.messages
+                val memoryContext = buildMemoryContext(userInput)
+                contextSettings = contextConfigRepository.getSettings()
+                val rebuildResult = companionRuntime.rebuildConversationWithContext(
+                    stableMessages = messages.filterNot { it.isStreaming },
+                    baseSystemPrompt = baseSystemPrompt,
+                    settings = contextSettings,
+                    userPreferences = memoryContext.confirmedPreferencePrompt,
+                    persistentMemoryPrompt = memoryContext.persistentPrompt,
+                    memoryPrompt = memoryContext.retrievedPrompt,
+                    forceRebuild = true
+                )
+                logToFile("内在分支: Conversation重建: ${if (rebuildResult.rebuildSucceeded == true) "成功" else "失败"}")
+
+                // 阶段二：陪伴agent读取上下文做情感承接
+                val emotionPrompt = "用户刚才突然问了一个知识问题（$userInput），你刚才已经给出了准确回答。现在请用一句简短温暖的话自然地回到陪伴对话，不要重复知识内容，只要一句情感承接即可。"
+                val emotionPlaceholder = ChatMessage(role = MessageRole.ASSISTANT, content = "", isStreaming = true)
+                _uiState.update { it.copy(messages = it.messages + emotionPlaceholder, isGenerating = true) }
+                val emotionResult = StringBuilder()
+                inferenceEngine.sendMessageStream(
+                    listOf(ChatMessage(role = MessageRole.USER, content = emotionPrompt))
+                ).collect { token ->
+                    appendAssistantToken(token)
+                    emotionResult.append(token)
+                }
+                logToFile("内在分支: 情感承接完成: ${emotionResult.toString().take(80)}")
+            } else {
+                // 正常陪伴对话
+                val messages = _uiState.value.messages
+                val memoryContext = buildMemoryContext(userInput)
+                contextSettings = contextConfigRepository.getSettings()
+                companionRuntime.runTurn(
+                    messages = messages,
+                    baseSystemPrompt = baseSystemPrompt,
+                    settings = contextSettings,
+                    userPreferences = memoryContext.confirmedPreferencePrompt,
+                    persistentMemoryPrompt = memoryContext.persistentPrompt,
+                    memoryPrompt = memoryContext.retrievedPrompt
+                ).collect { event ->
+                    when (event) {
+                        is CompanionTurnEvent.AssistantToken -> appendAssistantToken(event.token)
+                    }
                 }
             }
         } catch (e: Exception) {
@@ -733,6 +863,13 @@ $conversationSummary"""
     }
 
     private fun appendAssistantToken(token: String) {
+        // 过滤内部机制标记，不让用户看到
+        val cleanToken = token
+            .replace(Regex("[（(]内心切换[^）)]*[）)]"), "")
+            .replace(Regex("[（(]切换回[^）)]*[）)]"), "")
+            .replace(Regex("[（(]分支[^）)]*[）)]"), "")
+            .replace(Regex("[（(]模式[^）)]*[）)]"), "")
+        if (cleanToken.isBlank()) return
         _uiState.update { state ->
             val updatedMessages = state.messages.toMutableList()
             val lastIndex = updatedMessages.lastIndex
@@ -818,6 +955,18 @@ $conversationSummary"""
         voiceOutputEngine.stop()
     }
 
+    /** 内在分支中间步骤的finish：结束streaming但不触发偏好学习等后续逻辑 */
+    private fun finishStreamingForBranch() {
+        _uiState.update { state ->
+            val updatedMessages = state.messages.toMutableList()
+            val lastIndex = updatedMessages.lastIndex
+            if (lastIndex >= 0 && updatedMessages[lastIndex].isStreaming) {
+                updatedMessages[lastIndex] = updatedMessages[lastIndex].copy(isStreaming = false)
+            }
+            state.copy(messages = updatedMessages, isGenerating = false, isVoiceAutoSending = false)
+        }
+    }
+
     private fun updateAssistantMessage(content: String) {
         _uiState.update { state ->
             val updatedMessages = state.messages.toMutableList()
@@ -837,11 +986,70 @@ $conversationSummary"""
             val updatedMessages = state.messages.toMutableList()
             val lastIndex = updatedMessages.lastIndex
             if (lastIndex >= 0 && updatedMessages[lastIndex].isStreaming) {
-                updatedMessages[lastIndex] = updatedMessages[lastIndex].copy(
-                    isStreaming = false
-                )
+                val lastMessage = updatedMessages[lastIndex]
+                val cleanContent = stripInternalMarkers(lastMessage.content)
+
+                // 内在分支拆分：按 || 分隔符拆为知识回答 + 情感承接两条消息
+                if (cleanContent.contains("||")) {
+                    val parts = cleanContent.split("||", limit = 2)
+                    val knowledgePart = parts[0].trim()
+                    val emotionPart = parts.getOrNull(1)?.trim().orEmpty()
+                    // 第一条：知识回答
+                    updatedMessages[lastIndex] = lastMessage.copy(isStreaming = false, content = knowledgePart)
+                    // 第二条：情感承接
+                    if (emotionPart.isNotBlank()) {
+                        updatedMessages.add(ChatMessage(
+                            role = MessageRole.ASSISTANT,
+                            content = emotionPart
+                        ))
+                    }
+                    logToFile("内在分支拆分(||): 知识=${knowledgePart.take(50)}, 情感=${emotionPart.take(50)}")
+                } else if (lastUserMessageIsKnowledgeQuery()) {
+                    // fallback：用户问了知识问题但AI没用||，尝试按情感转折点拆分
+                    val splitResult = splitKnowledgeAndEmotion(cleanContent)
+                    if (splitResult != null) {
+                        updatedMessages[lastIndex] = lastMessage.copy(isStreaming = false, content = splitResult.first)
+                        updatedMessages.add(ChatMessage(
+                            role = MessageRole.ASSISTANT,
+                            content = splitResult.second
+                        ))
+                        logToFile("内在分支拆分(自动): 知识=${splitResult.first.take(50)}, 情感=${splitResult.second.take(50)}")
+                    } else {
+                        updatedMessages[lastIndex] = lastMessage.copy(isStreaming = false, content = cleanContent)
+                    }
+                } else {
+                    updatedMessages[lastIndex] = lastMessage.copy(isStreaming = false, content = cleanContent)
+                }
+
+                // 如果是建议消息，将内容复制到输入框并删除建议消息
+                if (lastMessage.isSuggestion) {
+                    val suggestionContent = lastMessage.content
+                    // 删除建议消息（用户消息和助手消息）
+                    val suggestionMessages = updatedMessages.filter { it.isSuggestion }
+                    updatedMessages.removeAll(suggestionMessages)
+                    return@update state.copy(
+                        messages = updatedMessages,
+                        inputText = suggestionContent,
+                        inputHint = "对话建议已生成，可修改后发送",
+                        isGenerating = false,
+                        isVoiceAutoSending = false
+                    )
+                }
             }
             state.copy(messages = updatedMessages, isGenerating = false, isVoiceAutoSending = false)
+        }
+
+        // 记录AI回复日志和分支检测
+        val lastAssistantMsg = _uiState.value.messages.lastOrNull()
+        if (lastAssistantMsg?.role == MessageRole.ASSISTANT && lastAssistantMsg.content.isNotBlank()) {
+            val reply = lastAssistantMsg.content.take(200)
+            logToFile("AI回复: $reply")
+            // 检测内在分支：用户从陪伴转向知识问答
+            val lastUserMsg = _uiState.value.messages.takeLast(5)
+                .lastOrNull { it.role == MessageRole.USER }
+            if (lastUserMsg != null && looksLikeKnowledgeQuery(lastUserMsg.content)) {
+                logToFile("内在分支触发: 用户从陪伴对话转向知识查询, 已内在处理并自然回归")
+            }
         }
 
         if (autoTtsActive) {
@@ -1475,6 +1683,121 @@ $conversationSummary"""
             forceRebuild = true,
             reason = reason
         )
+    }
+
+    // ── 对话建议功能 ──
+
+    private var isGeneratingSuggestion = false
+
+    /**
+     * 生成对话建议
+     * 将建议请求作为普通消息发送，但隐藏建议消息，只将建议结果显示在输入框
+     */
+    fun generateSuggestion() {
+        if (isGeneratingSuggestion) return
+        if (_uiState.value.isGenerating) return
+
+        val engineState = inferenceEngine.state.value
+        if (engineState !is InferenceState.Ready) {
+            logToFile("对话建议: 引擎未就绪, state=$engineState")
+            return
+        }
+
+        isGeneratingSuggestion = true
+        _uiState.update {
+            it.copy(
+                isSuggesting = true,
+                inputText = "",
+                inputHint = "生成对话建议中..."
+            )
+        }
+
+        viewModelScope.launch {
+            try {
+                // 找到最近一次用户发送的对话
+                val recentMessages = _uiState.value.messages.takeLast(20)
+                val lastUserMessage = recentMessages.lastOrNull { msg -> msg.role == MessageRole.USER }
+
+                if (lastUserMessage == null) {
+                    resetSuggestionState()
+                    logToFile("对话建议: 没有找到用户消息")
+                    return@launch
+                }
+
+                // 构建提示词
+                val prompt = buildSuggestionPrompt(recentMessages, lastUserMessage)
+                logToFile("对话建议: 开始生成，prompt=${prompt.take(100)}")
+
+                // 使用现有的对话机制发送建议请求
+                // 将建议消息添加到消息列表，但标记为建议类型
+                val suggestionUserMessage = ChatMessage(
+                    role = MessageRole.USER,
+                    content = prompt,
+                    isSuggestion = true
+                )
+                val suggestionAssistantPlaceholder = ChatMessage(
+                    role = MessageRole.ASSISTANT,
+                    content = "",
+                    isStreaming = true,
+                    isSuggestion = true
+                )
+
+                _uiState.update {
+                    it.copy(
+                        messages = it.messages + suggestionUserMessage + suggestionAssistantPlaceholder
+                    )
+                }
+
+                // 使用 generateResponse 生成建议
+                generateResponse(prompt)
+            } catch (e: Exception) {
+                logToFile("对话建议生成失败: ${e.message}")
+                e.printStackTrace()
+                _uiState.update {
+                    it.copy(
+                        inputText = "",
+                        inputHint = "建议生成失败，请重试"
+                    )
+                }
+            } finally {
+                isGeneratingSuggestion = false
+                _uiState.update { it.copy(isSuggesting = false) }
+            }
+        }
+    }
+
+    private fun resetSuggestionState() {
+        isGeneratingSuggestion = false
+        _uiState.update {
+            it.copy(
+                isSuggesting = false,
+                isGenerating = false,
+                inputText = "",
+                inputHint = "输入消息..."
+            )
+        }
+    }
+
+    /**
+     * 构建对话建议提示词
+     */
+    private fun buildSuggestionPrompt(
+        recentMessages: List<ChatMessage>,
+        lastUserMessage: ChatMessage
+    ): String {
+        val conversationHistory = recentMessages.takeLast(10).joinToString("\n") { msg ->
+            val role = if (msg.role == MessageRole.USER) "用户" else "助手"
+            "$role: ${msg.content.take(150)}"
+        }
+
+        return """根据对话历史，帮用户想一个简短的回复建议（20字以内），让对话能继续深入或打开新话题。
+
+对话历史:
+$conversationHistory
+
+用户最后说: ${lastUserMessage.content.take(100)}
+
+直接给出建议内容，不要解释："""
     }
 
     companion object {

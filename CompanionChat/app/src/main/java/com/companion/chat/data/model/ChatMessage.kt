@@ -19,7 +19,8 @@ data class ChatMessage(
     val content: String,
     val images: List<Uri> = emptyList(),
     val timestamp: Long = System.currentTimeMillis(),
-    val isStreaming: Boolean = false
+    val isStreaming: Boolean = false,
+    val isSuggestion: Boolean = false
 )
 
 data class ConversationSession(

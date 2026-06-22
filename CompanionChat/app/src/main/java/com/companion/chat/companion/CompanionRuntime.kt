@@ -30,6 +30,9 @@ class CompanionRuntime(
     private val roleCardPromptBuilder: RoleCardPromptBuilder = RoleCardPromptBuilder(),
     private val defaultBasePrompt: String = DEFAULT_BASE_PROMPT
 ) {
+    /** 缓存上次构建的 system prompt，避免每轮都重建 Conversation */
+    @Volatile
+    private var lastBuiltSystemPrompt: String = ""
 
     suspend fun refreshBasePrompt(): String {
         val rolePrompt = roleCardPromptBuilder.build(roleCardRepository.getActiveRoleCard())
@@ -152,18 +155,27 @@ class CompanionRuntime(
             persistentMemoryPrompt.isNotBlank() ||
             memoryPrompt.isNotBlank()
 
-        if (!forceRebuild && !manager.shouldCompress(stableMessages, settings) && !shouldInjectContext) {
+        // 先计算新 system prompt，与缓存比较决定是否需要重建
+        val contextWindow = if (!forceRebuild && !manager.shouldCompress(stableMessages, settings) && !shouldInjectContext) {
+            // 无压缩需求且无上下文注入，跳过
+            return CompanionRebuildResult.skipped()
+        } else {
+            manager.buildContext(
+                messages = stableMessages,
+                systemPrompt = baseSystemPrompt,
+                userPreferences = userPreferences,
+                persistentMemoryPrompt = persistentMemoryPrompt,
+                memoryPrompt = memoryPrompt,
+                settings = settings
+            )
+        }
+
+        // 如果 system prompt 未变化且不需要压缩，跳过重建
+        val needsCompress = manager.shouldCompress(stableMessages, settings)
+        if (!forceRebuild && !needsCompress && contextWindow.systemPrompt == lastBuiltSystemPrompt) {
             return CompanionRebuildResult.skipped()
         }
 
-        val contextWindow = manager.buildContext(
-            messages = stableMessages,
-            systemPrompt = baseSystemPrompt,
-            userPreferences = userPreferences,
-            persistentMemoryPrompt = persistentMemoryPrompt,
-            memoryPrompt = memoryPrompt,
-            settings = settings
-        )
         val rebuildSucceeded = engine.rebuildConversation(contextWindow.systemPrompt)
         if (!rebuildSucceeded) {
             return CompanionRebuildResult(
@@ -181,6 +193,7 @@ class CompanionRuntime(
 
         val replaySucceeded = engine.replayMessages(contextWindow.recentMessages)
         if (replaySucceeded) {
+            lastBuiltSystemPrompt = contextWindow.systemPrompt
             return CompanionRebuildResult(
                 rebuildAttempted = true,
                 rebuildSucceeded = true,
@@ -288,7 +301,7 @@ class CompanionRuntime(
 
     companion object {
         const val DEFAULT_BASE_PROMPT =
-            "你是 Anime Companion 的本地私密陪伴智能体。默认使用中文，像长期熟悉用户的伙伴一样自然回应：亲近但不过界，温柔但不说教，记得对话中的连续性与用户已经确认的偏好。你的记忆描述始终以用户为归属，不把用户的信息说成自己的经历。回答应简洁、有情绪承接，除非用户明确需要步骤或分析，否则少用训诫式建议。"
+            "你是 Anime Companion 的本地私密陪伴智能体。默认使用中文，像长期熟悉用户的伙伴一样自然回应：亲近但不过界，温柔但不说教，记得对话中的连续性与用户已经确认的偏好。你的记忆描述始终以用户为归属，不把用户的信息说成自己的经历。回答应简洁、有情绪承接，除非用户明确需要步骤或分析，否则少用训诫式建议。\n\n内在对话分支规则：当用户突然从情感陪伴对话转向知识问答、翻译、计算等任务型请求时，你必须用 || 分隔符将回复分成两部分：第一部分是准确简洁的知识回答，第二部分是一句简短的情感承接回到陪伴语境。格式：「知识回答||情感承接」。例如用户在聊心事时突然问「北京到上海多远」，你回复「约1318公里||说起来，你之前提到想出去走走，是不是在考虑旅行？」。如果用户的请求不涉及知识问答，不需要使用 || 分隔符，直接正常回复即可。绝对禁止输出括号标记、模式声明或切换提示。"
     }
 }
 

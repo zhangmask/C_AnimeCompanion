@@ -318,7 +318,10 @@ fun ChatScreen(
                 val lastAssistantIndex = uiState.messages.indexOfLast { it.role == MessageRole.ASSISTANT && !it.isStreaming }
 
                 // reverseLayout = true: 消息从底部向上排列，最新消息自然在底部
-                val reversedMessages = remember(uiState.messages) { uiState.messages.reversed() }
+                // 过滤掉建议消息
+                val reversedMessages = remember(uiState.messages) {
+                    uiState.messages.filter { !it.isSuggestion }.reversed()
+                }
 
                 LazyColumn(
                     modifier = Modifier
@@ -406,14 +409,19 @@ fun ChatScreen(
                 onGenerateImage = {
                     viewModel.generateChatSceneImage(uiState.inputText.trim())
                 },
+                onSuggestReply = {
+                    viewModel.generateSuggestion()
+                },
                 onVoiceInput = viewModel::toggleVoiceListening,
                 selectedImages = uiState.selectedImages,
                 onRemoveImage = viewModel::removeImage,
+                inputHint = uiState.inputHint,
                 isVoiceStarting = uiState.isVoiceStarting,
                 isVoiceListening = uiState.isVoiceListening,
                 isVoiceAutoSending = uiState.isVoiceAutoSending,
                 isGenerating = uiState.isGenerating,
                 isImageGenerating = uiState.imageGenerationState is ImageGenerationState.Generating,
+                isSuggesting = uiState.isSuggesting,
                 isVoiceSpeaking = uiState.isVoiceSpeaking,
                 canVoiceOutput = uiState.hasSpeakableAssistantMessage,
                 onVoiceOutput = viewModel::speakLatestAssistantMessage,
@@ -422,11 +430,8 @@ fun ChatScreen(
         }
     }
 
-    AnimatedVisibility(
-        visible = uiState.showSessionDrawer,
-        enter = slideInHorizontally(initialOffsetX = { -it }) + fadeIn(animationSpec = tween(300)),
-        exit = slideOutHorizontally(targetOffsetX = { -it }) + fadeOut(animationSpec = tween(200))
-    ) {
+    // 对话列表：覆盖全页面而非抽屉叠层，避免输入框被抬高
+    if (uiState.showSessionDrawer) {
         var showRoleEditor by remember { mutableStateOf(false) }
 
         ConversationDrawerSheet(
