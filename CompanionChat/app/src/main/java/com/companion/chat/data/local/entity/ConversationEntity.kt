@@ -13,5 +13,6 @@ data class ConversationEntity(
     val title: String,
     val roleCardId: Long? = null,
     val createdAt: Long,
-    val updatedAt: Long
+    val updatedAt: Long,
+    val isUserRenamed: Boolean = false
 )

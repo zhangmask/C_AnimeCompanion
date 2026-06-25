@@ -221,7 +221,13 @@ fun MainApp(onLanguageChanged: (com.companion.chat.locale.AppLanguage) -> Unit =
                     }
                 )
             }
-            composable(Screen.CHAT.route) { ChatScreen(viewModel = chatViewModel, bottomBarHeight = chatBottomBarHeight) }
+            composable(Screen.CHAT.route) {
+                ChatScreen(
+                    viewModel = chatViewModel,
+                    bottomBarHeight = chatBottomBarHeight,
+                    onRoleCardClick = { roleId -> navController.navigate(DiscoverRoutes.detail(roleId.toString())) }
+                )
+            }
             composable(Screen.MEMORY.route) {
                 MemoryScreen(memoryViewModel = viewModel(factory = viewModelFactory))
             }

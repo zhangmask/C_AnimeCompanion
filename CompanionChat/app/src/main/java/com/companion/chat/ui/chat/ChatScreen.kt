@@ -111,7 +111,8 @@ import kotlinx.coroutines.flow.collect
 fun ChatScreen(
     modifier: Modifier = Modifier,
     viewModel: ChatViewModel = viewModel(),
-    bottomBarHeight: androidx.compose.ui.unit.Dp = 0.dp
+    bottomBarHeight: androidx.compose.ui.unit.Dp = 0.dp,
+    onRoleCardClick: (Long) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
@@ -392,7 +393,11 @@ fun ChatScreen(
                             MessageBubble(
                                 message = message,
                                 assistantAvatarUri = uiState.assistantAvatarUri.ifBlank { null },
-                                userAvatarUri = userProfile.avatarUri.ifBlank { null }
+                                userAvatarUri = userProfile.avatarUri.ifBlank { null },
+                                onAssistantAvatarClick = {
+                                    uiState.sessions.firstOrNull { it.id == uiState.currentSessionId }
+                                        ?.roleCardId?.let { onRoleCardClick(it) }
+                                }
                             )
                         }
                     }
@@ -456,7 +461,8 @@ fun ChatScreen(
             onDeleteSession = viewModel::deleteSession,
             onEditingTitleChange = viewModel::updateEditingTitle,
             onConfirmEditing = viewModel::confirmEditingTitle,
-            onCancelEditing = viewModel::cancelEditingTitle
+            onCancelEditing = viewModel::cancelEditingTitle,
+            onRoleCardClick = onRoleCardClick
         )
 
         if (showRoleEditor) {

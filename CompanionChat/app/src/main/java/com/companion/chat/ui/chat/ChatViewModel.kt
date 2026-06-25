@@ -1370,7 +1370,7 @@ $conversationSummary"""
         val newTitle = state.editingTitle.trim().ifBlank { DEFAULT_SESSION_TITLE }
         val updatedSessions = state.sessions.map { session ->
             if (session.id == state.editingSessionId) {
-                session.copy(title = newTitle)
+                session.copy(title = newTitle, isUserRenamed = true)
             } else {
                 session
             }
@@ -1458,9 +1458,21 @@ $conversationSummary"""
         val filteredMessages = state.messages.filter {
             it.content != DEFAULT_WELCOME_MESSAGE || it.role != MessageRole.ASSISTANT
         }
-        val title = filteredMessages.firstOrNull { it.role == MessageRole.USER }?.content?.take(20)
-            ?: state.sessions.firstOrNull { it.id == state.currentSessionId }?.title
-            ?: DEFAULT_SESSION_TITLE
+        val currentSession = state.sessions.firstOrNull { it.id == state.currentSessionId }
+        // Title logic: keep role name if session has roleCard & user didn't rename; otherwise use message snippet
+        val title = if (currentSession?.isUserRenamed == true) {
+            currentSession.title
+        } else if (currentSession?.roleCardId != null) {
+            if (currentSession.title == DEFAULT_SESSION_TITLE) {
+                state.availableRoleCards.firstOrNull { it.id == currentSession.roleCardId }?.name ?: currentSession.title
+            } else {
+                currentSession.title
+            }
+        } else {
+            filteredMessages.firstOrNull { it.role == MessageRole.USER }?.content?.take(20)
+                ?: currentSession?.title
+                ?: DEFAULT_SESSION_TITLE
+        }
         val updatedAt = System.currentTimeMillis()
         val updatedSessions = state.sessions.map { session ->
             if (session.id == state.currentSessionId) {

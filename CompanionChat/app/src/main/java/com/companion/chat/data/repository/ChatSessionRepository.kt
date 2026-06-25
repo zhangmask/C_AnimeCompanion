@@ -107,7 +107,8 @@ private fun ConversationEntity.toDomainModel(): ConversationSession {
         title = title,
         roleCardId = roleCardId,
         createdAt = createdAt,
-        updatedAt = updatedAt
+        updatedAt = updatedAt,
+        isUserRenamed = isUserRenamed
     )
 }
 
@@ -117,7 +118,8 @@ private fun ConversationSession.toEntity(): ConversationEntity {
         title = title,
         roleCardId = roleCardId,
         createdAt = createdAt,
-        updatedAt = updatedAt
+        updatedAt = updatedAt,
+        isUserRenamed = isUserRenamed
     )
 }
 

@@ -150,7 +150,8 @@ private fun ConversationSession.toEntity(): ConversationEntity {
         id = id,
         title = title,
         createdAt = createdAt,
-        updatedAt = updatedAt
+        updatedAt = updatedAt,
+        isUserRenamed = isUserRenamed
     )
 }
 

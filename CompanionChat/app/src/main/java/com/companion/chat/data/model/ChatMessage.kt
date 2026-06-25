@@ -29,7 +29,8 @@ data class ConversationSession(
     val roleCardId: Long? = null,
     val messages: List<ChatMessage> = emptyList(),
     val createdAt: Long = System.currentTimeMillis(),
-    val updatedAt: Long = createdAt
+    val updatedAt: Long = createdAt,
+    val isUserRenamed: Boolean = false
 )
 
 fun createWelcomeMessage() = ChatMessage(

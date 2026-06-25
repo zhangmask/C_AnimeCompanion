@@ -41,7 +41,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         AgentExperience::class,
         MetaMemory::class
     ],
-    version = 6,
+    version = 7,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -69,7 +69,7 @@ abstract class CompanionDatabase : RoomDatabase() {
                     CompanionDatabase::class.java,
                     DATABASE_NAME
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
                     .addCallback(DatabaseInitializationCallback())
                     .build()
                     .also { instance = it }
@@ -262,6 +262,12 @@ abstract class CompanionDatabase : RoomDatabase() {
                         updatedAt INTEGER NOT NULL
                     )
                 """.trimIndent())
+            }
+        }
+
+        private val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE conversations ADD COLUMN isUserRenamed INTEGER NOT NULL DEFAULT 0")
             }
         }
 

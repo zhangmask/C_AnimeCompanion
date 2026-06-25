@@ -113,6 +113,7 @@ fun ConversationDrawerSheet(
     onEditingTitleChange: (String) -> Unit = {},
     onConfirmEditing: () -> Unit = {},
     onCancelEditing: () -> Unit = {},
+    onRoleCardClick: (Long) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     // DIAG: log at drawer entry
@@ -412,6 +413,9 @@ fun ConversationDrawerSheet(
                                 editingTitle = editingTitle,
                                 showActions = actionsVisibleIndex == index,
                                 roleCardAvatarUri = roleAvatarUri,
+                                onRoleCardClick = {
+                                    session.roleCardId?.let { onRoleCardClick(it) }
+                                },
                                 onClick = {
                                     actionsVisibleIndex = -1
                                     onSessionClick(session.id)
@@ -591,6 +595,7 @@ private fun SessionItem(
     onEditingTitleChange: (String) -> Unit,
     onConfirmEditing: () -> Unit,
     onCancelEditing: () -> Unit,
+    onRoleCardClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var isPressed by remember { mutableStateOf(false) }
@@ -630,7 +635,10 @@ private fun SessionItem(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // ── Avatar: 46dp circle with role image or initial letter ──
-            Box(contentAlignment = Alignment.Center) {
+            Box(
+                modifier = Modifier.clickable(enabled = session.roleCardId != null) { onRoleCardClick() },
+                contentAlignment = Alignment.Center
+            ) {
                 if (roleCardAvatarUri.isNotBlank()) {
                     AsyncImage(
                         model = roleCardAvatarUri,

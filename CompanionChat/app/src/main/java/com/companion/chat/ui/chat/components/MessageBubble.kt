@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -55,7 +56,8 @@ fun MessageBubble(
     message: ChatMessage,
     modifier: Modifier = Modifier,
     assistantAvatarUri: String? = null,
-    userAvatarUri: String? = null
+    userAvatarUri: String? = null,
+    onAssistantAvatarClick: () -> Unit = {}
 ) {
     val isUser = message.role == MessageRole.USER
     var showFullScreenImage by remember { mutableStateOf<android.net.Uri?>(null) }
@@ -68,7 +70,7 @@ fun MessageBubble(
         verticalAlignment = Alignment.Top
     ) {
         if (!isUser) {
-            AvatarIcon(isUser = false, avatarUri = assistantAvatarUri)
+            AvatarIcon(isUser = false, avatarUri = assistantAvatarUri, onClick = onAssistantAvatarClick)
             Column(
                 modifier = Modifier
                     .padding(start = 8.dp)
@@ -121,7 +123,7 @@ fun MessageBubble(
 }
 
 @Composable
-private fun AvatarIcon(isUser: Boolean, avatarUri: String? = null) {
+private fun AvatarIcon(isUser: Boolean, avatarUri: String? = null, onClick: () -> Unit = {}) {
     Box(
         modifier = Modifier
             .size(30.dp)
@@ -129,7 +131,8 @@ private fun AvatarIcon(isUser: Boolean, avatarUri: String? = null) {
             .background(
                 if (isUser) MaterialTheme.colorScheme.primaryContainer
                 else MaterialTheme.colorScheme.surfaceVariant
-            ),
+            )
+            .clickable(enabled = onClick != {}) { onClick() },
         contentAlignment = Alignment.Center
     ) {
         if (!avatarUri.isNullOrBlank()) {
@@ -207,16 +210,20 @@ private fun BubbleContent(
                 TypingIndicator()
             } else if (message.content.isNotEmpty()) {
                 if (isUser) {
-                    Text(
-                        text = message.content,
-                        color = contentColor,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
+                    SelectionContainer {
+                        Text(
+                            text = message.content,
+                            color = contentColor,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
                 } else {
-                    MarkdownMessageText(
-                        text = message.content,
-                        color = contentColor
-                    )
+                    SelectionContainer {
+                        MarkdownMessageText(
+                            text = message.content,
+                            color = contentColor
+                        )
+                    }
                 }
             }
 
