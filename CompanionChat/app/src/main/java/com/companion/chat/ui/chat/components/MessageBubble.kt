@@ -13,7 +13,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -70,7 +72,7 @@ fun MessageBubble(
         verticalAlignment = Alignment.Top
     ) {
         if (!isUser) {
-            AvatarIcon(isUser = false, avatarUri = assistantAvatarUri, onClick = onAssistantAvatarClick)
+            AvatarIcon(isUser = false, avatarUri = assistantAvatarUri, onClick = onAssistantAvatarClick.takeIf { it != {} })
             Column(
                 modifier = Modifier
                     .padding(start = 8.dp)
@@ -123,7 +125,7 @@ fun MessageBubble(
 }
 
 @Composable
-private fun AvatarIcon(isUser: Boolean, avatarUri: String? = null, onClick: () -> Unit = {}) {
+private fun AvatarIcon(isUser: Boolean, avatarUri: String? = null, onClick: (() -> Unit)? = null) {
     Box(
         modifier = Modifier
             .size(30.dp)
@@ -132,7 +134,10 @@ private fun AvatarIcon(isUser: Boolean, avatarUri: String? = null, onClick: () -
                 if (isUser) MaterialTheme.colorScheme.primaryContainer
                 else MaterialTheme.colorScheme.surfaceVariant
             )
-            .clickable(enabled = onClick != {}) { onClick() },
+            .then(
+                if (onClick != null) Modifier.clickable { onClick() }
+                else Modifier
+            ),
         contentAlignment = Alignment.Center
     ) {
         if (!avatarUri.isNullOrBlank()) {
@@ -209,21 +214,32 @@ private fun BubbleContent(
             if (!isUser && message.isStreaming && message.content.isEmpty()) {
                 TypingIndicator()
             } else if (message.content.isNotEmpty()) {
+                val clipboardManager = LocalClipboardManager.current
                 if (isUser) {
-                    SelectionContainer {
-                        Text(
-                            text = message.content,
-                            color = contentColor,
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
+                    Text(
+                        text = message.content,
+                        color = contentColor,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.pointerInput(message.id) {
+                            detectTapGestures(
+                                onLongPress = {
+                                    clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(message.content))
+                                }
+                            )
+                        }
+                    )
                 } else {
-                    SelectionContainer {
-                        MarkdownMessageText(
-                            text = message.content,
-                            color = contentColor
-                        )
-                    }
+                    MarkdownMessageText(
+                        text = message.content,
+                        color = contentColor,
+                        modifier = Modifier.pointerInput(message.id) {
+                            detectTapGestures(
+                                onLongPress = {
+                                    clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(message.content))
+                                }
+                            )
+                        }
+                    )
                 }
             }
 

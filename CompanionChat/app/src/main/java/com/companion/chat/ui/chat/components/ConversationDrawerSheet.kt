@@ -610,17 +610,6 @@ private fun SessionItem(
         modifier = modifier
             .fillMaxWidth()
             .scale(scaleVal)
-            .pointerInput(Unit) {
-                detectTapGestures(
-                    onPress = {
-                        isPressed = true
-                        tryAwaitRelease()
-                        isPressed = false
-                    },
-                    onTap = { onClick() },
-                    onLongPress = { onLongPress() }
-                )
-            }
     ) {
         Surface(
             modifier = Modifier.fillMaxWidth(),
@@ -636,7 +625,11 @@ private fun SessionItem(
         ) {
             // ── Avatar: 46dp circle with role image or initial letter ──
             Box(
-                modifier = Modifier.clickable(enabled = session.roleCardId != null) { onRoleCardClick() },
+                modifier = Modifier
+                    .clickable(
+                        enabled = session.roleCardId != null,
+                        onClickLabel = "View role detail"
+                    ) { onRoleCardClick() },
                 contentAlignment = Alignment.Center
             ) {
                 if (roleCardAvatarUri.isNotBlank()) {
@@ -716,7 +709,21 @@ private fun SessionItem(
                     )
                 }
             } else {
-                Column(modifier = Modifier.weight(1f)) {
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .pointerInput(Unit) {
+                            detectTapGestures(
+                                onPress = {
+                                    isPressed = true
+                                    tryAwaitRelease()
+                                    isPressed = false
+                                },
+                                onTap = { onClick() },
+                                onLongPress = { onLongPress() }
+                            )
+                        }
+                ) {
                     Text(
                         text = session.title,
                         fontSize = 15.sp,
