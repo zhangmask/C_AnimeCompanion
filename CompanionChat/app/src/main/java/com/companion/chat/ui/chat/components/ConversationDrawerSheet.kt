@@ -414,7 +414,10 @@ fun ConversationDrawerSheet(
                                 showActions = actionsVisibleIndex == index,
                                 roleCardAvatarUri = roleAvatarUri,
                                 onRoleCardClick = {
-                                    session.roleCardId?.let { onRoleCardClick(it) }
+                                    session.roleCardId?.let { roleId ->
+                                        onDismiss()
+                                        onRoleCardClick(roleId)
+                                    }
                                 },
                                 onClick = {
                                     actionsVisibleIndex = -1

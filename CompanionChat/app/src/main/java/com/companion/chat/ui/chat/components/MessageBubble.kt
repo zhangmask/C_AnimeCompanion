@@ -13,9 +13,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -164,7 +164,7 @@ private fun AvatarIcon(isUser: Boolean, avatarUri: String? = null, onClick: (() 
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
 private fun BubbleContent(
     message: ChatMessage,
@@ -220,25 +220,23 @@ private fun BubbleContent(
                         text = message.content,
                         color = contentColor,
                         style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.pointerInput(message.id) {
-                            detectTapGestures(
-                                onLongPress = {
-                                    clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(message.content))
-                                }
-                            )
-                        }
+                        modifier = Modifier.combinedClickable(
+                            onClick = {},
+                            onLongClick = {
+                                clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(message.content))
+                            }
+                        )
                     )
                 } else {
                     MarkdownMessageText(
                         text = message.content,
                         color = contentColor,
-                        modifier = Modifier.pointerInput(message.id) {
-                            detectTapGestures(
-                                onLongPress = {
-                                    clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(message.content))
-                                }
-                            )
-                        }
+                        modifier = Modifier.combinedClickable(
+                            onClick = {},
+                            onLongClick = {
+                                clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(message.content))
+                            }
+                        )
                     )
                 }
             }
