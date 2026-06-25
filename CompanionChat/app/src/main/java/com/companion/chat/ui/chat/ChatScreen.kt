@@ -319,6 +319,8 @@ fun ChatScreen(
                     }
                 }
 
+                var isSelectingText by remember { mutableStateOf(false) }
+
                 val lastAssistantIndex = uiState.messages.indexOfLast { it.role == MessageRole.ASSISTANT && !it.isStreaming }
 
                 // reverseLayout = true: 消息从底部向上排列，最新消息自然在底部
@@ -332,6 +334,7 @@ fun ChatScreen(
                         .weight(1f)
                         .fillMaxWidth(),
                     state = listState,
+                    userScrollEnabled = !isSelectingText,
                     reverseLayout = true,
                     contentPadding = PaddingValues(top = 8.dp, bottom = 10.dp),
                     verticalArrangement = Arrangement.spacedBy(2.dp)
@@ -397,7 +400,8 @@ fun ChatScreen(
                                 onAssistantAvatarClick = {
                                     uiState.sessions.firstOrNull { it.id == uiState.currentSessionId }
                                         ?.roleCardId?.let { onRoleCardClick(it) }
-                                }
+                                },
+                                onSelectionChanged = { isSelectingText = it }
                             )
                         }
                     }

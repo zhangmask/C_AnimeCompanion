@@ -2,6 +2,7 @@ package com.companion.chat.ui.chat.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,10 +15,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.combinedClickable
-import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.SmartToy
@@ -59,10 +59,12 @@ fun MessageBubble(
     modifier: Modifier = Modifier,
     assistantAvatarUri: String? = null,
     userAvatarUri: String? = null,
-    onAssistantAvatarClick: () -> Unit = {}
+    onAssistantAvatarClick: () -> Unit = {},
+    onSelectionChanged: (Boolean) -> Unit = {}
 ) {
     val isUser = message.role == MessageRole.USER
     var showFullScreenImage by remember { mutableStateOf<android.net.Uri?>(null) }
+    var isSelectable by remember { mutableStateOf(false) }
 
     Row(
         modifier = modifier
@@ -82,7 +84,16 @@ fun MessageBubble(
                 BubbleContent(
                     message = message,
                     isUser = false,
-                    onImageClick = { showFullScreenImage = it }
+                    isSelectable = isSelectable,
+                    onImageClick = { showFullScreenImage = it },
+                    onEnterSelectMode = {
+                        isSelectable = true
+                        onSelectionChanged(true)
+                    },
+                    onExitSelectMode = {
+                        isSelectable = false
+                        onSelectionChanged(false)
+                    }
                 )
             }
         }
@@ -97,7 +108,16 @@ fun MessageBubble(
                 BubbleContent(
                     message = message,
                     isUser = true,
-                    onImageClick = { showFullScreenImage = it }
+                    isSelectable = isSelectable,
+                    onImageClick = { showFullScreenImage = it },
+                    onEnterSelectMode = {
+                        isSelectable = true
+                        onSelectionChanged(true)
+                    },
+                    onExitSelectMode = {
+                        isSelectable = false
+                        onSelectionChanged(false)
+                    }
                 )
             }
             AvatarIcon(isUser = true, avatarUri = userAvatarUri)
@@ -169,7 +189,10 @@ private fun AvatarIcon(isUser: Boolean, avatarUri: String? = null, onClick: (() 
 private fun BubbleContent(
     message: ChatMessage,
     isUser: Boolean,
-    onImageClick: (android.net.Uri) -> Unit
+    isSelectable: Boolean = false,
+    onImageClick: (android.net.Uri) -> Unit,
+    onEnterSelectMode: () -> Unit = {},
+    onExitSelectMode: () -> Unit = {}
 ) {
     Surface(
         shape = RoundedCornerShape(
@@ -182,7 +205,17 @@ private fun BubbleContent(
         else AssistantBubbleColor,
         tonalElevation = 0.dp,
         shadowElevation = if (isUser) 2.dp else 1.dp,
-        modifier = Modifier.widthIn(max = 320.dp)
+        modifier = Modifier
+            .widthIn(max = 320.dp)
+            .then(
+                // Long press on bubble enters select mode (scroll is disabled so SelectionContainer works)
+                if (!isSelectable && message.content.isNotEmpty()) {
+                    Modifier.combinedClickable(
+                        onClick = {},
+                        onLongClick = { onEnterSelectMode() }
+                    )
+                } else Modifier
+            )
     ) {
         Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp)) {
             if (message.images.isNotEmpty()) {
@@ -214,30 +247,36 @@ private fun BubbleContent(
             if (!isUser && message.isStreaming && message.content.isEmpty()) {
                 TypingIndicator()
             } else if (message.content.isNotEmpty()) {
-                val clipboardManager = LocalClipboardManager.current
-                if (isUser) {
-                    Text(
-                        text = message.content,
-                        color = contentColor,
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.combinedClickable(
-                            onClick = {},
-                            onLongClick = {
-                                clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(message.content))
-                            }
-                        )
-                    )
+                if (isSelectable) {
+                    // Select mode: SelectionContainer active, scroll is disabled so gestures work
+                    SelectionContainer {
+                        if (isUser) {
+                            Text(
+                                text = message.content,
+                                color = contentColor,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        } else {
+                            MarkdownMessageText(
+                                text = message.content,
+                                color = contentColor
+                            )
+                        }
+                    }
                 } else {
-                    MarkdownMessageText(
-                        text = message.content,
-                        color = contentColor,
-                        modifier = Modifier.combinedClickable(
-                            onClick = {},
-                            onLongClick = {
-                                clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(message.content))
-                            }
+                    // Normal mode: just display text (long press on Surface enters select mode)
+                    if (isUser) {
+                        Text(
+                            text = message.content,
+                            color = contentColor,
+                            style = MaterialTheme.typography.bodyMedium
                         )
-                    )
+                    } else {
+                        MarkdownMessageText(
+                            text = message.content,
+                            color = contentColor
+                        )
+                    }
                 }
             }
 
@@ -250,6 +289,19 @@ private fun BubbleContent(
                     modifier = Modifier
                         .align(Alignment.End)
                         .padding(top = 4.dp)
+                )
+            }
+
+            // Exit select mode hint (visible only in select mode)
+            if (isSelectable) {
+                Text(
+                    text = Strings.txt(StringsKey.close),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier
+                        .align(Alignment.End)
+                        .padding(top = 4.dp)
+                        .clickable { onExitSelectMode() }
                 )
             }
         }
