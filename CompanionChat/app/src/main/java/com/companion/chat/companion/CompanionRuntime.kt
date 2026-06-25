@@ -2,10 +2,13 @@ package com.companion.chat.companion
 
 import com.companion.chat.data.context.ContextManager
 import com.companion.chat.data.context.ContextSettings
+import com.companion.chat.data.context.SystemPromptBuilder
 import com.companion.chat.data.context.PromptAssembler
+import com.companion.chat.locale.AppLanguage
 import com.companion.chat.data.engine.InferenceEngine
 import com.companion.chat.data.model.ChatMessage
 import com.companion.chat.data.model.MessageRole
+import com.companion.chat.data.local.dao.FtsQueryHelper
 import com.companion.chat.data.memory.MemoryPromptBuilder
 import com.companion.chat.data.memory.MemoryRepository
 import com.companion.chat.data.profile.UserProfileRepository
@@ -28,6 +31,7 @@ class CompanionRuntime(
     private val promptAssembler: PromptAssembler = PromptAssembler(),
     private val memoryPromptBuilder: MemoryPromptBuilder = MemoryPromptBuilder(),
     private val roleCardPromptBuilder: RoleCardPromptBuilder = RoleCardPromptBuilder(),
+    private val appLanguage: AppLanguage = AppLanguage.DEFAULT,
     private val defaultBasePrompt: String = DEFAULT_BASE_PROMPT
 ) {
     /** 缓存上次构建的 system prompt，避免每轮都重建 Conversation */
@@ -35,6 +39,7 @@ class CompanionRuntime(
     private var lastBuiltSystemPrompt: String = ""
 
     suspend fun refreshBasePrompt(): String {
+        val systemPrompt = SystemPromptBuilder.build(appLanguage)
         val rolePrompt = roleCardPromptBuilder.build(roleCardRepository.getActiveRoleCard())
         val skillPrompt = skillRepository.getActiveSkill()?.systemPrompt?.trim().orEmpty()
         val userProfilePrompt = buildUserProfilePrompt()
@@ -95,8 +100,12 @@ class CompanionRuntime(
         return refreshBasePrompt()
     }
 
-    suspend fun buildConfirmedPreferencePrompt(): String {
-        val confirmedPreferences = preferenceRepository?.getConfirmedPreferences().orEmpty()
+    suspend fun buildConfirmedPreferencePrompt(roleCardId: Long? = null): String {
+        val confirmedPreferences = if (roleCardId != null) {
+            preferenceRepository?.getConfirmedPreferencesForRole(roleCardId = roleCardId).orEmpty()
+        } else {
+            preferenceRepository?.getConfirmedPreferences().orEmpty()
+        }
         if (confirmedPreferences.isEmpty()) {
             return ""
         }
@@ -110,34 +119,35 @@ class CompanionRuntime(
 
     suspend fun buildMemoryContext(userInput: String, roleCardId: Long? = null): CompanionMemoryContext {
         val repository = memoryRepository ?: return CompanionMemoryContext()
-        val persistentMemories = if (roleCardId != null) {
-            repository.getPersistentMemoriesForRole(roleCardId)
+
+        // 改造后：使用 FTS 检索替代 getPersistentMemories
+        val keywords = extractKeywords(userInput)
+        val ftsTerms = if (keywords.isNotEmpty()) {
+            keywords.map { "\"${it.replace("\"", "")}\"" }.joinToString(" OR ")
+        } else null
+
+        val relevantMemories = if (ftsTerms != null && roleCardId != null) {
+            repository.searchByFTSWithRole(ftsTerms, roleCardId, 5)
+        } else if (ftsTerms != null) {
+            repository.searchByFTS(ftsTerms, 5)
         } else {
-            repository.getPersistentMemories()
+            emptyList()
         }
 
-        // 更新 BM25 索引（如果需要）
-        updateMemoryIndexIfNeeded(repository, roleCardId)
-
-        // 使用 BM25 检索相关记忆
-        val relevantMemories = memoryPromptBuilder.retrieveRelevant(userInput, topK = 5)
-
         return CompanionMemoryContext(
-            persistentPrompt = memoryPromptBuilder.buildPersistent(persistentMemories),
+            persistentPrompt = memoryPromptBuilder.build(relevantMemories),
             retrievedPrompt = memoryPromptBuilder.build(relevantMemories),
-            persistentMemoryCount = persistentMemories.size,
+            persistentMemoryCount = relevantMemories.size,
             retrievedMemoryCount = relevantMemories.size
         )
     }
 
-    private suspend fun updateMemoryIndexIfNeeded(repository: MemoryRepository, roleCardId: Long?) {
-        // 获取所有记忆用于构建索引
-        val allMemories = if (roleCardId != null) {
-            repository.getAllMemories().filter { it.roleCardId == roleCardId || it.roleCardId == null }
-        } else {
-            repository.getAllMemories()
-        }
-        memoryPromptBuilder.updateIndex(allMemories)
+    private fun extractKeywords(userInput: String): List<String> {
+        return userInput.lowercase()
+            .replace(Regex("[^a-z0-9\\u4E00-\\u9FFF]+"), " ")
+            .trim().split(Regex("\\s+"))
+            .filter { it.length >= 2 }
+            .distinct()
     }
 
     suspend fun rebuildConversationWithContext(
@@ -300,8 +310,8 @@ class CompanionRuntime(
     }
 
     companion object {
-        const val DEFAULT_BASE_PROMPT =
-            "你是 Anime Companion 的本地私密陪伴智能体。默认使用中文，像长期熟悉用户的伙伴一样自然回应：亲近但不过界，温柔但不说教，记得对话中的连续性与用户已经确认的偏好。你的记忆描述始终以用户为归属，不把用户的信息说成自己的经历。回答应简洁、有情绪承接，除非用户明确需要步骤或分析，否则少用训诫式建议。\n\n内在对话分支规则：当用户突然从情感陪伴对话转向知识问答、翻译、计算等任务型请求时，你必须用 || 分隔符将回复分成两部分：第一部分是准确简洁的知识回答，第二部分是一句简短的情感承接回到陪伴语境。格式：「知识回答||情感承接」。例如用户在聊心事时突然问「北京到上海多远」，你回复「约1318公里||说起来，你之前提到想出去走走，是不是在考虑旅行？」。如果用户的请求不涉及知识问答，不需要使用 || 分隔符，直接正常回复即可。绝对禁止输出括号标记、模式声明或切换提示。"
+        /** @deprecated Use [SystemPromptBuilder.build] instead. */
+        val DEFAULT_BASE_PROMPT: String = SystemPromptBuilder.build(AppLanguage.DEFAULT)
     }
 }
 

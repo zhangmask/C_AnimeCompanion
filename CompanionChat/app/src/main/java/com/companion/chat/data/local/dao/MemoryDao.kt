@@ -7,6 +7,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.RawQuery
 import androidx.room.Update
+import androidx.sqlite.db.SimpleSQLiteQuery
 import androidx.sqlite.db.SupportSQLiteQuery
 import com.companion.chat.data.local.entity.Memory
 import kotlinx.coroutines.flow.Flow
@@ -32,45 +33,76 @@ interface MemoryDao {
     @Query("SELECT * FROM memories ORDER BY updatedAt DESC")
     fun observeAll(): Flow<List<Memory>>
 
-    @Query("SELECT * FROM memories WHERE layer = :layer ORDER BY updatedAt DESC")
-    suspend fun getByLayer(layer: String): List<Memory>
-
-    @Query("SELECT * FROM memories WHERE layer = 'long_term' ORDER BY updatedAt DESC")
-    suspend fun getPersistentMemories(): List<Memory>
-
-    @Query("SELECT * FROM memories WHERE (roleCardId = :roleCardId OR roleCardId IS NULL) AND layer = 'long_term' ORDER BY updatedAt DESC")
-    suspend fun getPersistentMemoriesForRole(roleCardId: Long): List<Memory>
-
-    @Query("SELECT * FROM memories WHERE roleCardId IS NULL AND layer = 'long_term' ORDER BY updatedAt DESC")
-    suspend fun getGlobalPersistentMemories(): List<Memory>
-
     @Query("SELECT * FROM memories WHERE category = :category ORDER BY updatedAt DESC")
     suspend fun getByCategory(category: String): List<Memory>
 
-    @Query(
-        """
-        SELECT * FROM memories
-        WHERE category = :category AND content = :content
-        LIMIT 1
-        """
-    )
+    @Query("SELECT * FROM memories WHERE category = :category AND content = :content LIMIT 1")
     suspend fun findExactMatch(category: String, content: String): Memory?
 
+    @Query("SELECT * FROM memories WHERE strength > :minStrength ORDER BY strength DESC, lastAccessedAt DESC")
+    suspend fun getActiveMemories(minStrength: Double = 0.05): List<Memory>
+
+    // ── 强度衰减（按 idle 天数分段） ──
+    @Query("""
+        UPDATE memories SET strength = CASE
+            WHEN :idleDays >= 4 THEN ROUND(strength * 0.90, 4)
+            WHEN :idleDays = 3  THEN ROUND(strength * 0.90, 4)
+            WHEN :idleDays = 2  THEN ROUND(strength * 0.80, 4)
+            WHEN :idleDays = 1  THEN ROUND(strength * 0.70, 4)
+            ELSE strength
+        END, updatedAt = :now, lastAccessedAt = :now
+        WHERE id = :id AND strength > 0.05
+    """)
+    suspend fun applyDecayByAge(id: Long, idleDays: Int, now: Long)
+
+    // ── 强化（只更新 strength 和 lastAccessedAt，不误改 updatedAt） ──
+    @Query("""
+        UPDATE memories
+        SET strength = MIN(1.0, strength + :delta), lastAccessedAt = :now
+        WHERE id = :id
+    """)
+    suspend fun strengthen(id: Long, delta: Double, now: Long)
+
+    // ── 清理弱记忆 ──
+    @Query("DELETE FROM memories WHERE strength < :threshold")
+    suspend fun deleteByStrengthBelow(threshold: Double): Int
+
+    // ── FTS 检索（加 LIMIT） ──
+    // 注意：memories_fts 是运行时创建的 FTS4 虚拟表，Room 无法编译期验证，故使用 @RawQuery
     @RawQuery(observedEntities = [Memory::class])
     suspend fun searchByFTS(query: SupportSQLiteQuery): List<Memory>
 
-    @Query("UPDATE memories SET referenceCount = referenceCount + 1 WHERE id = :id")
-    suspend fun incrementReference(id: Long): Int
+    // ── FTS 检索 + 角色过滤 ──
+    @RawQuery(observedEntities = [Memory::class])
+    suspend fun searchByFTSWithRole(query: SupportSQLiteQuery): List<Memory>
+}
 
-    @Query("UPDATE memories SET layer = 'long_term', updatedAt = :now WHERE id = :id")
-    suspend fun promoteToLongTerm(id: Long, now: Long = System.currentTimeMillis()): Int
+/**
+ * FTS 查询构建器 — 隔离 @RawQuery 调用方的构造逻辑。
+ */
+object FtsQueryHelper {
+    /** 构建 FTS 查询（按 strength 排序 + LIMIT）。 */
+    fun buildFtsQuery(expression: String, limit: Int = 5): SupportSQLiteQuery {
+        val sql = """
+            SELECT memories.* FROM memories
+            JOIN memories_fts ON memories.id = memories_fts.docid
+            WHERE memories_fts MATCH ?
+            ORDER BY memories.strength DESC, memories.lastAccessedAt DESC
+            LIMIT ?
+        """.trimIndent()
+        return SimpleSQLiteQuery(sql, arrayOf<Any>(expression, limit))
+    }
 
-    @Query("UPDATE memories SET roleCardId = NULL, updatedAt = :now WHERE id = :id")
-    suspend fun promoteToGlobal(id: Long, now: Long = System.currentTimeMillis()): Int
-
-    @Query("DELETE FROM memories WHERE layer = 'short_term' AND expiresAt IS NOT NULL AND expiresAt < :now")
-    suspend fun cleanupExpiredShortTerm(now: Long): Int
-
-    @Query("SELECT * FROM memories WHERE layer = 'short_term' AND referenceCount >= 5")
-    suspend fun getPromotableShortTerm(): List<Memory>
+    /** 构建 FTS 查询（按 strength 排序 + LIMIT + 角色过滤）。 */
+    fun buildFtsQueryWithRole(expression: String, roleCardId: Long, limit: Int = 5): SupportSQLiteQuery {
+        val sql = """
+            SELECT memories.* FROM memories
+            JOIN memories_fts ON memories.id = memories_fts.docid
+            WHERE memories_fts MATCH ?
+              AND (memories.roleCardId IS NULL OR memories.roleCardId = ?)
+            ORDER BY memories.strength DESC, memories.lastAccessedAt DESC
+            LIMIT ?
+        """.trimIndent()
+        return SimpleSQLiteQuery(sql, arrayOf<Any>(expression, roleCardId, limit))
+    }
 }

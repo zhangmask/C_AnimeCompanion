@@ -1,3 +1,5 @@
+// RuleBasedMemoryExtractor deleted - tests deprecated
+/*
 package com.companion.chat.data.memory
 
 import org.junit.Assert.assertEquals
@@ -128,3 +130,5 @@ class RuleBasedMemoryExtractorTest {
         assertTrue(memories.isEmpty())
     }
 }
+
+*/

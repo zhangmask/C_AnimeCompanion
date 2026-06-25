@@ -100,6 +100,9 @@ import com.companion.chat.ui.theme.BrandOutlineVariant
 import com.companion.chat.ui.theme.BrandPrimaryContainer
 import kotlinx.coroutines.delay
 import com.companion.chat.ui.theme.BrandSecondaryContainer
+import com.companion.chat.locale.LocalLanguage
+import com.companion.chat.locale.Strings
+import com.companion.chat.locale.StringsKey
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -116,26 +119,26 @@ fun HomeScreen(
         modifier = modifier,
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("发现") },
+                title = { Text(Strings.txt(StringsKey.tab_discover)) },
                 actions = {
                     Box {
                         IconButton(onClick = { sortMenuOpen = true }) {
-                            Icon(Icons.AutoMirrored.Filled.Sort, contentDescription = "排序")
+                            Icon(Icons.AutoMirrored.Filled.Sort, contentDescription = Strings.txt(StringsKey.home_sort))
                         }
                         DropdownMenu(
                             expanded = sortMenuOpen,
                             onDismissRequest = { sortMenuOpen = false },
                             shape = RoundedCornerShape(12.dp)
                         ) {
-                            SortMenuItem("热门", RoleSortMode.HOT, uiState.sortMode) {
+                            SortMenuItem(Strings.txt(StringsKey.home_sort_hot), RoleSortMode.HOT, uiState.sortMode) {
                                 sortMenuOpen = false
                                 viewModel.setSortMode(it)
                             }
-                            SortMenuItem("最新", RoleSortMode.NEWEST, uiState.sortMode) {
+                            SortMenuItem(Strings.txt(StringsKey.home_sort_newest), RoleSortMode.NEWEST, uiState.sortMode) {
                                 sortMenuOpen = false
                                 viewModel.setSortMode(it)
                             }
-                            SortMenuItem("名称", RoleSortMode.NAME, uiState.sortMode) {
+                            SortMenuItem(Strings.txt(StringsKey.home_sort_name), RoleSortMode.NAME, uiState.sortMode) {
                                 sortMenuOpen = false
                                 viewModel.setSortMode(it)
                             }
@@ -218,10 +221,10 @@ fun DiscoverRoleDetailScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text(item?.role?.name ?: "角色详情") },
+                title = { Text(item?.role?.name ?: Strings.txt(StringsKey.home_role_detail)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.Close, contentDescription = "返回")
+                        Icon(Icons.Default.Close, contentDescription = Strings.txt(StringsKey.back))
                     }
                 }
             )
@@ -234,7 +237,7 @@ fun DiscoverRoleDetailScreen(
                     .padding(innerPadding),
                 contentAlignment = Alignment.Center
             ) {
-                Text("未找到角色")
+                Text(Strings.txt(StringsKey.home_not_found))
             }
         } else {
             Column(
@@ -265,9 +268,9 @@ fun DiscoverRoleDetailScreen(
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-                DetailSection("人设摘要", item.role.persona)
-                DetailSection("语音", item.role.voiceSummary)
-                DetailSection("图片风格", item.role.imageStyle.ifBlank { "未配置" })
+                DetailSection(Strings.txt(StringsKey.detail_persona), item.role.persona)
+                DetailSection(Strings.txt(StringsKey.detail_voice), item.role.voiceSummary)
+                DetailSection(Strings.txt(StringsKey.detail_image_style), item.role.imageStyle.ifBlank { Strings.txt(StringsKey.voice_not_configured) })
             }
         }
     }
@@ -309,7 +312,7 @@ private fun DiscoverControls(
                 ),
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
             singleLine = true,
-            placeholder = { Text("搜索角色、作者、标签") },
+            placeholder = { Text(Strings.txt(StringsKey.home_search_hint)) },
             shape = RoundedCornerShape(9999.dp),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedContainerColor = BrandSurfaceContainer,
@@ -353,12 +356,12 @@ private fun DiscoverControls(
                     )
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            "创建你的角色",
+                            Strings.txt(StringsKey.home_create_your_role),
                             style = MaterialTheme.typography.titleSmall,
                             color = Color.White
                         )
                         Text(
-                            "人设、头像、语音会保存到角色卡",
+                            Strings.txt(StringsKey.home_create_hint),
                             style = MaterialTheme.typography.bodySmall,
                             color = Color.White.copy(alpha = 0.85f)
                         )
@@ -370,7 +373,7 @@ private fun DiscoverControls(
                             contentColor = BrandPrimary
                         )
                     ) {
-                        Text("创建")
+                        Text(Strings.txt(StringsKey.home_create))
                     }
                 }
             }
@@ -380,7 +383,7 @@ private fun DiscoverControls(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "显示私密",
+                text = Strings.txt(StringsKey.home_show_mature),
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.weight(1f)
             )
@@ -465,13 +468,13 @@ private fun DiscoverRoleCard(
                     ) {
                         Icon(
                             imageVector = if (item.collection.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                            contentDescription = "收藏",
+                            contentDescription = Strings.txt(StringsKey.home_start_chat_btn),
                             tint = if (item.collection.isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
                 Text(
-                    text = "by ${item.role.author}",
+                    text = Strings.txt(StringsKey.home_by_author, item.role.author),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -518,15 +521,15 @@ private fun RoleHero(item: DiscoverRoleCardItem) {
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    text = "by ${item.role.author} · 热度 ${item.role.heat}",
+                    text = "${Strings.txt(StringsKey.home_by_author, item.role.author)} · ${item.role.heat}",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             if (item.collection.importedRoleCardId != null) {
-                ElevatedAssistChip(onClick = {}, label = { Text("已导入") })
+                ElevatedAssistChip(onClick = {}, label = { Text(Strings.txt(StringsKey.home_imported)) })
             } else if (item.collection.isUnlocked) {
-                ElevatedAssistChip(onClick = {}, label = { Text("已解锁") })
+                ElevatedAssistChip(onClick = {}, label = { Text(Strings.txt(StringsKey.home_unlocked)) })
             }
         }
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -553,7 +556,7 @@ private fun RoleDetailActions(
             ) {
                 Icon(Icons.AutoMirrored.Filled.Chat, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
-                Text("开始聊天")
+                Text(Strings.txt(StringsKey.home_start_chat_btn))
             }
             OutlinedButton(onClick = onFavorite) {
                 Icon(
@@ -569,7 +572,7 @@ private fun RoleDetailActions(
             ) {
                 Icon(Icons.Default.LockOpen, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
-                Text(if (item.collection.isUnlocked) "已解锁" else "收藏解锁")
+                Text(if (item.collection.isUnlocked) Strings.txt(StringsKey.home_unlocked) else Strings.txt(StringsKey.home_unlock_to_favorite))
             }
             OutlinedButton(
                 onClick = onGenerateImage,
@@ -578,7 +581,7 @@ private fun RoleDetailActions(
             ) {
                 Icon(Icons.Default.Image, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
-                Text(if (isGeneratingImage) "生成中" else "生成图片")
+                Text(if (isGeneratingImage) Strings.txt(StringsKey.home_generating) else Strings.txt(StringsKey.home_generate_image))
             }
         }
         if (item.collection.importedRoleCardId != null) {
@@ -588,7 +591,7 @@ private fun RoleDetailActions(
             ) {
                 Icon(Icons.Default.Edit, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
-                Text("编辑角色卡")
+                Text(Strings.txt(StringsKey.home_edit_character))
             }
         }
     }
@@ -632,7 +635,7 @@ private fun CoverBlock(
                 color = MaterialTheme.colorScheme.errorContainer
             ) {
                 Text(
-                    text = "私密",
+                    text = Strings.txt(StringsKey.home_mature_label),
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onErrorContainer
@@ -646,7 +649,7 @@ private fun CoverBlock(
 private fun DetailSection(title: String, body: String) {
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            if (title == "语音") {
+            if (title == Strings.txt(StringsKey.detail_voice)) {
                 Icon(
                     Icons.AutoMirrored.Filled.VolumeUp,
                     contentDescription = null,

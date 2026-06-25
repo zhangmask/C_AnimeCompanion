@@ -100,6 +100,10 @@ import com.companion.chat.ui.theme.BrandSurfaceContainer
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.companion.chat.locale.AppLanguage
+import com.companion.chat.locale.LocalLanguage
+import com.companion.chat.locale.Strings
+import com.companion.chat.locale.StringsKey
 
 // ── Memory-specific color palette ──
 private val MemoryFactBg = Color(0xFFE8F0FB)
@@ -156,7 +160,7 @@ fun MemoryScreen(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        text = "记忆管理",
+                        text = Strings.txt(StringsKey.memory_title),
                         style = MaterialTheme.typography.titleLarge
                     )
                 },
@@ -164,7 +168,7 @@ fun MemoryScreen(
                     IconButton(onClick = { openEditor(null) }) {
                         Icon(
                             imageVector = Icons.Default.Add,
-                            contentDescription = "新增记忆"
+                            contentDescription = Strings.txt(StringsKey.memory_add)
                         )
                     }
                 }
@@ -180,7 +184,7 @@ fun MemoryScreen(
             // ── Search + Filter Button ──
             var memorySearchQuery by remember { mutableStateOf("") }
             var showFilterDialog by remember { mutableStateOf(false) }
-            var layerFilter by remember { mutableStateOf("all") }  // "all", "short_term", "long_term"
+            var strengthFilter by remember { mutableStateOf("all") }  // "all", "strong", "weak"
             var selectedRoleCardId by remember { mutableStateOf<Long?>(null) }
 
             Row(
@@ -195,7 +199,7 @@ fun MemoryScreen(
                     onValueChange = { memorySearchQuery = it },
                     modifier = Modifier.weight(1f),
                     singleLine = true,
-                    placeholder = { Text("搜索记忆内容...") },
+                    placeholder = { Text(Strings.txt(StringsKey.memory_search_hint)) },
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
                     textStyle = MaterialTheme.typography.bodyMedium,
                     colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
@@ -208,7 +212,7 @@ fun MemoryScreen(
                         .size(48.dp)
                         .clip(androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
                         .background(
-                            if (uiState.filter != MemoryFilter.ALL || layerFilter != "all" || selectedRoleCardId != null)
+                            if (uiState.filter != MemoryFilter.ALL || strengthFilter != "all" || selectedRoleCardId != null)
                                 BrandPrimaryContainer
                             else
                                 MaterialTheme.colorScheme.surfaceContainerLow
@@ -218,8 +222,8 @@ fun MemoryScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Psychology,
-                        contentDescription = "筛选",
-                        tint = if (uiState.filter != MemoryFilter.ALL || layerFilter != "all" || selectedRoleCardId != null)
+                        contentDescription = Strings.txt(StringsKey.memory_filter),
+                        tint = if (uiState.filter != MemoryFilter.ALL || strengthFilter != "all" || selectedRoleCardId != null)
                             BrandPrimary
                         else
                             MaterialTheme.colorScheme.onSurfaceVariant,
@@ -229,17 +233,17 @@ fun MemoryScreen(
             }
 
             // Show active filter summary
-            val hasFilter = uiState.filter != MemoryFilter.ALL || layerFilter != "all" || selectedRoleCardId != null
+            val hasFilter = uiState.filter != MemoryFilter.ALL || strengthFilter != "all" || selectedRoleCardId != null
             if (hasFilter) {
                 val filterParts = mutableListOf<String>()
-                if (uiState.filter != MemoryFilter.ALL) filterParts.add(filterLabel(uiState.filter))
-                if (layerFilter != "all") filterParts.add(layerLabel(layerFilter))
+                if (uiState.filter != MemoryFilter.ALL) filterParts.add(filterLabel(uiState.filter, LocalLanguage.current))
+                if (strengthFilter != "all") filterParts.add("S:" + strengthFilter)
                 if (selectedRoleCardId != null) {
-                    val roleName = uiState.roleCards.find { it.id == selectedRoleCardId }?.name ?: "未知角色"
-                    filterParts.add("角色: $roleName")
+                    val roleName = uiState.roleCards.find { it.id == selectedRoleCardId }?.name ?: Strings.txt(StringsKey.memory_unknown_role)
+                    filterParts.add(Strings.txt(StringsKey.memory_role_prefix, roleName))
                 }
                 Text(
-                    text = "筛选: ${filterParts.joinToString(" · ")}",
+                    text = Strings.txt(StringsKey.memory_filter_label, filterParts.joinToString(" · ")),
                     style = MaterialTheme.typography.labelSmall,
                     color = BrandPrimary,
                     fontWeight = FontWeight.Medium,
@@ -252,10 +256,10 @@ fun MemoryScreen(
             // Filter bottom sheet dialog with tabs
             if (showFilterDialog) {
                 var tempCategoryFilter by remember { mutableStateOf(uiState.filter) }
-                var tempLayerFilter by remember { mutableStateOf(layerFilter) }
+                var tempStrengthFilter by remember { mutableStateOf(strengthFilter) }
                 var tempRoleCardId by remember { mutableStateOf(selectedRoleCardId) }
                 var selectedTab by remember { mutableIntStateOf(0) }
-                val tabs = listOf("分类", "层级", "角色")
+                val tabs = listOf(Strings.txt(StringsKey.memory_tab_category), Strings.txt(StringsKey.memory_tab_layer), Strings.txt(StringsKey.memory_tab_role))
 
                 Dialog(
                     onDismissRequest = { showFilterDialog = false },
@@ -286,7 +290,7 @@ fun MemoryScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        text = "筛选记忆",
+                                        text = Strings.txt(StringsKey.memory_filter_title),
                                         fontSize = 18.sp,
                                         fontWeight = FontWeight.Bold,
                                         modifier = Modifier.weight(1f)
@@ -301,7 +305,7 @@ fun MemoryScreen(
                                     ) {
                                         Icon(
                                             Icons.Default.Close,
-                                            "关闭",
+                                            Strings.txt(StringsKey.close),
                                             tint = Color(0xFF49454F),
                                             modifier = Modifier.size(18.dp)
                                         )
@@ -365,7 +369,7 @@ fun MemoryScreen(
                                                 FilterChip(
                                                     selected = isSelected,
                                                     onClick = { tempCategoryFilter = filter },
-                                                    label = { Text(filterLabel(filter)) },
+                                                    label = { Text(filterLabel(filter, LocalLanguage.current)) },
                                                     colors = FilterChipDefaults.filterChipColors(
                                                         selectedContainerColor = BrandPrimary,
                                                         selectedLabelColor = Color.White,
@@ -381,7 +385,8 @@ fun MemoryScreen(
                                         }
                                     }
                                     1 -> {
-                                        // Layer tab - horizontal scrollable chips
+                                        // Strength tab - horizontal scrollable chips
+                                        val lang0 = LocalLanguage.current
                                         LazyRow(
                                             modifier = Modifier
                                                 .fillMaxWidth()
@@ -389,13 +394,13 @@ fun MemoryScreen(
                                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                                             contentPadding = PaddingValues(horizontal = 20.dp)
                                         ) {
-                                            val layerOptions = listOf("all" to "全部", "short_term" to "短期", "long_term" to "长期")
-                                            items(layerOptions.size) { index ->
-                                                val (value, label) = layerOptions[index]
-                                                val isSelected = tempLayerFilter == value
+                                            val strengthOptions = listOf("all" to Strings.get(lang0, StringsKey.memory_layer_all), "weak" to "Weak (<0.4)", "strong" to "Strong (>=0.4)")
+                                            items(strengthOptions.size) { index ->
+                                                val (value, label) = strengthOptions[index]
+                                                val isSelected = tempStrengthFilter == value
                                                 FilterChip(
                                                     selected = isSelected,
-                                                    onClick = { tempLayerFilter = value },
+                                                    onClick = { tempStrengthFilter = value },
                                                     label = { Text(label) },
                                                     colors = FilterChipDefaults.filterChipColors(
                                                         selectedContainerColor = BrandPrimary,
@@ -424,7 +429,7 @@ fun MemoryScreen(
                                                 FilterChip(
                                                     selected = tempRoleCardId == null,
                                                     onClick = { tempRoleCardId = null },
-                                                    label = { Text("全部角色") },
+                                                    label = { Text(Strings.txt(StringsKey.memory_all_roles)) },
                                                     colors = FilterChipDefaults.filterChipColors(
                                                         selectedContainerColor = BrandPrimary,
                                                         selectedLabelColor = Color.White,
@@ -472,7 +477,7 @@ fun MemoryScreen(
                                             .height(48.dp)
                                             .clickable {
                                                 memoryViewModel.setFilter(tempCategoryFilter)
-                                                layerFilter = tempLayerFilter
+                                                strengthFilter = tempStrengthFilter
                                                 selectedRoleCardId = tempRoleCardId
                                                 memoryViewModel.setRoleCardFilter(tempRoleCardId)
                                                 showFilterDialog = false
@@ -485,7 +490,7 @@ fun MemoryScreen(
                                             contentAlignment = Alignment.Center
                                         ) {
                                             Text(
-                                                text = "确认筛选",
+                                                text = Strings.txt(StringsKey.memory_filter_confirm),
                                                 fontSize = 15.sp,
                                                 fontWeight = FontWeight.Medium,
                                                 color = Color.White
@@ -502,15 +507,15 @@ fun MemoryScreen(
             when {
                 uiState.isLoading -> {
                     EmptyState(
-                        title = "正在加载记忆",
-                        message = "请稍候..."
+                        title = Strings.txt(StringsKey.memory_loading_title),
+                        message = Strings.txt(StringsKey.memory_loading_msg)
                     )
                 }
 
                 uiState.memories.isEmpty() -> {
                     EmptyState(
-                        title = "还没有记忆",
-                        message = "在对话里说“记住...”，或点右上角新增一条。"
+                        title = Strings.txt(StringsKey.memory_empty_title),
+                        message = Strings.txt(StringsKey.memory_empty_msg)
                     )
                 }
 
@@ -518,8 +523,8 @@ fun MemoryScreen(
                     val displayMemories = uiState.memories.filter { memory ->
                         val matchesSearch = memorySearchQuery.isBlank() ||
                             memory.content.contains(memorySearchQuery, ignoreCase = true)
-                        val matchesLayer = layerFilter == "all" || memory.layer == layerFilter
-                        matchesSearch && matchesLayer
+                        val matchesStrength = strengthFilter == "all" || strengthFilter == "strong"
+                        matchesSearch && matchesStrength
                     }
                     LazyColumn(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -542,7 +547,7 @@ fun MemoryScreen(
                                     memory = memory,
                                     onEdit = { openEditor(memory) },
                                     onDelete = { deletingMemory = memory },
-                                    onPromote = { memoryViewModel.promoteMemory(memory.id) }
+                                    onPromote = { memoryViewModel.strengthenMemory(memory.id) }
                                 )
                             }
                         }
@@ -553,17 +558,17 @@ fun MemoryScreen(
     }
 
     if (showEditor) {
-        var draftLayer by remember { mutableStateOf(editingMemory?.layer ?: "short_term") }
+        var draftStrength by remember { mutableStateOf("" /* layer deprecated, use strength from memory */) }
         var draftCharacter by remember { mutableStateOf(editingMemory?.source ?: "") }
         MemoryEditorDialog(
-            title = if (editingMemory == null) "新增记忆" else "编辑记忆",
+            title = if (editingMemory == null) Strings.txt(StringsKey.memory_add) else Strings.txt(StringsKey.memory_edit),
             content = draftContent,
             category = draftCategory,
-            layer = draftLayer,
+            /* layer removed */
             characterName = draftCharacter,
             onContentChange = { draftContent = it },
             onCategoryChange = { draftCategory = it },
-            onLayerChange = { draftLayer = it },
+            onLayerChange /* kept for compat */ = { draftStrength = it },
             onCharacterNameChange = { draftCharacter = it },
             onDismiss = { showEditor = false },
             availableRoleCards = uiState.roleCards,
@@ -575,7 +580,7 @@ fun MemoryScreen(
                         memoryId = editingMemory!!.id,
                         content = draftContent,
                         category = draftCategory,
-                        layer = draftLayer
+                        /* layer removed */
                     )
                 }
                 showEditor = false
@@ -586,8 +591,8 @@ fun MemoryScreen(
     deletingMemory?.let { memory ->
         AlertDialog(
             onDismissRequest = { deletingMemory = null },
-            title = { Text("删除记忆") },
-            text = { Text("确认删除这条记忆吗？") },
+            title = { Text(Strings.txt(StringsKey.memory_delete_title)) },
+            text = { Text(Strings.txt(StringsKey.memory_delete_confirm)) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -595,12 +600,12 @@ fun MemoryScreen(
                         deletingMemory = null
                     }
                 ) {
-                    Text("删除")
+                    Text(Strings.txt(StringsKey.delete))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { deletingMemory = null }) {
-                    Text("取消")
+                    Text(Strings.txt(StringsKey.cancel))
                 }
             }
         )
@@ -670,24 +675,24 @@ private fun MemoryCard(
                     else -> Color(0xFFF0EDF3) to BrandOutline
                 }
                 MemoryTag(
-                    text = categoryLabel(memory.category),
+                    text = categoryLabel(memory.category, LocalLanguage.current),
                     bgColor = catBg,
                     textColor = catText
                 )
-                val (layerBg, layerText) = if (memory.layer == "long_term") {
+                val (strengthBg, strengthText) = if (memory.strength >= 0.4) {
                     MemoryLongBg to MemoryLongText
                 } else {
                     MemoryShortBg to MemoryShortText
                 }
                 MemoryTag(
-                    text = layerLabel(memory.layer),
-                    bgColor = layerBg,
-                    textColor = layerText
+                    text = "S=${"%.1f".format(memory.strength)}",
+                    bgColor = strengthBg,
+                    textColor = strengthText
                 )
             }
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "更新时间：${formatTime(memory.updatedAt)}",
+                text = Strings.txt(StringsKey.memory_updated_at, formatTime(memory.updatedAt)),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -697,16 +702,16 @@ private fun MemoryCard(
                 horizontalArrangement = Arrangement.End
             ) {
                 FilledTonalIconButton(onClick = onEdit) {
-                    Icon(Icons.Default.Edit, contentDescription = "编辑记忆")
+                    Icon(Icons.Default.Edit, contentDescription = Strings.txt(StringsKey.memory_edit_action))
                 }
                 Spacer(modifier = Modifier.size(8.dp))
                 FilledTonalIconButton(onClick = onDelete) {
-                    Icon(Icons.Default.Delete, contentDescription = "删除记忆")
+                    Icon(Icons.Default.Delete, contentDescription = Strings.txt(StringsKey.memory_delete_action))
                 }
-                if (memory.layer == "short_term") {
+                if (memory.strength < 0.4) {
                     Spacer(modifier = Modifier.size(8.dp))
                     FilledTonalIconButton(onClick = onPromote) {
-                        Icon(Icons.Default.KeyboardArrowUp, contentDescription = "提升为长期记忆")
+                        Icon(Icons.Default.KeyboardArrowUp, contentDescription = Strings.txt(StringsKey.memory_promote_action))
                     }
                 }
             }
@@ -742,7 +747,7 @@ private fun MemoryEditorDialog(
     title: String,
     content: String,
     category: String,
-    layer: String,
+    @Suppress("UNUSED_PARAMETER") _layer: String = "0.6",
     characterName: String,
     onContentChange: (String) -> Unit,
     onCategoryChange: (String) -> Unit,
@@ -754,7 +759,7 @@ private fun MemoryEditorDialog(
 ) {
     val categories = listOf("fact", "preference", "event", "relation", "time", "other")
     val layers = listOf("short_term", "long_term")
-    val tabs = listOf("内容", "分类", "层级", "角色")
+    val tabs = listOf(Strings.txt(StringsKey.memory_tab_content), Strings.txt(StringsKey.memory_tab_category), Strings.txt(StringsKey.memory_tab_layer), Strings.txt(StringsKey.memory_tab_role))
     var selectedTab by remember { mutableIntStateOf(0) }
 
     Dialog(
@@ -801,7 +806,7 @@ private fun MemoryEditorDialog(
                         ) {
                             Icon(
                                 Icons.Default.Close,
-                                "关闭",
+                                Strings.txt(StringsKey.close),
                                 tint = Color(0xFF49454F),
                                 modifier = Modifier.size(18.dp)
                             )
@@ -855,7 +860,7 @@ private fun MemoryEditorDialog(
                             OutlinedTextField(
                                 value = content,
                                 onValueChange = onContentChange,
-                                label = { Text("记忆内容") },
+                                label = { Text(Strings.txt(StringsKey.memory_field_content)) },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(horizontal = 20.dp, vertical = 16.dp),
@@ -877,7 +882,7 @@ private fun MemoryEditorDialog(
                                     FilterChip(
                                         selected = isSelected,
                                         onClick = { onCategoryChange(cat) },
-                                        label = { Text(categoryLabel(cat)) },
+                                        label = { Text(categoryLabel(cat, LocalLanguage.current)) },
                                         colors = FilterChipDefaults.filterChipColors(
                                             selectedContainerColor = BrandPrimary,
                                             selectedLabelColor = Color.White,
@@ -889,32 +894,6 @@ private fun MemoryEditorDialog(
                             }
                         }
                         2 -> {
-                            // Layer tab - horizontal scrollable chips
-                            LazyRow(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 20.dp),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                contentPadding = PaddingValues(horizontal = 20.dp)
-                            ) {
-                                items(layers.size) { index ->
-                                    val lay = layers[index]
-                                    val isSelected = layer == lay
-                                    FilterChip(
-                                        selected = isSelected,
-                                        onClick = { onLayerChange(lay) },
-                                        label = { Text(layerLabel(lay)) },
-                                        colors = FilterChipDefaults.filterChipColors(
-                                            selectedContainerColor = BrandPrimary,
-                                            selectedLabelColor = Color.White,
-                                            containerColor = BrandSurfaceContainer,
-                                            labelColor = BrandOutline
-                                        )
-                                    )
-                                }
-                            }
-                        }
-                        3 -> {
                             // Character tab
                             Column(
                                 modifier = Modifier
@@ -925,7 +904,7 @@ private fun MemoryEditorDialog(
                                 FilterChip(
                                     selected = characterName.isBlank(),
                                     onClick = { onCharacterNameChange("") },
-                                    label = { Text("全局记忆") },
+                                    label = { Text(Strings.txt(StringsKey.memory_global)) },
                                     colors = FilterChipDefaults.filterChipColors(
                                         selectedContainerColor = BrandPrimary,
                                         selectedLabelColor = Color.White,
@@ -958,6 +937,7 @@ private fun MemoryEditorDialog(
                             }
                         }
                     }
+                }
 
                     // ── Action Buttons ──
                     Row(
@@ -970,21 +950,20 @@ private fun MemoryEditorDialog(
                             onClick = onDismiss,
                             modifier = Modifier.weight(1f)
                         ) {
-                            Text("取消")
+                            Text(Strings.txt(StringsKey.cancel))
                         }
                         Button(
                             onClick = onConfirm,
                             enabled = content.isNotBlank(),
                             modifier = Modifier.weight(1f)
                         ) {
-                            Text("保存")
+                            Text(Strings.txt(StringsKey.save))
                         }
                     }
                 }
             }
         }
     }
-}
 
 @Composable
 private fun EmptyState(
@@ -1017,37 +996,37 @@ private fun EmptyState(
     }
 }
 
-private fun filterLabel(filter: MemoryFilter): String {
-    return when (filter) {
-        MemoryFilter.ALL -> "全部"
-        MemoryFilter.FACT -> "事实"
-        MemoryFilter.PREFERENCE -> "偏好"
-        MemoryFilter.EVENT -> "事件"
-        MemoryFilter.RELATION -> "关系"
-        MemoryFilter.TIME -> "时间"
-        MemoryFilter.OTHER -> "其他"
+private fun filterLabel(filter: MemoryFilter, lang: AppLanguage): String {
+    val k = when (filter) {
+        MemoryFilter.ALL -> StringsKey.memory_cat_all
+        MemoryFilter.FACT -> StringsKey.memory_cat_fact
+        MemoryFilter.PREFERENCE -> StringsKey.memory_cat_preference
+        MemoryFilter.EVENT -> StringsKey.memory_cat_event
+        MemoryFilter.BEHAVIOR -> StringsKey.memory_cat_other
+        MemoryFilter.KNOWLEDGE -> StringsKey.memory_cat_other
+        MemoryFilter.SKILL -> StringsKey.memory_cat_other
+        MemoryFilter.RELATION -> StringsKey.memory_cat_relation
+        MemoryFilter.TIME -> StringsKey.memory_cat_time
+        MemoryFilter.OTHER -> StringsKey.memory_cat_other
     }
+    return Strings.get(lang, k)
 }
 
-private fun categoryLabel(category: String): String {
-    return when (category) {
-        "fact" -> "事实"
-        "preference" -> "偏好"
-        "event" -> "事件"
-        "relation", "relationship" -> "关系"
-        "time" -> "时间"
-        "other" -> "其他"
-        else -> category
+private fun categoryLabel(category: String, lang: AppLanguage): String {
+    val k = when (category) {
+        "fact" -> StringsKey.memory_cat_fact
+        "preference" -> StringsKey.memory_cat_preference
+        "event" -> StringsKey.memory_cat_event
+        "relation", "relationship" -> StringsKey.memory_cat_relation
+        "time" -> StringsKey.memory_cat_time
+        "other" -> StringsKey.memory_cat_other
+        else -> return category
     }
+    return Strings.get(lang, k)
 }
 
-private fun layerLabel(layer: String): String {
-    return when (layer) {
-        "short_term" -> "短期"
-        "long_term" -> "长期"
-        else -> layer
-    }
-}
+/* layerLabel deprecated - use strengthLabel */
+@Deprecated("Use strength instead of layer") private fun layerLabel(layer: String, lang: AppLanguage): String { return layer }
 
 private fun formatTime(timestamp: Long): String {
     return SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date(timestamp))

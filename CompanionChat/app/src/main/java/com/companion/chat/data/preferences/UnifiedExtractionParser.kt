@@ -3,8 +3,17 @@ package com.companion.chat.data.preferences
 import com.companion.chat.data.memory.ExtractedMemory
 import com.companion.chat.data.memory.MemoryRepository
 
+/**
+ * 统一提取解析器 — 解析 LLM 输出的 JSON。
+ *
+ * 改造后新增解析 entities / links / metaMemories 数组。
+ * 原有 memories / user_preferences 解析逻辑保持向后兼容。
+ */
 class UnifiedExtractionParser {
 
+    /**
+     * 基础解析（向后兼容）：只返回 memories 和 user_preferences。
+     */
     fun parse(raw: String): UnifiedExtractionResult {
         val jsonObject = extractJsonObject(raw) ?: return UnifiedExtractionResult()
         val rawMemoryItems = parseRawItems(jsonObject, MEMORY_ARRAY_FIELD_NAMES)
@@ -19,56 +28,105 @@ class UnifiedExtractionParser {
         )
     }
 
+    /**
+     * 完整解析（v2 新增）：返回包括 entities / links / metaMemories。
+     */
+    fun parseFull(raw: String): UnifiedExtractionResultFull {
+        val jsonObject = extractJsonObject(raw) ?: return UnifiedExtractionResultFull()
+        val rawMemoryItems = parseRawItems(jsonObject, MEMORY_ARRAY_FIELD_NAMES)
+        val rawPreferenceItems = parseRawItems(jsonObject, PREFERENCE_ARRAY_FIELD_NAMES)
+        val memories = parseMemories(rawMemoryItems)
+        val userPreferences = parseUserPreferences(
+            rawPreferenceItems + recoverPreferenceItemsFromMemories(rawMemoryItems)
+        )
+        val entities = parseEntities(jsonObject)
+        val links = parseLinks(jsonObject)
+        val metaMemories = parseMetaMemories(jsonObject)
+        return UnifiedExtractionResultFull(
+            memories = memories,
+            userPreferences = userPreferences,
+            entities = entities,
+            links = links,
+            metaMemories = metaMemories
+        )/* TODO: applyEnrichedLinks */
+    }
+
+    private fun parseEntities(jsonObject: String): List<ExtractedEntity> {
+        val arrayText = extractArrayValue(jsonObject, ENTITY_ARRAY_FIELD_NAMES) ?: return emptyList()
+        return OBJECT_REGEX.findAll(arrayText).mapNotNull { match ->
+            val itemText = match.value
+            val name = extractField(itemText, setOf("name", "名称", "名字"))?.trim()
+            val type = extractField(itemText, setOf("type", "类型"))?.trim()?.lowercase() ?: "topic"
+            if (name.isNullOrBlank()) null
+            else ExtractedEntity(
+                name = name,
+                type = if (type in ALLOWED_ENTITY_TYPES) type else "topic"
+            )
+        }.distinctBy { it.name.trim().lowercase() }.toList()
+    }
+
+    private fun parseLinks(jsonObject: String): List<ExtractedLink> {
+        val arrayText = extractArrayValue(jsonObject, LINK_ARRAY_FIELD_NAMES) ?: return emptyList()
+        return OBJECT_REGEX.findAll(arrayText).mapNotNull { match ->
+            val itemText = match.value
+            val fromMemoryIdx = extractField(itemText, LINK_FROM_FIELD_NAMES)?.trim()?.toIntOrNull()
+            val toEntityIdx = extractField(itemText, LINK_TO_FIELD_NAMES)?.trim()?.toIntOrNull()
+            val linkType = extractField(itemText, LINK_TYPE_FIELD_NAMES)?.trim()?.lowercase() ?: "related_to"
+            val weight = extractField(itemText, LINK_WEIGHT_FIELD_NAMES)?.trim()?.toDoubleOrNull() ?: 1.0
+            if (fromMemoryIdx == null || toEntityIdx == null) null
+            else ExtractedLink(
+                fromMemoryIdx = fromMemoryIdx,
+                toEntityIdx = toEntityIdx,
+                linkType = if (linkType in ALLOWED_LINK_TYPES) linkType else "related_to",
+                weight = weight.coerceIn(0.0, 1.0)
+            )
+        }.toList()
+    }
+
+    private fun parseMetaMemories(jsonObject: String): List<ExtractedMetaMemory> {
+        val arrayText = extractArrayValue(jsonObject, META_MEMORY_ARRAY_FIELD_NAMES) ?: return emptyList()
+        return OBJECT_REGEX.findAll(arrayText).mapNotNull { match ->
+            val itemText = match.value
+            val content = extractField(itemText, setOf("content", "内容"))?.trim()
+            val category = extractField(itemText, setOf("category", "类别"))?.trim()?.lowercase() ?: "retrieval"
+            if (content.isNullOrBlank()) null
+            else ExtractedMetaMemory(
+                content = content,
+                category = if (category in ALLOWED_META_CATEGORIES) category else "retrieval"
+            )
+        }.toList()
+    }
+
     private fun parseRawItems(objectText: String, fieldNames: Set<String>): List<RawExtractionItem> {
         val arrayText = extractArrayValue(objectText, fieldNames) ?: return emptyList()
         return OBJECT_REGEX.findAll(arrayText).mapNotNull { match ->
             val itemText = match.value
             val category = extractField(itemText, CATEGORY_FIELD_NAMES)?.trim().orEmpty()
             val content = extractField(itemText, CONTENT_FIELD_NAMES)?.trim().orEmpty()
-            if (category.isBlank() || content.isBlank()) {
-                null
-            } else {
-                RawExtractionItem(
-                    category = category,
-                    content = content
-                )
-            }
+            if (category.isBlank() || content.isBlank()) null
+            else RawExtractionItem(category = category, content = content)
         }.toList()
     }
 
     private fun parseMemories(items: List<RawExtractionItem>): List<ExtractedMemory> {
         return items.mapNotNull { item ->
-            val category = normalizeMemoryCategory(
-                item.category.trim().lowercase()
-            )
+            val category = normalizeMemoryCategory(item.category.trim().lowercase())
             val content = item.content.trim()
-            if (category !in ALLOWED_MEMORY_CATEGORIES || content.isBlank()) {
-                null
-            } else {
-                ExtractedMemory(
-                    content = content,
-                    category = category,
-                    layer = "short_term",
-                    source = MemoryRepository.MODEL_SOURCE
-                )
-            }
+            if (category !in ALLOWED_MEMORY_CATEGORIES || content.isBlank()) null
+            else ExtractedMemory(
+                content = content,
+                category = category,
+                source = MemoryRepository.MODEL_SOURCE
+            )
         }.distinctBy { "${it.category}|${it.content.trim().lowercase()}" }
     }
 
     private fun parseUserPreferences(items: List<RawExtractionItem>): List<ExtractedPreference> {
         return items.mapNotNull { item ->
-            val category = normalizePreferenceCategory(
-                item.category.trim().lowercase()
-            )
+            val category = normalizePreferenceCategory(item.category.trim().lowercase())
             val content = item.content.trim()
-            if (category !in ALLOWED_PREFERENCE_CATEGORIES || content.isBlank()) {
-                null
-            } else {
-                ExtractedPreference(
-                    category = category,
-                    content = content
-                )
-            }
+            if (category !in ALLOWED_PREFERENCE_CATEGORIES || content.isBlank()) null
+            else ExtractedPreference(category = category, content = content)
         }.distinctBy { "${it.category}|${it.content.trim().lowercase()}" }
     }
 
@@ -76,17 +134,10 @@ class UnifiedExtractionParser {
         return items.mapNotNull { item ->
             val normalizedPreferenceCategory = normalizePreferenceCategory(item.category.trim().lowercase())
             if (normalizedPreferenceCategory in ALLOWED_PREFERENCE_CATEGORIES) {
-                return@mapNotNull RawExtractionItem(
-                    category = normalizedPreferenceCategory,
-                    content = item.content
-                )
+                return@mapNotNull RawExtractionItem(category = normalizedPreferenceCategory, content = item.content)
             }
-
             inferPreferenceCategoryFromMemoryItem(item)?.let { inferredCategory ->
-                RawExtractionItem(
-                    category = inferredCategory,
-                    content = item.content
-                )
+                RawExtractionItem(category = inferredCategory, content = item.content)
             }
         }
     }
@@ -94,7 +145,6 @@ class UnifiedExtractionParser {
     private fun inferPreferenceCategoryFromMemoryItem(item: RawExtractionItem): String? {
         val normalizedMemoryCategory = normalizeMemoryCategory(item.category.trim().lowercase())
         val content = item.content.trim()
-
         return when {
             looksLikeName(content) -> "name"
             normalizedMemoryCategory == "time" || looksLikeHabit(content) -> "habit"
@@ -105,41 +155,22 @@ class UnifiedExtractionParser {
         }
     }
 
-    private fun looksLikeName(content: String): Boolean {
-        return content.startsWith("叫") || content.startsWith("名叫")
-    }
+    // ── 工具方法 ──
 
-    private fun looksLikeStyle(content: String): Boolean {
-        return STYLE_HINTS.any { hint -> content.contains(hint) } ||
-            content.startsWith("以后请") ||
-            content.startsWith("请") ||
-            content.startsWith("希望你")
-    }
-
-    private fun looksLikeInterest(content: String): Boolean {
-        return INTEREST_HINTS.any { hint -> content.contains(hint) }
-    }
-
-    private fun looksLikeHabit(content: String): Boolean {
-        return HABIT_HINTS.any { hint -> content.contains(hint) }
-    }
-
-    private fun looksLikeOtherPreference(content: String): Boolean {
-        return OTHER_HINTS.any { hint -> content.startsWith(hint) || content.contains(hint) }
-    }
+    private fun looksLikeName(content: String) = content.startsWith("叫") || content.startsWith("名叫")
+    private fun looksLikeStyle(content: String) = STYLE_HINTS.any { content.contains(it) } ||
+        content.startsWith("以后请") || content.startsWith("请") || content.startsWith("希望你")
+    private fun looksLikeInterest(content: String) = INTEREST_HINTS.any { content.contains(it) }
+    private fun looksLikeHabit(content: String) = HABIT_HINTS.any { content.contains(it) }
+    private fun looksLikeOtherPreference(content: String) = OTHER_HINTS.any { content.startsWith(it) || content.contains(it) }
 
     private fun extractJsonObject(raw: String): String? {
         val normalized = raw.trim()
-        if (normalized.isBlank()) {
-            return null
-        }
-
+        if (normalized.isBlank()) return null
         val unfenced = CODE_BLOCK_REGEX.find(normalized)?.groupValues?.getOrNull(1)?.trim() ?: normalized
         val startIndex = unfenced.indexOf('{')
         val endIndex = unfenced.lastIndexOf('}')
-        if (startIndex < 0 || endIndex <= startIndex) {
-            return null
-        }
+        if (startIndex < 0 || endIndex <= startIndex) return null
         return unfenced.substring(startIndex, endIndex + 1)
     }
 
@@ -149,43 +180,24 @@ class UnifiedExtractionParser {
             val match = fieldRegex.find(objectText) ?: return@forEach
             val arrayStart = match.range.last
             val arrayEnd = findMatchingBracket(objectText, arrayStart)
-            if (arrayEnd > arrayStart) {
-                return objectText.substring(arrayStart, arrayEnd + 1)
-            }
+            if (arrayEnd > arrayStart) return objectText.substring(arrayStart, arrayEnd + 1)
         }
         return null
     }
 
     private fun findMatchingBracket(text: String, startIndex: Int): Int {
-        var depth = 0
-        var inString = false
-        var stringQuote = '"'
-        var escaped = false
-
+        var depth = 0; var inString = false; var stringQuote = '"'; var escaped = false
         for (index in startIndex until text.length) {
             val char = text[index]
-            if (escaped) {
-                escaped = false
-                continue
-            }
-
+            if (escaped) { escaped = false; continue }
             when {
                 char == '\\' -> escaped = true
                 inString && char == stringQuote -> inString = false
-                !inString && (char == '"' || char == '\'') -> {
-                    inString = true
-                    stringQuote = char
-                }
+                !inString && (char == '"' || char == '\'') -> { inString = true; stringQuote = char }
                 !inString && char == '[' -> depth += 1
-                !inString && char == ']' -> {
-                    depth -= 1
-                    if (depth == 0) {
-                        return index
-                    }
-                }
+                !inString && char == ']' -> { depth -= 1; if (depth == 0) return index }
             }
         }
-
         return -1
     }
 
@@ -194,77 +206,95 @@ class UnifiedExtractionParser {
             val regex = Regex("""["']$fieldName["']\s*:\s*["']((?:\\.|[^"'\\])*)["']""")
             regex.find(objectText)?.groupValues?.getOrNull(1)
         }?.let { value ->
-            value
-                .replace("\\\"", "\"")
-                .replace("\\'", "'")
-                .replace("\\n", "\n")
-                .replace("\\\\", "\\")
+            value.replace("\\\"", "\"").replace("\\'", "'").replace("\\n", "\n").replace("\\\\", "\\")
         }
     }
 
-    private fun normalizeMemoryCategory(category: String): String {
-        return MEMORY_CATEGORY_ALIASES[category] ?: category
-    }
-
-    private fun normalizePreferenceCategory(category: String): String {
-        return PREFERENCE_CATEGORY_ALIASES[category] ?: category
-    }
+    private fun normalizeMemoryCategory(category: String): String = MEMORY_CATEGORY_ALIASES[category] ?: category
+    private fun normalizePreferenceCategory(category: String): String = PREFERENCE_CATEGORY_ALIASES[category] ?: category
 
     companion object {
         private val MEMORY_ARRAY_FIELD_NAMES = setOf("memories", "memory", "记忆")
         private val PREFERENCE_ARRAY_FIELD_NAMES = setOf("user_preferences", "preferences", "偏好")
+        private val ENTITY_ARRAY_FIELD_NAMES = setOf("entities", "entity", "实体")
+        private val LINK_ARRAY_FIELD_NAMES = setOf("links", "link", "链接")
+        private val META_MEMORY_ARRAY_FIELD_NAMES = setOf("metaMemories", "meta_memories", "元记忆")
+        private val LINK_FROM_FIELD_NAMES = setOf("fromMemoryIdx", "fromIdx", "from", "源")
+        private val LINK_TO_FIELD_NAMES = setOf("toEntityIdx", "toIdx", "to", "目标")
+        private val LINK_TYPE_FIELD_NAMES = setOf("linkType", "link_type", "type", "类型")
+        private val LINK_WEIGHT_FIELD_NAMES = setOf("weight", "权重")
         private val CATEGORY_FIELD_NAMES = setOf("category", "类别")
         private val CONTENT_FIELD_NAMES = setOf("content", "内容")
-        private val ALLOWED_MEMORY_CATEGORIES = setOf("fact", "preference", "event", "relation", "time", "other")
+
+        private val ALLOWED_MEMORY_CATEGORIES = setOf("fact", "preference", "event", "behavior", "knowledge", "skill", "relation", "time", "other")
         private val ALLOWED_PREFERENCE_CATEGORIES = setOf("name", "style", "interest", "habit", "other")
+        private val ALLOWED_ENTITY_TYPES = setOf("person", "org", "topic", "concept")
+        private val ALLOWED_LINK_TYPES = setOf("related_to", "belongs_to", "caused_by", "derived_from", "contradicts", "evolved_from")
+        private val ALLOWED_META_CATEGORIES = setOf("retrieval", "reasoning", "conflict")
+
         private val MEMORY_CATEGORY_ALIASES = mapOf(
-            "fact" to "fact",
-            "事实" to "fact",
-            "preference" to "preference",
-            "偏好" to "preference",
-            "event" to "event",
-            "事件" to "event",
-            "relation" to "relation",
-            "relationship" to "relation",
-            "关系" to "relation",
-            "time" to "time",
-            "时间" to "time",
-            "other" to "other",
-            "其他" to "other"
+            "fact" to "fact", "事实" to "fact",
+            "preference" to "preference", "偏好" to "preference",
+            "event" to "event", "事件" to "event",
+            "behavior" to "behavior", "行为" to "behavior",
+            "knowledge" to "knowledge", "知识" to "knowledge",
+            "skill" to "skill", "技能" to "skill",
+            "relation" to "relation", "relationship" to "relation", "关系" to "relation",
+            "time" to "time", "时间" to "time",
+            "other" to "other", "其他" to "other"
         )
         private val PREFERENCE_CATEGORY_ALIASES = mapOf(
-            "name" to "name",
-            "名字" to "name",
-            "称呼" to "name",
-            "style" to "style",
-            "风格" to "style",
-            "interest" to "interest",
-            "兴趣" to "interest",
-            "habit" to "habit",
-            "习惯" to "habit",
-            "other" to "other",
-            "其他" to "other"
+            "name" to "name", "名字" to "name", "称呼" to "name",
+            "style" to "style", "风格" to "style",
+            "interest" to "interest", "兴趣" to "interest",
+            "habit" to "habit", "习惯" to "habit",
+            "other" to "other", "其他" to "other"
         )
-        private val STYLE_HINTS = listOf(
-            "回答", "简洁", "直接", "官方", "举例", "详细", "语气", "风格"
-        )
-        private val INTEREST_HINTS = listOf(
-            "喜欢", "热爱", "偏爱", "不喜欢", "讨厌", "不爱"
-        )
-        private val HABIT_HINTS = listOf(
-            "一般", "通常", "经常", "平时", "常常",
-            "早上", "上午", "中午", "下午", "晚上", "凌晨",
-            "周末", "每天", "每日", "睡前", "起床后", "点后", "点前"
-        )
-        private val OTHER_HINTS = listOf(
-            "比较", "很", "挺", "有点", "容易", "偏", "慢热", "内向", "外向"
-        )
+
+        private val STYLE_HINTS = listOf("回答", "简洁", "直接", "官方", "举例", "详细", "语气", "风格")
+        private val INTEREST_HINTS = listOf("喜欢", "热爱", "偏爱", "不喜欢", "讨厌", "不爱")
+        private val HABIT_HINTS = listOf("一般", "通常", "经常", "平时", "常常", "早上", "上午", "中午", "下午", "晚上", "凌晨", "周末", "每天", "每日", "睡前", "起床后", "点后", "点前")
+        private val OTHER_HINTS = listOf("比较", "很", "挺", "有点", "容易", "偏", "慢热", "内向", "外向")
+
         private val OBJECT_REGEX = Regex("""\{[^{}]*\}""")
         private val CODE_BLOCK_REGEX = Regex("""```(?:json)?\s*([\s\S]*?)\s*```""", RegexOption.IGNORE_CASE)
     }
 
-    private data class RawExtractionItem(
-        val category: String,
-        val content: String
-    )
+    private data class RawExtractionItem(val category: String, val content: String)
+}
+
+// ── 新增数据类 ──
+
+data class ExtractedEntity(
+    val name: String,
+    val type: String  // "person" / "org" / "topic" / "concept"
+)
+
+data class ExtractedLink(
+    val fromMemoryIdx: Int,
+    val toEntityIdx: Int,
+    val linkType: String,
+    val weight: Double
+)
+
+data class ExtractedMetaMemory(
+    val content: String,
+    val category: String = "retrieval"
+)
+
+data class UnifiedExtractionResultFull(
+    val memories: List<ExtractedMemory> = emptyList(),
+    val userPreferences: List<ExtractedPreference> = emptyList(),
+    val entities: List<ExtractedEntity> = emptyList(),
+    val links: List<ExtractedLink> = emptyList(),
+    val metaMemories: List<ExtractedMetaMemory> = emptyList()
+) {
+    /**
+     * 将 links 中的 toEntityIdx 丰富为 entityName。
+     */
+    /* TODO: implement enrichment
+    fun applyEnrichedLinks(): UnifiedExtractionResultFull {
+        // 将 links 中的 toEntityIdx 映射为 entities[name]
+        return this
+    }*/
 }

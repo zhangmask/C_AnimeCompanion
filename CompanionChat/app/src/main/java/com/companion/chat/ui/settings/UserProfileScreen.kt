@@ -50,6 +50,9 @@ import com.companion.chat.ui.theme.BrandPrimary
 import com.companion.chat.ui.theme.BrandOutline
 import com.companion.chat.ui.theme.BrandOutlineVariant
 import com.companion.chat.ui.theme.BrandSurfaceContainer
+import com.companion.chat.locale.LocalLanguage
+import com.companion.chat.locale.Strings
+import com.companion.chat.locale.StringsKey
 
 @Composable
 fun UserProfileScreen(
@@ -70,7 +73,7 @@ fun UserProfileScreen(
     var importantInfo by remember { mutableStateOf(profile.importantInfo) }
 
     var selectedTab by remember { mutableIntStateOf(0) }
-    val tabs = listOf("基础", "个性")
+    val tabs = listOf(Strings.txt(StringsKey.role_tab_basic), Strings.txt(StringsKey.profile_tab_personality))
 
     val avatarPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -104,7 +107,7 @@ fun UserProfileScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "编辑个人资料",
+                    text = Strings.txt(StringsKey.profile_title),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f)
@@ -119,7 +122,7 @@ fun UserProfileScreen(
                 ) {
                     Icon(
                         Icons.Default.Close,
-                        "关闭",
+                        Strings.txt(StringsKey.close),
                         tint = Color(0xFF49454F),
                         modifier = Modifier.size(18.dp)
                     )
@@ -198,7 +201,7 @@ fun UserProfileScreen(
                                 if (avatarUri.isNotBlank()) {
                                     AsyncImage(
                                         model = avatarUri,
-                                        contentDescription = "头像",
+                                        contentDescription = Strings.txt(StringsKey.profile_avatar),
                                         modifier = Modifier
                                             .fillMaxSize()
                                             .clip(CircleShape),
@@ -207,7 +210,7 @@ fun UserProfileScreen(
                                 } else {
                                     Icon(
                                         Icons.Default.Person,
-                                        contentDescription = "头像",
+                                        contentDescription = Strings.txt(StringsKey.profile_avatar),
                                         modifier = Modifier.size(40.dp),
                                         tint = BrandPrimary
                                     )
@@ -223,7 +226,7 @@ fun UserProfileScreen(
                                 ) {
                                     Icon(
                                         Icons.Default.CameraAlt,
-                                        contentDescription = "修改头像",
+                                        contentDescription = Strings.txt(StringsKey.profile_change_avatar_hint),
                                         modifier = Modifier.size(14.dp),
                                         tint = Color.White
                                     )
@@ -233,7 +236,7 @@ fun UserProfileScreen(
 
                         // Change avatar hint
                         Text(
-                            text = "点击修改头像",
+                            text = Strings.txt(StringsKey.profile_click_to_change),
                             fontSize = 12.sp,
                             color = BrandPrimary,
                             fontWeight = FontWeight.Medium,
@@ -241,24 +244,24 @@ fun UserProfileScreen(
                         )
 
                         ProfileFormField(
-                            label = "昵称",
+                            label = Strings.txt(StringsKey.profile_nickname),
                             value = nickname,
                             onValueChange = { nickname = it },
-                            placeholder = "给自己取个名字"
+                            placeholder = Strings.txt(StringsKey.profile_name_placeholder)
                         )
 
                         ProfileFormField(
-                            label = "性别",
+                            label = Strings.txt(StringsKey.profile_gender),
                             value = gender,
                             onValueChange = { gender = it },
-                            placeholder = "男 / 女 / 其他"
+                            placeholder = Strings.txt(StringsKey.profile_gender_placeholder)
                         )
 
                         ProfileFormField(
-                            label = "年龄",
+                            label = Strings.txt(StringsKey.profile_age_label),
                             value = age,
                             onValueChange = { age = it },
-                            placeholder = "你的年龄"
+                            placeholder = Strings.txt(StringsKey.profile_age_placeholder)
                         )
                     }
                 }
@@ -274,40 +277,40 @@ fun UserProfileScreen(
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         ProfileFormField(
-                            label = "个性签名",
+                            label = Strings.txt(StringsKey.profile_bio_label),
                             value = bio,
                             onValueChange = { bio = it },
-                            placeholder = "一句话介绍自己",
+                            placeholder = Strings.txt(StringsKey.profile_bio_placeholder),
                             maxLines = 2
                         )
 
                         ProfileFormField(
-                            label = "个人介绍",
+                            label = Strings.txt(StringsKey.profile_intro_label),
                             value = introduction,
                             onValueChange = { introduction = it },
-                            placeholder = "详细介绍一下自己，让 AI 更了解你",
+                            placeholder = Strings.txt(StringsKey.profile_intro_placeholder),
                             maxLines = 4
                         )
 
                         ProfileFormField(
-                            label = "兴趣标签",
+                            label = Strings.txt(StringsKey.profile_interests),
                             value = interestTags,
                             onValueChange = { interestTags = it },
-                            placeholder = "用逗号分隔，如：阅读, 音乐, 游戏",
+                            placeholder = Strings.txt(StringsKey.profile_tags_placeholder),
                             maxLines = 2
                         )
 
                         ProfileFormField(
-                            label = "重要信息",
+                            label = Strings.txt(StringsKey.profile_important_label),
                             value = importantInfo,
                             onValueChange = { importantInfo = it },
-                            placeholder = "希望 AI 记住的重要事情，如过敏信息、特殊需求等",
+                            placeholder = Strings.txt(StringsKey.profile_important_placeholder),
                             maxLines = 4
                         )
 
                         // Help text
                         Text(
-                            text = "这些信息会帮助 AI 更好地了解你，提供更个性化的对话体验。重要信息会被优先记住。",
+                            text = Strings.txt(StringsKey.profile_help_text),
                             fontSize = 12.sp,
                             color = Color(0xFF79747E),
                             modifier = Modifier.padding(top = 4.dp)
@@ -350,7 +353,7 @@ fun UserProfileScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "保存",
+                            text = Strings.txt(StringsKey.save),
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Medium,
                             color = Color.White

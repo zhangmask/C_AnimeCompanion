@@ -68,6 +68,9 @@ import com.companion.chat.ui.theme.BrandPrimary
 import com.companion.chat.ui.theme.BrandPrimaryContainer
 import com.companion.chat.ui.theme.BrandSurfaceContainer
 import com.companion.chat.data.voice.VoiceClipScanner
+import com.companion.chat.locale.LocalLanguage
+import com.companion.chat.locale.Strings
+import com.companion.chat.locale.StringsKey
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -97,7 +100,7 @@ fun RoleCardEditorSheet(
     isEditing: Boolean = false
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
-    val tabs = listOf("基础", "人设", "图片", "语音")
+    val tabs = listOf(Strings.txt(StringsKey.role_tab_basic), Strings.txt(StringsKey.role_tab_persona), Strings.txt(StringsKey.role_tab_image), Strings.txt(StringsKey.role_tab_voice))
 
     // Tab 0 - 基础
     var name by remember { mutableStateOf(existingName) }
@@ -195,7 +198,7 @@ fun RoleCardEditorSheet(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = if (isEditing) "编辑角色卡" else "创建角色卡",
+                            text = if (isEditing) Strings.txt(StringsKey.role_edit_card_title) else Strings.txt(StringsKey.role_create_card_title),
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.weight(1f)
@@ -210,7 +213,7 @@ fun RoleCardEditorSheet(
                         ) {
                             Icon(
                                 Icons.Default.Close,
-                                "关闭",
+                                Strings.txt(StringsKey.close),
                                 tint = Color(0xFF49454F),
                                 modifier = Modifier.size(18.dp)
                             )
@@ -274,28 +277,28 @@ fun RoleCardEditorSheet(
                             0 -> {
                                 // ── 基础 Tab ──
                                 FormField(
-                                    label = "名称",
+                                    label = Strings.txt(StringsKey.role_field_name),
                                     value = name,
                                     onValueChange = { name = it },
-                                    placeholder = "给角色取个名字"
+                                    placeholder = Strings.txt(StringsKey.role_name_placeholder)
                                 )
                                 FormField(
-                                    label = "简介",
+                                    label = Strings.txt(StringsKey.role_field_description),
                                     value = description,
                                     onValueChange = { description = it },
-                                    placeholder = "温柔治愈的邻家女孩",
+                                    placeholder = Strings.txt(StringsKey.role_desc_placeholder),
                                     maxLines = 2
                                 )
                                 FormField(
-                                    label = "头像图标",
+                                    label = Strings.txt(StringsKey.role_avatar_icon),
                                     value = avatar,
                                     onValueChange = { avatar = it },
-                                    placeholder = "图标标识符，如 person、star、heart"
+                                    placeholder = Strings.txt(StringsKey.role_avatar_icon_hint)
                                 )
 
                                 // Avatar preview
                                 Text(
-                                    text = "头像预览",
+                                    text = Strings.txt(StringsKey.role_avatar_preview),
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     color = Color(0xFF49454F)
@@ -314,7 +317,7 @@ fun RoleCardEditorSheet(
                                         if (avatarImageUri.isNotBlank()) {
                                             AsyncImage(
                                                 model = avatarImageUri,
-                                                contentDescription = "头像",
+                                                contentDescription = Strings.txt(StringsKey.role_field_avatar),
                                                 modifier = Modifier
                                                     .fillMaxSize()
                                                     .clip(RoundedCornerShape(16.dp)),
@@ -337,7 +340,7 @@ fun RoleCardEditorSheet(
                                         }
                                     }
                                     Text(
-                                        text = if (name.isNotBlank()) name else "未命名",
+                                        text = if (name.isNotBlank()) name else Strings.txt(StringsKey.role_unnamed),
                                         fontSize = 15.sp,
                                         fontWeight = FontWeight.Medium,
                                         color = Color(0xFF1C1B1F)
@@ -345,10 +348,10 @@ fun RoleCardEditorSheet(
                                 }
 
                                 FormField(
-                                    label = "开场白",
+                                    label = Strings.txt(StringsKey.role_field_opening),
                                     value = openingMessage,
                                     onValueChange = { openingMessage = it },
-                                    placeholder = "你好呀~今天想聊什么呢？",
+                                    placeholder = Strings.txt(StringsKey.role_opening_placeholder),
                                     maxLines = 3
                                 )
                             }
@@ -356,45 +359,45 @@ fun RoleCardEditorSheet(
                             1 -> {
                                 // ── 人设 Tab ──
                                 FormField(
-                                    label = "核心人设 *",
+                                    label = Strings.txt(StringsKey.role_persona_core),
                                     value = persona,
                                     onValueChange = { persona = it },
-                                    placeholder = "描述角色的核心性格和行为特点",
+                                    placeholder = Strings.txt(StringsKey.role_persona_core_hint),
                                     maxLines = 4
                                 )
                                 FormField(
-                                    label = "说话风格",
+                                    label = Strings.txt(StringsKey.role_field_speaking_style),
                                     value = speakingStyle,
                                     onValueChange = { speakingStyle = it },
-                                    placeholder = "温暖亲切，偶尔撒娇，喜欢用语气词",
+                                    placeholder = Strings.txt(StringsKey.role_speaking_style_hint),
                                     maxLines = 3
                                 )
                                 FormField(
-                                    label = "背景故事",
+                                    label = Strings.txt(StringsKey.role_background_story),
                                     value = background,
                                     onValueChange = { background = it },
-                                    placeholder = "角色的来历和背景设定",
+                                    placeholder = Strings.txt(StringsKey.role_background_hint),
                                     maxLines = 4
                                 )
                                 FormField(
-                                    label = "规则",
+                                    label = Strings.txt(StringsKey.role_field_rules),
                                     value = rules,
                                     onValueChange = { rules = it },
-                                    placeholder = "角色必须遵守的行为规则和约束",
+                                    placeholder = Strings.txt(StringsKey.role_rules_hint),
                                     maxLines = 4
                                 )
                                 FormField(
-                                    label = "禁忌",
+                                    label = Strings.txt(StringsKey.role_field_taboos),
                                     value = taboos,
                                     onValueChange = { taboos = it },
-                                    placeholder = "角色绝对不能触碰的话题或行为",
+                                    placeholder = Strings.txt(StringsKey.role_taboos_hint),
                                     maxLines = 3
                                 )
                                 FormField(
-                                    label = "示例对话",
+                                    label = Strings.txt(StringsKey.role_field_example_dialogue),
                                     value = exampleDialogue,
                                     onValueChange = { exampleDialogue = it },
-                                    placeholder = "用户: 你好\n角色: 你好呀~很高兴见到你！",
+                                    placeholder = Strings.txt(StringsKey.role_example_dialogue_hint),
                                     maxLines = 6
                                 )
                             }
@@ -402,7 +405,7 @@ fun RoleCardEditorSheet(
                             2 -> {
                                 // ── 图片 Tab ──
                                 Text(
-                                    text = "头像图片",
+                                    text = Strings.txt(StringsKey.role_avatar_image),
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     color = Color(0xFF49454F),
@@ -421,7 +424,7 @@ fun RoleCardEditorSheet(
                                     ) {
                                         AsyncImage(
                                             model = avatarImageUri,
-                                            contentDescription = "头像预览",
+                                            contentDescription = Strings.txt(StringsKey.role_avatar_preview),
                                             modifier = Modifier
                                                 .fillMaxSize()
                                                 .clip(RoundedCornerShape(12.dp)),
@@ -440,7 +443,7 @@ fun RoleCardEditorSheet(
                                         ) {
                                             Icon(
                                                 Icons.Default.Close,
-                                                "移除头像",
+                                                Strings.txt(StringsKey.role_remove_avatar),
                                                 tint = Color.White,
                                                 modifier = Modifier.size(16.dp)
                                             )
@@ -471,7 +474,7 @@ fun RoleCardEditorSheet(
                                                 modifier = Modifier.size(28.dp)
                                             )
                                             Text(
-                                                text = "选择头像图片",
+                                                text = Strings.txt(StringsKey.role_pick_avatar_image),
                                                 fontSize = 13.sp,
                                                 color = BrandPrimary
                                             )
@@ -480,14 +483,14 @@ fun RoleCardEditorSheet(
                                 }
 
                                 FormField(
-                                    label = "相册图片 URI（逗号分隔）",
+                                    label = Strings.txt(StringsKey.role_gallery_uri),
                                     value = galleryImageUris,
                                     onValueChange = { galleryImageUris = it },
                                     placeholder = "uri1, uri2, uri3",
                                     maxLines = 3
                                 )
                                 FormField(
-                                    label = "图片风格提示词",
+                                    label = Strings.txt(StringsKey.role_field_image_style),
                                     value = imageStylePrompt,
                                     onValueChange = { imageStylePrompt = it },
                                     placeholder = "anime style, soft colors, warm lighting",
@@ -498,7 +501,7 @@ fun RoleCardEditorSheet(
                             3 -> {
                                 // ── 语音 Tab ──
                                 Text(
-                                    text = "语音模式",
+                                    text = Strings.txt(StringsKey.role_field_voice_mode),
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     color = Color(0xFF49454F),
@@ -511,7 +514,7 @@ fun RoleCardEditorSheet(
                                     FilterChip(
                                         selected = voiceMode == "SYSTEM_TTS",
                                         onClick = { voiceMode = "SYSTEM_TTS" },
-                                        label = { Text("系统 TTS") },
+                                        label = { Text(Strings.txt(StringsKey.role_voice_mode_system)) },
                                         colors = FilterChipDefaults.filterChipColors(
                                             selectedContainerColor = BrandPrimary,
                                             selectedLabelColor = Color.White
@@ -520,7 +523,7 @@ fun RoleCardEditorSheet(
                                     FilterChip(
                                         selected = voiceMode == "CLONE",
                                         onClick = { voiceMode = "CLONE" },
-                                        label = { Text("MOSS 本地克隆") },
+                                        label = { Text(Strings.txt(StringsKey.role_voice_mode_clone)) },
                                         colors = FilterChipDefaults.filterChipColors(
                                             selectedContainerColor = BrandPrimary,
                                             selectedLabelColor = Color.White
@@ -529,7 +532,7 @@ fun RoleCardEditorSheet(
                                 }
 
                                 Text(
-                                    text = "已上传的语音片段",
+                                    text = Strings.txt(StringsKey.role_uploaded_clips),
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     color = Color(0xFF49454F),
@@ -538,7 +541,7 @@ fun RoleCardEditorSheet(
 
                                 if (voiceClips.isEmpty()) {
                                     Text(
-                                        text = "暂无语音片段，请先上传一段参考音频（WAV 格式最佳）。",
+                                        text = Strings.txt(StringsKey.role_no_clips_hint),
                                         fontSize = 12.sp,
                                         color = Color(0xFF79747E),
                                         modifier = Modifier.padding(start = 2.dp)
@@ -589,7 +592,7 @@ fun RoleCardEditorSheet(
                                         ) {
                                             Icon(
                                                 imageVector = if (isPlaying) Icons.Default.Stop else Icons.Default.PlayArrow,
-                                                contentDescription = if (isPlaying) "停止" else "播放",
+                                                contentDescription = if (isPlaying) Strings.txt(StringsKey.role_stop) else Strings.txt(StringsKey.role_play),
                                                 tint = Color.White,
                                                 modifier = Modifier.size(16.dp)
                                             )
@@ -614,7 +617,7 @@ fun RoleCardEditorSheet(
                                         if (isSelected) {
                                             Icon(
                                                 Icons.Default.Check,
-                                                contentDescription = "已选中",
+                                                contentDescription = Strings.txt(StringsKey.selected),
                                                 tint = BrandPrimary,
                                                 modifier = Modifier.size(20.dp)
                                             )
@@ -647,7 +650,7 @@ fun RoleCardEditorSheet(
                                             modifier = Modifier.size(18.dp)
                                         )
                                         Text(
-                                            text = "上传新语音片段",
+                                            text = Strings.txt(StringsKey.role_upload_new_clip),
                                             fontSize = 13.sp,
                                             color = Color(0xFF79747E)
                                         )
@@ -655,28 +658,28 @@ fun RoleCardEditorSheet(
                                 }
 
                                 Text(
-                                    text = "选中的语音片段将作为该角色的默认语音。克隆后端不可用时会自动回退系统 TTS。",
+                                    text = Strings.txt(StringsKey.role_clone_note),
                                     fontSize = 12.sp,
                                     color = Color(0xFF79747E),
                                     modifier = Modifier.padding(start = 2.dp)
                                 )
 
                                 FormField(
-                                    label = "语音显示名称",
+                                    label = Strings.txt(StringsKey.role_field_voice_display),
                                     value = voiceDisplayName,
                                     onValueChange = { voiceDisplayName = it },
-                                    placeholder = "温柔女声 / 磁性男声"
+                                    placeholder = Strings.txt(StringsKey.role_voice_display_hint)
                                 )
                                 FormField(
-                                    label = "语音包 URI",
+                                    label = Strings.txt(StringsKey.role_voice_package_uri),
                                     value = voiceProfileUri,
                                     onValueChange = { voiceProfileUri = it },
-                                    placeholder = "自动从选中片段填入，也可手动输入"
+                                    placeholder = Strings.txt(StringsKey.role_voice_package_hint)
                                 )
 
                                 if (voiceMode == "CLONE" && voiceProfileUri.isBlank()) {
                                     Text(
-                                        text = "未配置时将使用默认 MOSS 音色",
+                                        text = Strings.txt(StringsKey.role_default_moss_note),
                                         fontSize = 12.sp,
                                         color = Color(0xFF79747E),
                                         modifier = Modifier.padding(start = 2.dp)
@@ -704,7 +707,7 @@ fun RoleCardEditorSheet(
                             border = androidx.compose.foundation.BorderStroke(1.dp, BrandOutlineVariant)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
-                                Text("取消", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = Color(0xFF49454F))
+                                Text(Strings.txt(StringsKey.cancel), fontSize = 15.sp, fontWeight = FontWeight.Medium, color = Color(0xFF49454F))
                             }
                         }
                         // Save
@@ -743,7 +746,7 @@ fun RoleCardEditorSheet(
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 Text(
-                                    "保存",
+                                    Strings.txt(StringsKey.save),
                                     fontSize = 15.sp,
                                     fontWeight = FontWeight.Medium,
                                     color = if (canSave) Color.White else BrandOutlineVariant

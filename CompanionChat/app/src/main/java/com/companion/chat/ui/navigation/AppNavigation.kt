@@ -10,34 +10,35 @@ import androidx.compose.material.icons.outlined.Explore
 import androidx.compose.material.icons.outlined.Memory
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.companion.chat.locale.StringsKey
 
 enum class Screen(
     val route: String,
-    val label: String,
+    val labelKey: StringsKey,
     val selectedIcon: ImageVector,
     val unselectedIcon: ImageVector
 ) {
     HOME(
         route = "home",
-        label = "发现",
+        labelKey = StringsKey.tab_discover,
         selectedIcon = Icons.Filled.Explore,
         unselectedIcon = Icons.Outlined.Explore
     ),
     CHAT(
         route = "chat",
-        label = "对话",
+        labelKey = StringsKey.tab_chat,
         selectedIcon = Icons.AutoMirrored.Filled.Chat,
         unselectedIcon = Icons.AutoMirrored.Outlined.Chat
     ),
     MEMORY(
         route = "memory",
-        label = "记忆",
+        labelKey = StringsKey.tab_memory,
         selectedIcon = Icons.Filled.Memory,
         unselectedIcon = Icons.Outlined.Memory
     ),
     SETTINGS(
         route = "settings",
-        label = "设置",
+        labelKey = StringsKey.tab_settings,
         selectedIcon = Icons.Filled.Settings,
         unselectedIcon = Icons.Outlined.Settings
     )

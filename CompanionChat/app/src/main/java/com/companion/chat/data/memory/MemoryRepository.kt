@@ -1,187 +1,138 @@
 package com.companion.chat.data.memory
 
+import com.companion.chat.data.local.dao.FtsQueryHelper
 import com.companion.chat.data.local.dao.MemoryDao
 import com.companion.chat.data.local.entity.Memory
 import kotlinx.coroutines.flow.Flow
 
+/**
+ * 记忆仓库 — 记忆的持久化入口。
+ *
+ * 改造后：
+ * - 废除规则提取器依赖（extractor），交由 MemoryExtractLoop 统一处理
+ * - 废除 retriever，改为 PprRetriever
+ * - 新增实体/链接写入和语义去重
+ */
 class MemoryRepository(
     private val memoryDao: MemoryDao,
-    private val extractor: MemoryExtractor = RuleBasedMemoryExtractor(),
-    private val retriever: MemoryRetriever = MemoryRetriever(memoryDao),
     private val nowProvider: () -> Long = { System.currentTimeMillis() }
 ) {
 
-    suspend fun extractAndStoreMemories(userMessage: String, sessionId: String, roleCardId: Long? = null): List<Memory> {
-        val extractedMemories = extractor.extract(
-            userMessage = userMessage,
-            sessionId = sessionId
-        )
-        return storeExtractedMemories(extractedMemories, sessionId, roleCardId)
-    }
+    // ── 基础 CRUD ──
 
-    suspend fun extractAndStoreMemoriesFromMessages(
-        userMessages: List<String>,
-        sessionId: String,
+    suspend fun getAllMemories(): List<Memory> = memoryDao.getAll()
+    fun observeAllMemories(): Flow<List<Memory>> = memoryDao.observeAll()
+    suspend fun getByCategory(category: String): List<Memory> = memoryDao.getByCategory(category)
+    suspend fun findExactMatch(category: String, content: String): Memory? =
+        memoryDao.findExactMatch(category, content)
+
+    /**
+     * 存储单条记忆（统一入口）。
+     */
+    suspend fun storeMemory(
+        content: String,
+        category: String,
+        source: String,
+        entityName: String? = null,
+        sessionId: String? = null,
         roleCardId: Long? = null
-    ): List<Memory> {
-        val extractedMemories = userMessages.flatMap { message ->
-            extractor.extract(
-                userMessage = message,
-                sessionId = sessionId
-            )
-        }
-        return storeExtractedMemories(extractedMemories, sessionId, roleCardId)
-    }
-
-    suspend fun storeModelExtractedMemories(
-        extractedMemories: List<ExtractedMemory>,
-        sessionId: String,
-        roleCardId: Long? = null
-    ): List<Memory> {
-        return storeExtractedMemories(extractedMemories, sessionId, roleCardId)
-    }
-
-    suspend fun retrieveRelevantMemories(userMessage: String, roleCardId: Long? = null): List<Memory> {
-        return if (roleCardId != null) {
-            // Return memories for this role + global memories (roleCardId IS NULL)
-            memoryDao.getPersistentMemoriesForRole(roleCardId)
-        } else {
-            retriever.retrieveRelevantMemories(userMessage)
-        }
-    }
-
-    suspend fun getPersistentMemories(): List<Memory> {
-        return memoryDao.getPersistentMemories()
-    }
-
-    suspend fun getPersistentMemoriesForRole(roleCardId: Long): List<Memory> {
-        return memoryDao.getPersistentMemoriesForRole(roleCardId)
-    }
-
-    suspend fun getGlobalPersistentMemories(): List<Memory> {
-        return memoryDao.getGlobalPersistentMemories()
-    }
-
-    suspend fun getAllMemories(): List<Memory> {
-        return memoryDao.getAll()
-    }
-
-    fun observeAllMemories(): Flow<List<Memory>> {
-        return memoryDao.observeAll()
-    }
-
-    suspend fun addManualMemory(content: String, category: String, roleCardId: Long? = null): Memory {
+    ): Memory {
         val now = nowProvider()
         val memory = Memory(
             content = content.trim(),
             category = category,
-            layer = LONG_TERM_LAYER,
-            source = MANUAL_SOURCE,
-            referenceCount = 0,
-            sessionId = null,
+            strength = MemoryConfig.INITIAL_STRENGTH,
+            source = source,
+            entityName = entityName,
+            sessionId = sessionId,
             roleCardId = roleCardId,
             createdAt = now,
             updatedAt = now,
-            expiresAt = null
+            lastAccessedAt = now
         )
-        val insertedId = memoryDao.insert(memory)
-        return memory.copy(id = insertedId)
+        val id = memoryDao.insert(memory)
+        return memory.copy(id = id)
     }
 
     suspend fun updateMemory(memory: Memory) {
-        memoryDao.update(
-            memory.copy(
-                content = memory.content.trim(),
-                updatedAt = nowProvider()
-            )
-        )
+        memoryDao.update(memory.copy(updatedAt = nowProvider()))
     }
 
     suspend fun deleteMemory(memory: Memory) {
         memoryDao.delete(memory)
     }
 
-    suspend fun promoteMemory(memoryId: Long, now: Long = nowProvider()): Boolean {
-        return memoryDao.promoteToLongTerm(memoryId, now) > 0
+    // ── 强度管理 ──
+    // applyDailyDecay 移至 MemoryDecayManager，避免重复
+
+    suspend fun strengthenMemory(memoryId: Long, delta: Double = 0.15) {
+        memoryDao.strengthen(memoryId, delta, nowProvider())
     }
 
-    suspend fun promoteMemoryToGlobal(memoryId: Long, now: Long = nowProvider()): Boolean {
-        return memoryDao.promoteToGlobal(memoryId, now) > 0
+    suspend fun cleanupWeakMemories(threshold: Double = 0.05): Int {
+        return memoryDao.deleteByStrengthBelow(threshold)
     }
 
-    suspend fun cleanupExpiredShortTerm(now: Long = nowProvider()): Int {
-        return memoryDao.cleanupExpiredShortTerm(now)
+    // ── FTS 检索 ──
+
+    suspend fun searchByFTS(expression: String, limit: Int = 5): List<Memory> {
+        return memoryDao.searchByFTS(FtsQueryHelper.buildFtsQuery(expression, limit))
     }
 
-    suspend fun promoteEligibleShortTerm(now: Long = nowProvider()): Int {
-        val promotableMemories = memoryDao.getPromotableShortTerm()
-        promotableMemories.forEach { memoryDao.promoteToLongTerm(it.id, now) }
-        return promotableMemories.size
+    suspend fun searchByFTSWithRole(expression: String, roleCardId: Long, limit: Int = 5): List<Memory> {
+        return memoryDao.searchByFTSWithRole(FtsQueryHelper.buildFtsQueryWithRole(expression, roleCardId, limit))
     }
 
-    private suspend fun storeExtractedMemories(
-        extractedMemories: List<ExtractedMemory>,
-        sessionId: String,
-        roleCardId: Long? = null
-    ): List<Memory> {
-        if (extractedMemories.isEmpty()) {
-            return emptyList()
+    // ── 语义去重 ──
+
+    /**
+     * 向量语义去重。后备方案：用简化的规则去重。
+     */
+    suspend fun deduplicateBySemantics(
+        content: String,
+        category: String,
+        threshold: Float = MemoryConfig.SEMANTIC_DEDUP_THRESHOLD,
+        embeddingEngine: (suspend (String) -> FloatArray)? = null
+    ): Memory? {
+        val existingMemories = memoryDao.getByCategory(category)
+
+        if (embeddingEngine != null) {
+            val embedding = embeddingEngine(content) ?: return null
+            for (memory in existingMemories) {
+                val existingEmbedding = embeddingEngine(memory.content) ?: continue
+                val similarity = cosineSimilarity(embedding, existingEmbedding)
+                if (similarity >= threshold) return memory
+            }
+        } else {
+            // 后备：简化规则去重（仅去除纯语气词）
+            val normalized = normalizeForDedupSimple(content)
+            for (memory in existingMemories) {
+                if (normalizeForDedupSimple(memory.content) == normalized) return memory
+            }
         }
+        return null
+    }
 
-        val now = nowProvider()
-        val storedMemories = mutableListOf<Memory>()
-        extractedMemories.forEach { extractedMemory ->
-            val content = extractedMemory.content.trim()
-            val category = extractedMemory.category.trim()
-            if (content.isBlank() || category.isBlank()) {
-                return@forEach
-            }
-
-            val existing = memoryDao.findExactMatch(category, content)
-            if (existing != null) {
-                storedMemories += existing
-                return@forEach
-            }
-
-            // 模糊去重：归一化后检查是否已有语义相近的记忆
-            val normalizedContent = normalizeForDedup(content)
-            val fuzzyMatch = memoryDao.getByCategory(category).firstOrNull { memory ->
-                normalizeForDedup(memory.content) == normalizedContent
-            }
-            if (fuzzyMatch != null) {
-                storedMemories += fuzzyMatch
-                return@forEach
-            }
-
-            val memoryToInsert = Memory(
-                content = content,
-                category = category,
-                layer = extractedMemory.layer,
-                source = extractedMemory.source,
-                referenceCount = 0,
-                sessionId = sessionId,
-                roleCardId = roleCardId,
-                createdAt = now,
-                updatedAt = now,
-                expiresAt = extractedMemory.expiresAt ?: now + SHORT_TERM_TTL_MILLIS
-            )
-            val insertedId = memoryDao.insert(memoryToInsert)
-            storedMemories += memoryToInsert.copy(id = insertedId)
+    private fun cosineSimilarity(a: FloatArray, b: FloatArray): Float {
+        var dot = 0f; var na = 0f; var nb = 0f
+        for (i in a.indices) {
+            dot += a[i] * b[i]
+            na += a[i] * a[i]
+            nb += b[i] * b[i]
         }
-        return storedMemories
+        return dot / (kotlin.math.sqrt(na) * kotlin.math.sqrt(nb))
     }
 
     companion object {
-        const val SHORT_TERM_TTL_MILLIS = 7L * 24 * 60 * 60 * 1000
-        private const val LONG_TERM_LAYER = "long_term"
-        private const val MANUAL_SOURCE = "manual"
+        private const val DAY_MILLIS = 24L * 60 * 60 * 1000
         const val MODEL_SOURCE = "model_extractor"
+        const val MANUAL_SOURCE = "manual"
 
-        /** 去除语气词和轻量动词，归一化用于模糊去重 */
-        private val DEDUP_NOISE = listOf("打", "的", "了", "着", "过", "吧", "呢", "啊", "呀")
-        private fun normalizeForDedup(content: String): String {
+        /** 简化去重 — 只去除纯语气词（移除"打""着""过"等过度去除） */
+        private val DEDUP_NOISE_SIMPLE = listOf("的", "了", "吧", "呢", "啊", "呀", "嘛", "哦")
+        private fun normalizeForDedupSimple(content: String): String {
             var result = content.trim().lowercase()
-            for (noise in DEDUP_NOISE) {
+            for (noise in DEDUP_NOISE_SIMPLE) {
                 result = result.replace(noise, "")
             }
             return result

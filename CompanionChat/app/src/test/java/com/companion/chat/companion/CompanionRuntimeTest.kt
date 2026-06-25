@@ -526,11 +526,11 @@ class CompanionRuntimeTest {
 
         override fun observeAll(): Flow<List<Memory>> = emptyFlow()
 
-        override suspend fun getByLayer(layer: String): List<Memory> {
-            return memories.filter { it.layer == layer }.sortedByDescending { it.updatedAt }
-        }
+        /* getByLayer removed
+            return emptyList()
+        } */
 
-        override suspend fun getPersistentMemories(): List<Memory> {
+        /* getPersistentMemories removed
             return getByLayer("long_term")
         }
 
@@ -543,22 +543,12 @@ class CompanionRuntimeTest {
         }
 
         override suspend fun searchByFTS(query: SupportSQLiteQuery): List<Memory> {
-            return memories.filter { it.layer != "long_term" && it.content.contains("简洁") }
+            return memories.filter { it.content.contains("简洁") }
         }
 
-        override suspend fun incrementReference(id: Long): Int = 1
+        /* incrementReference removed
 
-        override suspend fun promoteToLongTerm(id: Long, now: Long): Int {
-            val index = memories.indexOfFirst { it.id == id }
-            if (index < 0) return 0
-            memories[index] = memories[index].copy(layer = "long_term", updatedAt = now)
-            return 1
-        }
-
-        override suspend fun cleanupExpiredShortTerm(now: Long): Int = 0
-
-        override suspend fun getPromotableShortTerm(): List<Memory> = emptyList()
-    }
+        /* promoteToLongTerm removed */
 
     private class FakeContextManager(
         private val shouldCompress: Boolean = false

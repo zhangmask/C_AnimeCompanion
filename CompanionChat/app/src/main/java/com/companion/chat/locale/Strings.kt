@@ -1,0 +1,1362 @@
+package com.companion.chat.locale
+
+import androidx.compose.runtime.Composable
+
+/**
+ * UI 字符串键。每个键对应一条用户可见文案。
+ *
+ * 新增文案只需在此枚举加一个值，并在 [Strings.ZH] / [Strings.EN] 两个 map 里
+ * 各加一条对应翻译即可。未来新增语言只需新增一个 map，无需改动调用方。
+ */
+enum class StringsKey {
+    // ── 通用 ──
+    back,                  // 返回 / Back
+    close,                 // 关闭 / Close
+    confirm,               // 确认 / Confirm
+    cancel,                // 取消 / Cancel
+    save,                  // 保存 / Save
+    delete,                // 删除 / Delete
+    edit,                  // 编辑 / Edit
+    refresh,               // 刷新 / Refresh
+    search,                // 搜索 / Search
+    filter,                // 筛选 / Filter
+    settings,              // 设置 / Settings
+    enable,                // 启用 / Enable
+    disable,               // 禁用 / Disable
+    configure,             // 配置 / Configure
+    selected,              // 已选中 / Selected
+    loading,               // 加载中 / Loading
+
+    // ── 底部导航 ──
+    tab_discover,          // 发现 / Discover
+    tab_chat,              // 对话 / Chat
+    tab_memory,            // 记忆 / Memory
+    tab_settings,          // 设置 / Settings
+
+    // ── ChatScreen ──
+    chat_title,            // 对话 / Chat
+    chat_status_disconnected,   // 未连接 / Disconnected
+    chat_status_loading,        // 模型加载中 / Loading model
+    chat_status_ready,          // 已就绪 / Ready
+    chat_status_generating,     // 生成中 / Generating
+    chat_status_error,          // 错误 / Error
+    chat_empty_hint,            // 直接输入第一条消息，或从左上角打开会话列表。 / Type your first message, or open sessions from top-left.
+    chat_compressing,           // 正在压缩上下文… / Compressing context…
+
+    // ── ChatInputBar ──
+    input_placeholder,          // 输入消息… / Type a message…
+    input_voice,                // 语音输入 / Voice input
+    input_send,                 // 发送 / Send
+    input_stop,                 // �停止 / Stop
+    input_read_aloud,           // 朗读 / Read aloud
+    input_stop_reading,         // 停止朗读 / Stop reading
+    input_pick_image,           // 选择图片 / Pick image
+    input_generate_image,       // 生成图片 / Generate image
+
+    // ── ConversationDrawerSheet ──
+    drawer_title,               // 对话列表 / Sessions
+    drawer_search_hint,         // 搜索对话或角色 / Search sessions or characters
+    drawer_filter_today,        // 今天 / Today
+    drawer_filter_yesterday,    // 昨天 / Yesterday
+    drawer_filter_week,         // 本周 / This week
+    drawer_filter_month,        // 本月 / This month
+    drawer_filter_all,          // 全部 / All
+    drawer_filter_title,        // 筛选对话 / Filter sessions
+    drawer_filter_time_section, // 时间 / Time
+    drawer_empty_no_match,      // 未找到匹配的对话 / No matching sessions
+    drawer_empty_period,        // 该时间段内暂无对话 / No sessions in this period
+    drawer_empty_none,          // 暂无对话 / No sessions yet
+    drawer_new_chat,            // 新建对话 / New chat
+    drawer_choose_character,    // 选择角色 / Choose character
+    drawer_create_new_character,// 创建新角色 / Create new character
+    drawer_new_character_hint,  // 自定义人设、头像和语音 / Custom persona, avatar and voice
+    drawer_existing_characters, // 已有角色 / Existing characters
+    drawer_no_character_hint,   // 还没有角色卡，先创建一个吧 / No character cards yet, create one first
+    drawer_active_tag,          // 使用中 / Active
+    drawer_blank_chat,          // 空白对话（不使用角色） / Blank chat (no character)
+    drawer_edit_title,          // 编辑标题 / Edit title
+    drawer_delete_session,      // 删除会话 / Delete session
+    drawer_msg_count_suffix,    // 条消息 / messages
+    drawer_time_just_now,       // 刚刚 / just now
+    drawer_time_min_ago,        // 分钟前 / min ago
+    drawer_time_hour_ago,       // 小时前 / h ago
+    drawer_time_day_ago,        // 天前 / d ago
+    drawer_filter_label,     // 筛选: %s / Filter: %s
+
+    // ── MessageBubble ──
+    msg_copy,                   // 复制 / Copy
+    msg_copied,                 // 已复制 / Copied
+    msg_regenerate,             // 重新生成 / Regenerate
+    msg_delete,                 // 删除 / Delete
+    msg_avatar_me,              // 我 / Me
+    msg_avatar_assistant,       // 助手 / Assistant
+    msg_image_loading,          // 加载图片… / Loading image…
+    msg_image_failed,           // 图片加载失败 / Image failed to load
+
+    // ── HomeScreen ──
+    home_title,                 // 首页 / Home
+    home_start_chat,            // 开始对话 / Start chat
+    home_recent,                // 最近对话 / Recent sessions
+    home_no_recent,             // 暂无对话 / No sessions yet
+    home_my_characters,         // 我的角色 / My characters
+    home_no_character,          // 还没有角色，去创建一个 / No characters yet, create one
+
+    // ── MemoryScreen ──
+    memory_title,               // 记忆管理 / Memory management
+    memory_add,                 // 新增记忆 / Add memory
+    memory_edit,                // 编辑记忆 / Edit memory
+    memory_delete_title,        // 删除记忆 / Delete memory
+    memory_delete_confirm,      // 确认删除这条记忆吗？ / Delete this memory?
+    memory_search_hint,         // 搜索记忆内容… / Search memory content…
+    memory_filter,              // 筛选 / Filter
+    memory_filter_title,        // 筛选记忆 / Filter memories
+    memory_filter_confirm,      // 确认筛选 / Confirm filter
+    memory_filter_label,        // 筛选: %s / Filter: %s
+    memory_unknown_role,        // 未知角色 / Unknown character
+    memory_role_prefix,         // 角色: %s / Character: %s
+    memory_loading_title,       // 正在加载记忆 / Loading memories
+    memory_loading_msg,         // 请稍候… / Please wait…
+    memory_empty_title,         // 还没有记忆 / No memories yet
+    memory_empty_msg,           // 在对话里说"记住..."，或点右上角新增一条。 / Say "remember..." in chat, or tap top-right to add one.
+    memory_updated_at,          // 更新时间：%s / Updated: %s
+    memory_edit_action,         // 编辑记忆 / Edit memory
+    memory_delete_action,       // 删除记忆 / Delete memory
+    memory_promote_action,      // 提升为长期记忆 / Promote to long-term
+    memory_field_content,       // 记忆内容 / Memory content
+    memory_global,              // 全局记忆 / Global memory
+    memory_all_roles,           // 全部角色 / All characters
+    memory_tab_content,         // 内容 / Content
+    memory_tab_category,        // 分类 / Category
+    memory_tab_layer,           // 层级 / Layer
+    memory_tab_role,            // 角色 / Character
+    memory_layer_all,           // 全部 / All
+    memory_layer_short,         // 短期 / Short-term
+    memory_layer_long,          // 长期 / Long-term
+    memory_cat_all,             // 全部 / All
+    memory_cat_fact,            // 事实 / Fact
+    memory_cat_preference,      // 偏好 / Preference
+    memory_cat_event,           // 事件 / Event
+    memory_cat_relation,        // 关系 / Relation
+    memory_cat_time,            // 时间 / Time
+    memory_cat_other,           // 其他 / Other
+
+    // ── 记忆系统（改造 v2 新增）──
+    memory_retrieved_title,     // 从记忆中检索到的与当前对话相关的信息
+    memory_persistent_title,    // 长期记忆中的关键信息
+    memory_user_note,           // 以下内容均为用户本人的记忆...
+    memory_summary_title,       // 快速摘要
+    memory_meta_section_title,  // 元记忆提示
+    memory_category_fact,       // 事实
+    memory_category_preference, // 偏好
+    memory_category_event,      // 事件
+    memory_category_behavior,   // 行为
+    memory_category_knowledge,  // 知识
+    memory_category_skill,      // 技能
+    memory_category_relation,   // 关系
+    memory_category_other,      // 其他
+    memory_strength_label,      // 强度
+
+    // ── SettingsScreen ──
+    settings_title,             // 设置 / Settings
+    settings_section_general,   // 通用 / General
+    settings_item_language,     // 语言 / Language
+    settings_item_dark_mode,    // 深色模式 / Dark mode
+    settings_section_chat,      // 对话 / Chat
+    settings_item_characters,   // 角色管理 / Characters
+    settings_item_model,        // 模型配置 / Model config
+    settings_item_voice,        // 语音设置 / Voice settings
+    settings_item_memory,       // 记忆设置 / Memory settings
+    settings_item_image,        // 图像生成 / Image generation
+    settings_item_personalization,// 个性化 / Personalization
+    settings_section_account,   // 账户 / Account
+    settings_item_user_profile, // 用户资料 / User profile
+    settings_item_skills,       // 技能管理 / Skills
+    settings_section_about,     // 关于 / About
+    settings_item_privacy,      // 隐私 / Privacy
+    settings_item_about,        // 关于 / About
+
+    // ── SettingsScreen 额外 ──
+    settings_section_characters,// 角色 / Characters
+    settings_section_memory,    // 记忆 / Memory
+    settings_section_model,     // 模型 / Model
+    settings_section_voice,    // 语音 / Voice
+    settings_section_appearance,// 外观 / Appearance
+    settings_item_context_window, // 上下文窗口大小 / Context window size
+    settings_hint_nickname,     // 设置昵称 / Set nickname
+    settings_hint_bio,          // 设置你的个人信息... / Set your personal info...
+    settings_sub_characters,    // 创建和切换陪伴角色卡 / Create and switch character cards
+    settings_sub_skills,        // 管理工作能力模板和自定义 skills / Manage skill templates and custom skills
+    settings_sub_memory,        // 查看、编辑和提升短期记忆 / View, edit, and promote short-term memories
+    settings_item_auto_learn,   // 自动学习偏好 / Auto learn preferences
+    settings_sub_learn_on,      // 后台总结最近对话并逐步学习用户偏好 / Background summary learns user preferences
+    settings_sub_learn_off,     // 已关闭后台偏好总结... / Background preference summary disabled...
+    settings_sub_model,         // 选择模型、GPU/CPU 后端 / Select model, GPU/CPU backend
+    settings_sub_context,       // 当前保留最近 %d 轮对话 / Currently keeping last %d rounds
+    settings_sub_image,         // 配置联网图片生成 HTTP 接口 / Configure online image generation HTTP API
+    settings_sub_voice,         // 语音输入输出、语速语调 / Voice I/O, speed, and pitch
+    profile_avatar_desc,        // 用户头像 / User avatar
+    profile_change_avatar,      // 更换头像 / Change avatar
+    profile_edit_profile,       // 编辑个人资料 / Edit profile
+
+    // ── AboutScreen ──
+    about_title,                // 关于 / About
+    about_version,              // 版本 / Version
+    about_intro,                // 本地 AI 伴侣，完全离线运行 / Local AI companion, fully offline
+    about_license,              // 开源协议 / Open source license
+    about_source,               // 源代码 / Source code
+    about_feedback,             // 反馈 / Feedback
+
+    // ── DarkMode ──
+    dark_mode_title,            // 深色模式 / Dark mode
+    dark_mode_follow_system,    // 跟随系统 / Follow system
+    dark_mode_on,               // 开启 / On
+    dark_mode_off,              // 关闭 / Off
+
+    // ── LanguageSettingsScreen ──
+    language_title,             // 语言 / Language
+    language_settings_title,    // 语言设置 / Language settings
+    language_choose_hint,       // 选择界面语言 / Choose interface language
+    language_zh,                // 中文 / Chinese
+    language_en,                // 英文 / English
+    language_switch_hint,       // 切换后全应用界面立即生效。 / Switch takes effect immediately across the whole app.
+
+    // ── CharacterManagement ──
+    char_mgmt_title,            // 角色管理 / Characters
+    char_mgmt_new,              // 新建角色 / New character
+    char_mgmt_delete_confirm,   // 确定删除该角色？ / Delete this character?
+    char_mgmt_set_active,       // 设为使用中 / Set active
+    char_mgmt_empty,            // 还没有角色，点击新建创建一个 / No characters yet, tap new to create one
+
+    // ── ModelConfig ──
+    model_title,                // 模型配置 / Model config
+    model_path,                 // 模型路径 / Model path
+    model_pick,                 // 选择模型 / Pick model
+    model_quantization,         // 量化方式 / Quantization
+    model_context_length,       // 上下文长度 / Context length
+    model_threads,              // 线程数 / Threads
+    model_gpu,                  // GPU 加速 / GPU acceleration
+    model_reset,                // 重置默认 / Reset to default
+    model_load,                 // 加载模型 / Load model
+    model_unload,               // 卸载模型 / Unload model
+    model_loaded,               // 已加载 / Loaded
+    model_not_loaded,           // 未加载 / Not loaded
+
+
+    // ── ModelConfigScreen 额外 ──
+    model_context_window,       // 上下文窗口大小 / Context window size
+    model_context_desc,         // 当前保留最近 %d 轮完整对话... / Currently keeping last %d rounds...
+    model_backend,              // 推理后端 / Inference backend
+    model_backend_llama_desc,   // 默认文本后端，读取外部 GGUF uncensor 模型。 / Default text backend, loads external GGUF model.
+    model_backend_litert_desc,  // 可选多模态后端，继续支持图片输入链路。 / Optional multimodal backend for image input.
+    model_gpu_desc,             // 使用 GPU 加速推理（LiteRT 后端） / Use GPU for inference (LiteRT backend)
+    model_path_hint,            // 留空使用默认路径：%s / Leave empty to use default path: %s
+    model_status_ready,         // 已就绪 / Ready
+    model_status_missing,       // 缺失 / Missing
+    model_apply,                // 应用模型配置 / Apply config
+    model_context_hint,         // 建议范围 3~20... / Recommended range 3~20...
+    context_retain_label,       // 保留最近 %d 轮 / Keep last %d rounds
+    context_compress_hint,      // 压缩阈值约为 %d 条消息 / Compression threshold ~%d messages
+    model_ready_generate,       // 模型就绪，可以生成图片 / Model ready, can generate images
+    model_dir_not_configured,   // 模型目录未配置 / Model directory not configured
+    model_invalid_config,       // 配置无效：%s / Invalid config: %s
+    model_missing_files,        // 文件缺失：%s / Missing files: %s
+    model_package_ready,        // 模型包已就绪：%s / Model package ready: %s
+
+    // ── ImageGen 配置 ──
+    image_provider_config,      // 图片生成 Provider 配置 / Image generation provider config
+    image_http_desc,            // 使用通用 HTTP 图片接口，配置可真实生成图片 / Uses generic HTTP image API
+    image_local_sd_desc,        // stable-diffusion.cpp + Vulkan，本地私有出图 / stable-diffusion.cpp + Vulkan, local private generation
+    image_dreamlite_desc,       // 端侧接入框架已准备，等待官方权重/端侧包 / On-device framework ready, awaiting official weights
+    image_http_title,           // HTTP 联网生成 / HTTP online generation
+    image_local_sd_title,       // 本地 SD1.5 Hyper-SD / Local SD1.5 Hyper-SD
+    image_dreamlite_title,      // 本地 DreamLite / Local DreamLite
+    image_status_sd,            // Stable Diffusion 状态：%s / Stable Diffusion status: %s
+    image_status_dreamlite,     // DreamLite 状态：%s / DreamLite status: %s
+    image_local_width,          // 本地宽度 / Local width
+    image_local_height,         // 本地高度 / Local height
+    image_local_steps,          // 本地 Steps / Local Steps
+    image_local_cfg,            // 本地 CFG Scale / Local CFG Scale
+    image_local_seed,           // 本地 Seed（留空随机） / Local Seed (leave empty for random)
+    image_enable_vulkan,        // 启用 Vulkan / Enable Vulkan
+    image_template_hint,        // 模板支持 {{model}} 与 {{prompt}}... / Template supports {{model}} and {{prompt}}...
+    image_mmproj_status,        // 图片 projector：%s / Image projector: %s
+
+    // ── VoiceSettings ──
+    voice_title,                // 语音设置 / Voice settings
+    voice_output,               // 语音输出 / Voice output
+    voice_auto_read,            // 自动朗读回复 / Auto read replies
+    voice_speed,                // 语速 / Speed
+    voice_pitch,                // 音调 / Pitch
+    voice_select,               // 选择语音 / Select voice
+    voice_test,                 // 测试语音 / Test voice
+    voice_cloud_asr,            // 云端语音识别 / Cloud ASR
+
+    // ── UserProfile ──
+    profile_title,              // 用户资料 / User profile
+    profile_nickname,           // 昵称 / Nickname
+    profile_avatar,             // 头像 / Avatar
+    profile_birthday,           // 生日 / Birthday
+    profile_gender,             // 性别 / Gender
+    profile_gender_male,        // 男 / Male
+    profile_gender_female,      // 女 / Female
+    profile_gender_other,       // 其他 / Other
+    profile_interests,          // 兴趣 / Interests
+
+    // ── SkillsManagement ──
+    skills_title,               // 技能管理 / Skills
+    skills_empty,               // 暂无可用技能 / No skills available
+
+    // ── RoleCardEditor (基础字段，Sheet/Dialog 共用) ──
+    role_edit_title,            // 编辑角色 / Edit character
+    role_create_title,          // 创建角色 / Create character
+    role_field_name,            // 名称 / Name
+    role_field_description,     // 描述 / Description
+    role_field_persona,         // 人设 / Persona
+    role_field_speaking_style,  // 说话风格 / Speaking style
+    role_field_background,      // 背景 / Background
+    role_field_rules,           // 规则 / Rules
+    role_field_taboos,          // 禁忌 / Taboos
+    role_field_opening,         // 开场白 / Opening message
+    role_field_example_dialogue,// 示例对话 / Example dialogue
+    role_field_avatar,          // 头像 / Avatar
+    role_field_gallery,         // 图库 / Gallery
+    role_field_image_style,     // 图像风格提示 / Image style prompt
+    role_field_voice_profile,   // 语音档案 / Voice profile
+    role_field_voice_mode,      // 语音模式 / Voice mode
+    role_field_voice_display,   // 语音显示名 / Voice display name
+    role_delete_title,          // 删除角色 / Delete character
+    role_delete_confirm,        // 确定删除该角色？ / Delete this character?
+    role_name_required,         // 请输入名称 / Please enter a name
+    role_pick_image,            // 选择图片 / Pick image
+    // RoleCardEditorSheet 专用
+    role_tab_basic,             // 基础 / Basic
+    role_tab_persona,           // 人设 / Persona
+    role_tab_image,             // 图片 / Image
+    role_tab_voice,             // 语音 / Voice
+    role_edit_card_title,       // 编辑角色卡 / Edit character card
+    role_create_card_title,     // 创建角色卡 / Create character card
+    role_avatar_icon,           // 头像图标 / Avatar icon
+    role_avatar_icon_hint,      // 图标标识符，如 person、star、heart / Icon identifier, e.g. person, star, heart
+    role_avatar_preview,        // 头像预览 / Avatar preview
+    role_unnamed,               // 未命名 / Unnamed
+    role_persona_core,          // 核心人设 * / Core persona *
+    role_persona_core_hint,     // 描述角色的核心性格和行为特点 / Describe core personality and behavior
+    role_speaking_style_hint,   // 温暖亲切，偶尔撒娇，喜欢用语气词 / Warm and friendly, occasionally playful
+    role_background_story,      // 背景故事 / Background story
+    role_background_hint,       // 角色的来历和背景设定 / Character origin and background
+    role_rules_hint,            // 角色必须遵守的行为规则和约束 / Behavior rules and constraints
+    role_taboos_hint,           // 角色绝对不能触碰的话题或行为 / Topics or behaviors strictly forbidden
+    role_example_dialogue_hint, // 用户: 你好\n角色: 你好呀~很高兴见到你！ / User: Hi\nCharacter: Hi~ nice to meet you!
+    role_avatar_image,          // 头像图片 / Avatar image
+    role_remove_avatar,         // 移除头像 / Remove avatar
+    role_pick_avatar_image,     // 选择头像图片 / Pick avatar image
+    role_gallery_uri,           // 相册图片 URI（逗号分隔） / Gallery image URIs (comma separated)
+    role_voice_mode_system,     // 系统 TTS / System TTS
+    role_voice_mode_clone,      // MOSS 本地克隆 / MOSS local clone
+    role_uploaded_clips,        // 已上传的语音片段 / Uploaded voice clips
+    role_no_clips_hint,         // 暂无语音片段，请先上传一段参考音频（WAV 格式最佳）。 / No voice clips yet, upload a reference audio first (WAV recommended).
+    role_stop,                  // 停止 / Stop
+    role_play,                  // 播放 / Play
+    role_upload_new_clip,       // 上传新语音片段 / Upload new voice clip
+    role_clone_note,            // 选中的语音片段将作为该角色的默认语音。克隆后端不可用时会自动回退系统 TTS。 / Selected clip becomes default voice. Falls back to system TTS if clone backend unavailable.
+    role_voice_display_hint,    // 温柔女声 / 磁性男声 / Gentle female / Magnetic male
+    role_voice_package_uri,     // 语音包 URI / Voice package URI
+    role_voice_package_hint,    // 自动从选中片段填入，也可手动输入 / Auto-filled from selected clip, or input manually
+    role_default_moss_note,     // 未配置时将使用默认 MOSS 音色 / Uses default MOSS voice when not configured
+    role_name_placeholder,      // 给角色取个名字 / Give the character a name
+    role_desc_placeholder,      // 温柔治愈的邻家女孩 / Gentle healing girl next door
+    role_opening_placeholder,   // 你好呀~今天想聊什么呢？ / Hi~ what shall we talk about today?
+
+    // ── ChatViewModel Toast/Snackbar ──
+    toast_permission_denied,    // 权限被拒绝 / Permission denied
+    toast_model_load_failed,    // 模型加载失败 / Model load failed
+    toast_generate_failed,      // 生成失败 / Generation failed
+    toast_saved,                // 保存成功 / Saved
+    toast_deleted,              // 已删除 / Deleted
+    toast_network_error,        // 网络错误 / Network error
+    snackbar_image_failed,      // 图片生成失败 / Image generation failed
+    default_session_title,      // 新对话 / New chat
+    // ChatViewModel 额外面向用户的字符串
+    toast_moss_fallback,        // 检测到 MOSS 延迟过大，已回退到系统 TTS / MOSS latency too high, fell back to system TTS
+    err_model_not_loaded,       // 模型未加载，请在设置中配置模型路径。 / Model not loaded, please configure model path in settings.
+    err_inference,              // 推理出错: %s / Inference error: %s
+    err_init_exception,         // 初始化异常: %s / Init exception: %s
+    hint_input_msg,             // 输入消息… / Type a message…
+    hint_suggestion_ready,      // 对话建议已生成，可修改后发送 / Suggestion generated, edit and send
+    hint_suggestion_loading,    // 生成对话建议中… / Generating suggestion…
+    hint_suggestion_failed,     // 建议生成失败，请重试 / Suggestion failed, please retry
+    msg_compressing_context,    // 正在压缩上下文，请稍候… / Compressing context, please wait…
+
+    // ── VoiceSettingsScreen 额外 ──
+    voice_recognition_mode,     // 识别模式 / Recognition mode
+    voice_recognition_backend,  // 识别后端 / Recognition backend
+    voice_model_directory,      // 模型目录 / Model directory
+    voice_model_status,         // 模型状态 / Model status
+    voice_cloud_asr_label,      // 云 ASR / Cloud ASR
+    voice_cloud_response_field, // 云响应字段 / Cloud response field
+    voice_moss_directory,       // MOSS 目录 / MOSS directory
+    voice_moss_status,          // MOSS 状态 / MOSS status
+    voice_local_clone,          // 本地克隆 / Local clone
+    voice_output_mode,          // 输出模式 / Output mode
+    voice_default_timbre,       // 默认音色 / Default voice
+    voice_role_voice,           // 角色语音 / Character voice
+    voice_not_configured,       // 未配置 / Not configured
+    voice_configured,           // 已配置 / Configured
+    voice_local_sensevoice,     // 本地 SenseVoice ASR / Local SenseVoice ASR
+    voice_cloud_http_asr,       // 云 HTTP ASR / Cloud HTTP ASR
+    voice_moss_nano_default,    // MOSS TTS Nano（默认引擎） / MOSS TTS Nano (default engine)
+    voice_fallback_tts,         // 回退系统 TTS / Fallback to system TTS
+    voice_clone_default,        // MOSS 本地克隆（默认） / MOSS local clone (default)
+    voice_role_voice_hint,      // 在角色管理中配置... / Configure in character management...
+    voice_desc,                 // 语音输入默认使用... / Voice input uses local SenseVoice...
+    voice_auto_read_desc,       // AI 开始回复 0.5 秒后... / Auto-read 0.5s after AI starts replying
+    voice_ready,                // 完整 / Complete
+    voice_local_not_configured, // 本地 SenseVoice 模型未配置 / Local SenseVoice model not configured
+    voice_moss_not_configured,  // moss-tts-nano 模型未配置 / moss-tts-nano model not configured
+    voice_invalid_config,       // 配置无效：%s / Invalid config: %s
+    voice_missing_files,        // 文件缺失：%s / Missing files: %s
+
+    // ── HomeScreen 额外 ──
+    home_discover,              // 发现 / Discover
+    home_sort,                  // 排序 / Sort
+    home_sort_hot,              // 热门 / Hot
+    home_sort_newest,           // 最新 / Newest
+    home_sort_name,             // 名称 / Name
+    home_search_hint,           // 搜索角色、作者、标签 / Search characters, authors, tags
+    home_create_your_role,      // 创建你的角色 / Create your character
+    home_create_hint,           // 人设、头像、语音会保存到角色卡 / Persona, avatar, voice saved to card
+    home_create,                // 创建 / Create
+    home_show_mature,           // 显示私密 / Show mature
+    home_role_detail,           // 角色详情 / Character details
+    home_not_found,             // 未找到角色 / Character not found
+    home_by_author,             // by %s / by %s
+    home_imported,              // 已导入 / Imported
+    home_unlocked,              // 已解锁 / Unlocked
+    home_start_chat_btn,        // 开始聊天 / Start chat
+    home_unlock_to_favorite,    // 收藏解锁 / Unlock to favorite
+    home_generating,            // 生成中 / Generating
+    home_generate_image,        // 生成图片 / Generate image
+    home_edit_character,        // 编辑角色卡 / Edit character card
+    home_mature_label,          // 私密 / Mature
+
+    // ── ChatScreen 额外 ──
+    chat_quick_continue,        // 继续聊聊 / Continue chatting
+    chat_quick_generate_img,    // 生成此刻图片 / Generate scene image
+
+    // ── CharacterManagement 额外 ──
+    char_mgmt_persona_label,    // 人设：%s / Persona: %s
+    char_mgmt_style_label,      // 风格：%s / Style: %s
+    char_mgmt_image_label,      // 图片：头像%s，图库 %d 张 / Image: avatar %s, gallery %d images
+    char_mgmt_voice_label,      // 语音：%s / Voice: %s
+    char_mgmt_avatar_configured,// 已配置 / Configured
+    char_mgmt_avatar_missing,   // 未配置 / Not configured
+
+    // ── UserProfileScreen 额外 ──
+    profile_tab_personality,    // 个性 / Personality
+    profile_change_avatar_hint, // 修改头像 / Change avatar
+    profile_click_to_change,    // 点击修改头像 / Tap to change avatar
+    profile_name_placeholder,   // 给自己取个名字 / Give yourself a name
+    profile_gender_placeholder, // 男 / 女 / 其他 / Male / Female / Other
+    profile_age_label,          // 年龄 / Age
+    profile_age_placeholder,    // 你的年龄 / Your age
+    profile_bio_label,          // 个性签名 / Bio
+    profile_bio_placeholder,    // 一句话介绍自己 / Describe yourself in one line
+    profile_intro_label,        // 个人介绍 / Introduction
+    profile_intro_placeholder,  // 详细介绍一下自己，让 AI 更了解你 / Introduce yourself in detail so AI knows you better
+    profile_tags_placeholder,   // 用逗号分隔，如：阅读, 音乐, 游戏 / Comma separated, e.g. reading, music, gaming
+    profile_important_label,    // 重要信息 / Important info
+    profile_important_placeholder, // 希望 AI 记住的重要事情... / Important things for AI to remember...
+    profile_help_text,          // 这些信息会帮助 AI... / This info helps AI understand you...
+
+    // ── SkillsManagement 额外 ──
+    skills_used_count,          // 已使用 %d 次 / Used %d times
+    skills_delete_confirm,      // 确认删除"%s"吗？ / Delete "%s"?
+    skills_custom_empty_title,  // 还没有自定义 Skills / No custom skills yet
+    skills_custom_create_hint,  // 点击右上角"+"创建你的自定义 skill。 / Tap "+" at top right to create your custom skill.
+
+    // ── DetailSection ──
+    detail_persona,             // 人设摘要 / Persona summary
+    detail_voice,               // 语音 / Voice
+    detail_image_style,         // 图片风格 / Image style
+
+    // ── DiscoverViewModel ──
+    discover_import_failed,     // 导入角色失败 / Import character failed
+    discover_image_added,       // 图片已加入角色图库 / Image added to character gallery
+    discover_image_generated,   // 图片已生成: %s / Image generated: %s
+
+    // ── VoiceDrivenChatPolicy ──
+    voice_policy_no_text,       // 未识别到文本 / No text recognized
+    voice_policy_generating,    // 正在生成回复，请稍后再说 / Generating reply, please wait
+    voice_policy_not_ready,     // 模型未就绪，语音内容已保留在输入框 / Model not ready, voice content kept in input box
+    toast_record_permission_denied, // 缺少录音权限，无法使用语音输入 / Microphone permission denied
+}
+
+/**
+ * UI 字符串表。按 [AppLanguage] 提供翻译。
+ *
+ * 可扩展：新增语言只需在 [translations] 里加一个 `AppLanguage.XX to mapOf(...)`，
+ * 提供 [StringsKey] 全部键的翻译即可，无需改动调用方。
+ *
+ * 注意：每个语言的 map 必须覆盖全部 [StringsKey]，缺失键会在 [get] 时回退到中文。
+ */
+object Strings {
+
+    /** 中文翻译（默认/回退语言）。 */
+    val ZH: Map<StringsKey, String> = mapOf(
+        StringsKey.back to "back",
+        StringsKey.close to "close",
+        StringsKey.confirm to "confirm",
+        StringsKey.cancel to "cancel",
+        StringsKey.save to "save",
+        StringsKey.delete to "delete",
+        StringsKey.edit to "edit",
+        StringsKey.refresh to "refresh",
+        StringsKey.search to "search",
+        StringsKey.filter to "filter",
+        StringsKey.settings to "settings",
+        StringsKey.enable to "enable",
+        StringsKey.disable to "disable",
+        StringsKey.configure to "configure",
+        StringsKey.selected to "selected",
+        StringsKey.loading to "loading",
+        StringsKey.tab_discover to "tab discover",
+        StringsKey.tab_chat to "tab chat",
+        StringsKey.tab_memory to "tab memory",
+        StringsKey.tab_settings to "tab settings",
+        StringsKey.chat_title to "chat title",
+        StringsKey.chat_status_disconnected to "chat status disconnected",
+        StringsKey.chat_status_loading to "chat status loading",
+        StringsKey.chat_status_ready to "chat status ready",
+        StringsKey.chat_status_generating to "chat status generating",
+        StringsKey.chat_status_error to "chat status error",
+        StringsKey.chat_empty_hint to "chat empty hint",
+        StringsKey.chat_compressing to "chat compressing",
+        StringsKey.input_placeholder to "input placeholder",
+        StringsKey.input_voice to "input voice",
+        StringsKey.input_send to "input send",
+        StringsKey.input_stop to "input stop",
+        StringsKey.input_read_aloud to "input read aloud",
+        StringsKey.input_stop_reading to "input stop reading",
+        StringsKey.input_pick_image to "input pick image",
+        StringsKey.input_generate_image to "input generate image",
+        StringsKey.drawer_title to "drawer title",
+        StringsKey.drawer_search_hint to "drawer search hint",
+        StringsKey.drawer_filter_today to "drawer filter today",
+        StringsKey.drawer_filter_yesterday to "drawer filter yesterday",
+        StringsKey.drawer_filter_week to "drawer filter week",
+        StringsKey.drawer_filter_month to "drawer filter month",
+        StringsKey.drawer_filter_all to "drawer filter all",
+        StringsKey.drawer_filter_title to "drawer filter title",
+        StringsKey.drawer_filter_time_section to "drawer filter time section",
+        StringsKey.drawer_empty_no_match to "drawer empty no match",
+        StringsKey.drawer_empty_period to "drawer empty period",
+        StringsKey.drawer_empty_none to "drawer empty none",
+        StringsKey.drawer_new_chat to "drawer new chat",
+        StringsKey.drawer_choose_character to "drawer choose character",
+        StringsKey.drawer_create_new_character to "drawer create new character",
+        StringsKey.drawer_new_character_hint to "drawer new character hint",
+        StringsKey.drawer_existing_characters to "drawer existing characters",
+        StringsKey.drawer_no_character_hint to "drawer no character hint",
+        StringsKey.drawer_active_tag to "drawer active tag",
+        StringsKey.drawer_blank_chat to "drawer blank chat",
+        StringsKey.drawer_edit_title to "drawer edit title",
+        StringsKey.drawer_delete_session to "drawer delete session",
+        StringsKey.drawer_msg_count_suffix to "drawer msg count suffix",
+        StringsKey.drawer_time_just_now to "drawer time just now",
+        StringsKey.drawer_time_min_ago to "drawer time min ago",
+        StringsKey.drawer_time_hour_ago to "drawer time hour ago",
+        StringsKey.drawer_time_day_ago to "drawer time day ago",
+        StringsKey.drawer_filter_label to "drawer filter label",
+        StringsKey.msg_copy to "msg copy",
+        StringsKey.msg_copied to "msg copied",
+        StringsKey.msg_regenerate to "msg regenerate",
+        StringsKey.msg_delete to "msg delete",
+        StringsKey.msg_avatar_me to "msg avatar me",
+        StringsKey.msg_avatar_assistant to "msg avatar assistant",
+        StringsKey.msg_image_loading to "msg image loading",
+        StringsKey.msg_image_failed to "msg image failed",
+        StringsKey.home_title to "home title",
+        StringsKey.home_start_chat to "home start chat",
+        StringsKey.home_recent to "home recent",
+        StringsKey.home_no_recent to "home no recent",
+        StringsKey.home_my_characters to "home my characters",
+        StringsKey.home_no_character to "home no character",
+        StringsKey.memory_title to "memory title",
+        StringsKey.memory_add to "memory add",
+        StringsKey.memory_edit to "memory edit",
+        StringsKey.memory_delete_title to "memory delete title",
+        StringsKey.memory_delete_confirm to "memory delete confirm",
+        StringsKey.memory_search_hint to "memory search hint",
+        StringsKey.memory_filter to "memory filter",
+        StringsKey.memory_filter_title to "memory filter title",
+        StringsKey.memory_filter_confirm to "memory filter confirm",
+        StringsKey.memory_filter_label to "memory filter label",
+        StringsKey.memory_unknown_role to "memory unknown role",
+        StringsKey.memory_role_prefix to "memory role prefix",
+        StringsKey.memory_loading_title to "memory loading title",
+        StringsKey.memory_loading_msg to "memory loading msg",
+        StringsKey.memory_empty_title to "memory empty title",
+        StringsKey.memory_empty_msg to "memory empty msg",
+        StringsKey.memory_updated_at to "memory updated at",
+        StringsKey.memory_edit_action to "memory edit action",
+        StringsKey.memory_delete_action to "memory delete action",
+        StringsKey.memory_promote_action to "memory promote action",
+        StringsKey.memory_field_content to "memory field content",
+        StringsKey.memory_global to "memory global",
+        StringsKey.memory_all_roles to "memory all roles",
+        StringsKey.memory_tab_content to "memory tab content",
+        StringsKey.memory_tab_category to "memory tab category",
+        StringsKey.memory_tab_layer to "memory tab layer",
+        StringsKey.memory_tab_role to "memory tab role",
+        StringsKey.memory_layer_all to "memory layer all",
+        StringsKey.memory_layer_short to "memory layer short",
+        StringsKey.memory_layer_long to "memory layer long",
+        StringsKey.memory_cat_all to "memory cat all",
+        StringsKey.memory_cat_fact to "memory cat fact",
+        StringsKey.memory_cat_preference to "memory cat preference",
+        StringsKey.memory_cat_event to "memory cat event",
+        StringsKey.memory_cat_relation to "memory cat relation",
+        StringsKey.memory_cat_time to "memory cat time",
+        StringsKey.memory_cat_other to "memory cat other",
+        StringsKey.memory_retrieved_title to "memory retrieved title",
+        StringsKey.memory_persistent_title to "memory persistent title",
+        StringsKey.memory_user_note to "memory user note",
+        StringsKey.memory_summary_title to "memory summary title",
+        StringsKey.memory_meta_section_title to "memory meta section title",
+        StringsKey.memory_category_fact to "memory category fact",
+        StringsKey.memory_category_preference to "memory category preference",
+        StringsKey.memory_category_event to "memory category event",
+        StringsKey.memory_category_behavior to "memory category behavior",
+        StringsKey.memory_category_knowledge to "memory category knowledge",
+        StringsKey.memory_category_skill to "memory category skill",
+        StringsKey.memory_category_relation to "memory category relation",
+        StringsKey.memory_category_other to "memory category other",
+        StringsKey.memory_strength_label to "memory strength label",
+        StringsKey.settings_title to "settings title",
+        StringsKey.settings_section_general to "settings section general",
+        StringsKey.settings_item_language to "settings item language",
+        StringsKey.settings_item_dark_mode to "settings item dark mode",
+        StringsKey.settings_section_chat to "settings section chat",
+        StringsKey.settings_item_characters to "settings item characters",
+        StringsKey.settings_item_model to "settings item model",
+        StringsKey.settings_item_voice to "settings item voice",
+        StringsKey.settings_item_memory to "settings item memory",
+        StringsKey.settings_item_image to "settings item image",
+        StringsKey.settings_item_personalization to "settings item personalization",
+        StringsKey.settings_section_account to "settings section account",
+        StringsKey.settings_item_user_profile to "settings item user profile",
+        StringsKey.settings_item_skills to "settings item skills",
+        StringsKey.settings_section_about to "settings section about",
+        StringsKey.settings_item_privacy to "settings item privacy",
+        StringsKey.settings_item_about to "settings item about",
+        StringsKey.settings_section_characters to "settings section characters",
+        StringsKey.settings_section_memory to "settings section memory",
+        StringsKey.settings_section_model to "settings section model",
+        StringsKey.settings_section_voice to "settings section voice",
+        StringsKey.settings_section_appearance to "settings section appearance",
+        StringsKey.settings_item_context_window to "settings item context window",
+        StringsKey.settings_hint_nickname to "settings hint nickname",
+        StringsKey.settings_hint_bio to "settings hint bio",
+        StringsKey.settings_sub_characters to "settings sub characters",
+        StringsKey.settings_sub_skills to "settings sub skills",
+        StringsKey.settings_sub_memory to "settings sub memory",
+        StringsKey.settings_item_auto_learn to "settings item auto learn",
+        StringsKey.settings_sub_learn_on to "settings sub learn on",
+        StringsKey.settings_sub_learn_off to "settings sub learn off",
+        StringsKey.settings_sub_model to "settings sub model",
+        StringsKey.settings_sub_context to "settings sub context",
+        StringsKey.settings_sub_image to "settings sub image",
+        StringsKey.settings_sub_voice to "settings sub voice",
+        StringsKey.profile_avatar_desc to "profile avatar desc",
+        StringsKey.profile_change_avatar to "profile change avatar",
+        StringsKey.profile_edit_profile to "profile edit profile",
+        StringsKey.about_title to "about title",
+        StringsKey.about_version to "about version",
+        StringsKey.about_intro to "about intro",
+        StringsKey.about_license to "about license",
+        StringsKey.about_source to "about source",
+        StringsKey.about_feedback to "about feedback",
+        StringsKey.dark_mode_title to "dark mode title",
+        StringsKey.dark_mode_follow_system to "dark mode follow system",
+        StringsKey.dark_mode_on to "dark mode on",
+        StringsKey.dark_mode_off to "dark mode off",
+        StringsKey.language_title to "language title",
+        StringsKey.language_settings_title to "language settings title",
+        StringsKey.language_choose_hint to "language choose hint",
+        StringsKey.language_zh to "language zh",
+        StringsKey.language_en to "language en",
+        StringsKey.language_switch_hint to "language switch hint",
+        StringsKey.char_mgmt_title to "char mgmt title",
+        StringsKey.char_mgmt_new to "char mgmt new",
+        StringsKey.char_mgmt_delete_confirm to "char mgmt delete confirm",
+        StringsKey.char_mgmt_set_active to "char mgmt set active",
+        StringsKey.char_mgmt_empty to "char mgmt empty",
+        StringsKey.model_title to "model title",
+        StringsKey.model_path to "model path",
+        StringsKey.model_pick to "model pick",
+        StringsKey.model_quantization to "model quantization",
+        StringsKey.model_context_length to "model context length",
+        StringsKey.model_threads to "model threads",
+        StringsKey.model_gpu to "model gpu",
+        StringsKey.model_reset to "model reset",
+        StringsKey.model_load to "model load",
+        StringsKey.model_unload to "model unload",
+        StringsKey.model_loaded to "model loaded",
+        StringsKey.model_not_loaded to "model not loaded",
+        StringsKey.model_context_window to "model context window",
+        StringsKey.model_context_desc to "model context desc",
+        StringsKey.model_backend to "model backend",
+        StringsKey.model_backend_llama_desc to "model backend llama desc",
+        StringsKey.model_backend_litert_desc to "model backend litert desc",
+        StringsKey.model_gpu_desc to "model gpu desc",
+        StringsKey.model_path_hint to "model path hint",
+        StringsKey.model_status_ready to "model status ready",
+        StringsKey.model_status_missing to "model status missing",
+        StringsKey.model_apply to "model apply",
+        StringsKey.model_context_hint to "model context hint",
+        StringsKey.context_retain_label to "context retain label",
+        StringsKey.context_compress_hint to "context compress hint",
+        StringsKey.model_ready_generate to "model ready generate",
+        StringsKey.model_dir_not_configured to "model dir not configured",
+        StringsKey.model_invalid_config to "model invalid config",
+        StringsKey.model_missing_files to "model missing files",
+        StringsKey.model_package_ready to "model package ready",
+        StringsKey.image_provider_config to "image provider config",
+        StringsKey.image_http_desc to "image http desc",
+        StringsKey.image_local_sd_desc to "image local sd desc",
+        StringsKey.image_dreamlite_desc to "image dreamlite desc",
+        StringsKey.image_http_title to "image http title",
+        StringsKey.image_local_sd_title to "image local sd title",
+        StringsKey.image_dreamlite_title to "image dreamlite title",
+        StringsKey.image_status_sd to "image status sd",
+        StringsKey.image_status_dreamlite to "image status dreamlite",
+        StringsKey.image_local_width to "image local width",
+        StringsKey.image_local_height to "image local height",
+        StringsKey.image_local_steps to "image local steps",
+        StringsKey.image_local_cfg to "image local cfg",
+        StringsKey.image_local_seed to "image local seed",
+        StringsKey.image_enable_vulkan to "image enable vulkan",
+        StringsKey.image_template_hint to "image template hint",
+        StringsKey.image_mmproj_status to "image mmproj status",
+        StringsKey.voice_title to "voice title",
+        StringsKey.voice_output to "voice output",
+        StringsKey.voice_auto_read to "voice auto read",
+        StringsKey.voice_speed to "voice speed",
+        StringsKey.voice_pitch to "voice pitch",
+        StringsKey.voice_select to "voice select",
+        StringsKey.voice_test to "voice test",
+        StringsKey.voice_cloud_asr to "voice cloud asr",
+        StringsKey.profile_title to "profile title",
+        StringsKey.profile_nickname to "profile nickname",
+        StringsKey.profile_avatar to "profile avatar",
+        StringsKey.profile_birthday to "profile birthday",
+        StringsKey.profile_gender to "profile gender",
+        StringsKey.profile_gender_male to "profile gender male",
+        StringsKey.profile_gender_female to "profile gender female",
+        StringsKey.profile_gender_other to "profile gender other",
+        StringsKey.profile_interests to "profile interests",
+        StringsKey.skills_title to "skills title",
+        StringsKey.skills_empty to "skills empty",
+        StringsKey.role_edit_title to "role edit title",
+        StringsKey.role_create_title to "role create title",
+        StringsKey.role_field_name to "role field name",
+        StringsKey.role_field_description to "role field description",
+        StringsKey.role_field_persona to "role field persona",
+        StringsKey.role_field_speaking_style to "role field speaking style",
+        StringsKey.role_field_background to "role field background",
+        StringsKey.role_field_rules to "role field rules",
+        StringsKey.role_field_taboos to "role field taboos",
+        StringsKey.role_field_opening to "role field opening",
+        StringsKey.role_field_example_dialogue to "role field example dialogue",
+        StringsKey.role_field_avatar to "role field avatar",
+        StringsKey.role_field_gallery to "role field gallery",
+        StringsKey.role_field_image_style to "role field image style",
+        StringsKey.role_field_voice_profile to "role field voice profile",
+        StringsKey.role_field_voice_mode to "role field voice mode",
+        StringsKey.role_field_voice_display to "role field voice display",
+        StringsKey.role_delete_title to "role delete title",
+        StringsKey.role_delete_confirm to "role delete confirm",
+        StringsKey.role_name_required to "role name required",
+        StringsKey.role_pick_image to "role pick image",
+        StringsKey.role_tab_basic to "role tab basic",
+        StringsKey.role_tab_persona to "role tab persona",
+        StringsKey.role_tab_image to "role tab image",
+        StringsKey.role_tab_voice to "role tab voice",
+        StringsKey.role_edit_card_title to "role edit card title",
+        StringsKey.role_create_card_title to "role create card title",
+        StringsKey.role_avatar_icon to "role avatar icon",
+        StringsKey.role_avatar_icon_hint to "role avatar icon hint",
+        StringsKey.role_avatar_preview to "role avatar preview",
+        StringsKey.role_unnamed to "role unnamed",
+        StringsKey.role_persona_core to "role persona core",
+        StringsKey.role_persona_core_hint to "role persona core hint",
+        StringsKey.role_speaking_style_hint to "role speaking style hint",
+        StringsKey.role_background_story to "role background story",
+        StringsKey.role_background_hint to "role background hint",
+        StringsKey.role_rules_hint to "role rules hint",
+        StringsKey.role_taboos_hint to "role taboos hint",
+        StringsKey.role_example_dialogue_hint to "role example dialogue hint",
+        StringsKey.role_avatar_image to "role avatar image",
+        StringsKey.role_remove_avatar to "role remove avatar",
+        StringsKey.role_pick_avatar_image to "role pick avatar image",
+        StringsKey.role_gallery_uri to "role gallery uri",
+        StringsKey.role_voice_mode_system to "role voice mode system",
+        StringsKey.role_voice_mode_clone to "role voice mode clone",
+        StringsKey.role_uploaded_clips to "role uploaded clips",
+        StringsKey.role_no_clips_hint to "role no clips hint",
+        StringsKey.role_stop to "role stop",
+        StringsKey.role_play to "role play",
+        StringsKey.role_upload_new_clip to "role upload new clip",
+        StringsKey.role_clone_note to "role clone note",
+        StringsKey.role_voice_display_hint to "role voice display hint",
+        StringsKey.role_voice_package_uri to "role voice package uri",
+        StringsKey.role_voice_package_hint to "role voice package hint",
+        StringsKey.role_default_moss_note to "role default moss note",
+        StringsKey.role_name_placeholder to "role name placeholder",
+        StringsKey.role_desc_placeholder to "role desc placeholder",
+        StringsKey.role_opening_placeholder to "role opening placeholder",
+        StringsKey.toast_permission_denied to "toast permission denied",
+        StringsKey.toast_model_load_failed to "toast model load failed",
+        StringsKey.toast_generate_failed to "toast generate failed",
+        StringsKey.toast_saved to "toast saved",
+        StringsKey.toast_deleted to "toast deleted",
+        StringsKey.toast_network_error to "toast network error",
+        StringsKey.snackbar_image_failed to "snackbar image failed",
+        StringsKey.default_session_title to "default session title",
+        StringsKey.toast_moss_fallback to "toast moss fallback",
+        StringsKey.err_model_not_loaded to "err model not loaded",
+        StringsKey.err_inference to "err inference",
+        StringsKey.err_init_exception to "err init exception",
+        StringsKey.hint_input_msg to "hint input msg",
+        StringsKey.hint_suggestion_ready to "hint suggestion ready",
+        StringsKey.hint_suggestion_loading to "hint suggestion loading",
+        StringsKey.hint_suggestion_failed to "hint suggestion failed",
+        StringsKey.msg_compressing_context to "msg compressing context",
+        StringsKey.voice_recognition_mode to "voice recognition mode",
+        StringsKey.voice_recognition_backend to "voice recognition backend",
+        StringsKey.voice_model_directory to "voice model directory",
+        StringsKey.voice_model_status to "voice model status",
+        StringsKey.voice_cloud_asr_label to "voice cloud asr label",
+        StringsKey.voice_cloud_response_field to "voice cloud response field",
+        StringsKey.voice_moss_directory to "voice moss directory",
+        StringsKey.voice_moss_status to "voice moss status",
+        StringsKey.voice_local_clone to "voice local clone",
+        StringsKey.voice_output_mode to "voice output mode",
+        StringsKey.voice_default_timbre to "voice default timbre",
+        StringsKey.voice_role_voice to "voice role voice",
+        StringsKey.voice_not_configured to "voice not configured",
+        StringsKey.voice_configured to "voice configured",
+        StringsKey.voice_local_sensevoice to "voice local sensevoice",
+        StringsKey.voice_cloud_http_asr to "voice cloud http asr",
+        StringsKey.voice_moss_nano_default to "voice moss nano default",
+        StringsKey.voice_fallback_tts to "voice fallback tts",
+        StringsKey.voice_clone_default to "voice clone default",
+        StringsKey.voice_role_voice_hint to "voice role voice hint",
+        StringsKey.voice_desc to "voice desc",
+        StringsKey.voice_auto_read_desc to "voice auto read desc",
+        StringsKey.voice_ready to "voice ready",
+        StringsKey.voice_local_not_configured to "voice local not configured",
+        StringsKey.voice_moss_not_configured to "voice moss not configured",
+        StringsKey.voice_invalid_config to "voice invalid config",
+        StringsKey.voice_missing_files to "voice missing files",
+        StringsKey.home_discover to "home discover",
+        StringsKey.home_sort to "home sort",
+        StringsKey.home_sort_hot to "home sort hot",
+        StringsKey.home_sort_newest to "home sort newest",
+        StringsKey.home_sort_name to "home sort name",
+        StringsKey.home_search_hint to "home search hint",
+        StringsKey.home_create_your_role to "home create your role",
+        StringsKey.home_create_hint to "home create hint",
+        StringsKey.home_create to "home create",
+        StringsKey.home_show_mature to "home show mature",
+        StringsKey.home_role_detail to "home role detail",
+        StringsKey.home_not_found to "home not found",
+        StringsKey.home_by_author to "home by author",
+        StringsKey.home_imported to "home imported",
+        StringsKey.home_unlocked to "home unlocked",
+        StringsKey.home_start_chat_btn to "home start chat btn",
+        StringsKey.home_unlock_to_favorite to "home unlock to favorite",
+        StringsKey.home_generating to "home generating",
+        StringsKey.home_generate_image to "home generate image",
+        StringsKey.home_edit_character to "home edit character",
+        StringsKey.home_mature_label to "home mature label",
+        StringsKey.chat_quick_continue to "chat quick continue",
+        StringsKey.chat_quick_generate_img to "chat quick generate img",
+        StringsKey.char_mgmt_persona_label to "char mgmt persona label",
+        StringsKey.char_mgmt_style_label to "char mgmt style label",
+        StringsKey.char_mgmt_image_label to "char mgmt image label",
+        StringsKey.char_mgmt_voice_label to "char mgmt voice label",
+        StringsKey.char_mgmt_avatar_configured to "char mgmt avatar configured",
+        StringsKey.char_mgmt_avatar_missing to "char mgmt avatar missing",
+        StringsKey.profile_tab_personality to "profile tab personality",
+        StringsKey.profile_change_avatar_hint to "profile change avatar hint",
+        StringsKey.profile_click_to_change to "profile click to change",
+        StringsKey.profile_name_placeholder to "profile name placeholder",
+        StringsKey.profile_gender_placeholder to "profile gender placeholder",
+        StringsKey.profile_age_label to "profile age label",
+        StringsKey.profile_age_placeholder to "profile age placeholder",
+        StringsKey.profile_bio_label to "profile bio label",
+        StringsKey.profile_bio_placeholder to "profile bio placeholder",
+        StringsKey.profile_intro_label to "profile intro label",
+        StringsKey.profile_intro_placeholder to "profile intro placeholder",
+        StringsKey.profile_tags_placeholder to "profile tags placeholder",
+        StringsKey.profile_important_label to "profile important label",
+        StringsKey.profile_important_placeholder to "profile important placeholder",
+        StringsKey.profile_help_text to "profile help text",
+        StringsKey.skills_used_count to "skills used count",
+        StringsKey.skills_delete_confirm to "skills delete confirm",
+        StringsKey.skills_custom_empty_title to "skills custom empty title",
+        StringsKey.skills_custom_create_hint to "skills custom create hint",
+        StringsKey.detail_persona to "detail persona",
+        StringsKey.detail_voice to "detail voice",
+        StringsKey.detail_image_style to "detail image style",
+        StringsKey.discover_import_failed to "discover import failed",
+        StringsKey.discover_image_added to "discover image added",
+        StringsKey.discover_image_generated to "discover image generated",
+        StringsKey.voice_policy_no_text to "voice policy no text",
+        StringsKey.voice_policy_generating to "voice policy generating",
+        StringsKey.voice_policy_not_ready to "voice policy not ready",
+        StringsKey.toast_record_permission_denied to "toast record permission denied"
+    )
+
+    val EN: Map<StringsKey, String> = mapOf(
+        StringsKey.back to "back",
+        StringsKey.close to "close",
+        StringsKey.confirm to "confirm",
+        StringsKey.cancel to "cancel",
+        StringsKey.save to "save",
+        StringsKey.delete to "delete",
+        StringsKey.edit to "edit",
+        StringsKey.refresh to "refresh",
+        StringsKey.search to "search",
+        StringsKey.filter to "filter",
+        StringsKey.settings to "settings",
+        StringsKey.enable to "enable",
+        StringsKey.disable to "disable",
+        StringsKey.configure to "configure",
+        StringsKey.selected to "selected",
+        StringsKey.loading to "loading",
+        StringsKey.tab_discover to "tab discover",
+        StringsKey.tab_chat to "tab chat",
+        StringsKey.tab_memory to "tab memory",
+        StringsKey.tab_settings to "tab settings",
+        StringsKey.chat_title to "chat title",
+        StringsKey.chat_status_disconnected to "chat status disconnected",
+        StringsKey.chat_status_loading to "chat status loading",
+        StringsKey.chat_status_ready to "chat status ready",
+        StringsKey.chat_status_generating to "chat status generating",
+        StringsKey.chat_status_error to "chat status error",
+        StringsKey.chat_empty_hint to "chat empty hint",
+        StringsKey.chat_compressing to "chat compressing",
+        StringsKey.input_placeholder to "input placeholder",
+        StringsKey.input_voice to "input voice",
+        StringsKey.input_send to "input send",
+        StringsKey.input_stop to "input stop",
+        StringsKey.input_read_aloud to "input read aloud",
+        StringsKey.input_stop_reading to "input stop reading",
+        StringsKey.input_pick_image to "input pick image",
+        StringsKey.input_generate_image to "input generate image",
+        StringsKey.drawer_title to "drawer title",
+        StringsKey.drawer_search_hint to "drawer search hint",
+        StringsKey.drawer_filter_today to "drawer filter today",
+        StringsKey.drawer_filter_yesterday to "drawer filter yesterday",
+        StringsKey.drawer_filter_week to "drawer filter week",
+        StringsKey.drawer_filter_month to "drawer filter month",
+        StringsKey.drawer_filter_all to "drawer filter all",
+        StringsKey.drawer_filter_title to "drawer filter title",
+        StringsKey.drawer_filter_time_section to "drawer filter time section",
+        StringsKey.drawer_empty_no_match to "drawer empty no match",
+        StringsKey.drawer_empty_period to "drawer empty period",
+        StringsKey.drawer_empty_none to "drawer empty none",
+        StringsKey.drawer_new_chat to "drawer new chat",
+        StringsKey.drawer_choose_character to "drawer choose character",
+        StringsKey.drawer_create_new_character to "drawer create new character",
+        StringsKey.drawer_new_character_hint to "drawer new character hint",
+        StringsKey.drawer_existing_characters to "drawer existing characters",
+        StringsKey.drawer_no_character_hint to "drawer no character hint",
+        StringsKey.drawer_active_tag to "drawer active tag",
+        StringsKey.drawer_blank_chat to "drawer blank chat",
+        StringsKey.drawer_edit_title to "drawer edit title",
+        StringsKey.drawer_delete_session to "drawer delete session",
+        StringsKey.drawer_msg_count_suffix to "drawer msg count suffix",
+        StringsKey.drawer_time_just_now to "drawer time just now",
+        StringsKey.drawer_time_min_ago to "drawer time min ago",
+        StringsKey.drawer_time_hour_ago to "drawer time hour ago",
+        StringsKey.drawer_time_day_ago to "drawer time day ago",
+        StringsKey.drawer_filter_label to "drawer filter label",
+        StringsKey.msg_copy to "msg copy",
+        StringsKey.msg_copied to "msg copied",
+        StringsKey.msg_regenerate to "msg regenerate",
+        StringsKey.msg_delete to "msg delete",
+        StringsKey.msg_avatar_me to "msg avatar me",
+        StringsKey.msg_avatar_assistant to "msg avatar assistant",
+        StringsKey.msg_image_loading to "msg image loading",
+        StringsKey.msg_image_failed to "msg image failed",
+        StringsKey.home_title to "home title",
+        StringsKey.home_start_chat to "home start chat",
+        StringsKey.home_recent to "home recent",
+        StringsKey.home_no_recent to "home no recent",
+        StringsKey.home_my_characters to "home my characters",
+        StringsKey.home_no_character to "home no character",
+        StringsKey.memory_title to "memory title",
+        StringsKey.memory_add to "memory add",
+        StringsKey.memory_edit to "memory edit",
+        StringsKey.memory_delete_title to "memory delete title",
+        StringsKey.memory_delete_confirm to "memory delete confirm",
+        StringsKey.memory_search_hint to "memory search hint",
+        StringsKey.memory_filter to "memory filter",
+        StringsKey.memory_filter_title to "memory filter title",
+        StringsKey.memory_filter_confirm to "memory filter confirm",
+        StringsKey.memory_filter_label to "memory filter label",
+        StringsKey.memory_unknown_role to "memory unknown role",
+        StringsKey.memory_role_prefix to "memory role prefix",
+        StringsKey.memory_loading_title to "memory loading title",
+        StringsKey.memory_loading_msg to "memory loading msg",
+        StringsKey.memory_empty_title to "memory empty title",
+        StringsKey.memory_empty_msg to "memory empty msg",
+        StringsKey.memory_updated_at to "memory updated at",
+        StringsKey.memory_edit_action to "memory edit action",
+        StringsKey.memory_delete_action to "memory delete action",
+        StringsKey.memory_promote_action to "memory promote action",
+        StringsKey.memory_field_content to "memory field content",
+        StringsKey.memory_global to "memory global",
+        StringsKey.memory_all_roles to "memory all roles",
+        StringsKey.memory_tab_content to "memory tab content",
+        StringsKey.memory_tab_category to "memory tab category",
+        StringsKey.memory_tab_layer to "memory tab layer",
+        StringsKey.memory_tab_role to "memory tab role",
+        StringsKey.memory_layer_all to "memory layer all",
+        StringsKey.memory_layer_short to "memory layer short",
+        StringsKey.memory_layer_long to "memory layer long",
+        StringsKey.memory_cat_all to "memory cat all",
+        StringsKey.memory_cat_fact to "memory cat fact",
+        StringsKey.memory_cat_preference to "memory cat preference",
+        StringsKey.memory_cat_event to "memory cat event",
+        StringsKey.memory_cat_relation to "memory cat relation",
+        StringsKey.memory_cat_time to "memory cat time",
+        StringsKey.memory_cat_other to "memory cat other",
+        StringsKey.memory_retrieved_title to "memory retrieved title",
+        StringsKey.memory_persistent_title to "memory persistent title",
+        StringsKey.memory_user_note to "memory user note",
+        StringsKey.memory_summary_title to "memory summary title",
+        StringsKey.memory_meta_section_title to "memory meta section title",
+        StringsKey.memory_category_fact to "memory category fact",
+        StringsKey.memory_category_preference to "memory category preference",
+        StringsKey.memory_category_event to "memory category event",
+        StringsKey.memory_category_behavior to "memory category behavior",
+        StringsKey.memory_category_knowledge to "memory category knowledge",
+        StringsKey.memory_category_skill to "memory category skill",
+        StringsKey.memory_category_relation to "memory category relation",
+        StringsKey.memory_category_other to "memory category other",
+        StringsKey.memory_strength_label to "memory strength label",
+        StringsKey.settings_title to "settings title",
+        StringsKey.settings_section_general to "settings section general",
+        StringsKey.settings_item_language to "settings item language",
+        StringsKey.settings_item_dark_mode to "settings item dark mode",
+        StringsKey.settings_section_chat to "settings section chat",
+        StringsKey.settings_item_characters to "settings item characters",
+        StringsKey.settings_item_model to "settings item model",
+        StringsKey.settings_item_voice to "settings item voice",
+        StringsKey.settings_item_memory to "settings item memory",
+        StringsKey.settings_item_image to "settings item image",
+        StringsKey.settings_item_personalization to "settings item personalization",
+        StringsKey.settings_section_account to "settings section account",
+        StringsKey.settings_item_user_profile to "settings item user profile",
+        StringsKey.settings_item_skills to "settings item skills",
+        StringsKey.settings_section_about to "settings section about",
+        StringsKey.settings_item_privacy to "settings item privacy",
+        StringsKey.settings_item_about to "settings item about",
+        StringsKey.settings_section_characters to "settings section characters",
+        StringsKey.settings_section_memory to "settings section memory",
+        StringsKey.settings_section_model to "settings section model",
+        StringsKey.settings_section_voice to "settings section voice",
+        StringsKey.settings_section_appearance to "settings section appearance",
+        StringsKey.settings_item_context_window to "settings item context window",
+        StringsKey.settings_hint_nickname to "settings hint nickname",
+        StringsKey.settings_hint_bio to "settings hint bio",
+        StringsKey.settings_sub_characters to "settings sub characters",
+        StringsKey.settings_sub_skills to "settings sub skills",
+        StringsKey.settings_sub_memory to "settings sub memory",
+        StringsKey.settings_item_auto_learn to "settings item auto learn",
+        StringsKey.settings_sub_learn_on to "settings sub learn on",
+        StringsKey.settings_sub_learn_off to "settings sub learn off",
+        StringsKey.settings_sub_model to "settings sub model",
+        StringsKey.settings_sub_context to "settings sub context",
+        StringsKey.settings_sub_image to "settings sub image",
+        StringsKey.settings_sub_voice to "settings sub voice",
+        StringsKey.profile_avatar_desc to "profile avatar desc",
+        StringsKey.profile_change_avatar to "profile change avatar",
+        StringsKey.profile_edit_profile to "profile edit profile",
+        StringsKey.about_title to "about title",
+        StringsKey.about_version to "about version",
+        StringsKey.about_intro to "about intro",
+        StringsKey.about_license to "about license",
+        StringsKey.about_source to "about source",
+        StringsKey.about_feedback to "about feedback",
+        StringsKey.dark_mode_title to "dark mode title",
+        StringsKey.dark_mode_follow_system to "dark mode follow system",
+        StringsKey.dark_mode_on to "dark mode on",
+        StringsKey.dark_mode_off to "dark mode off",
+        StringsKey.language_title to "language title",
+        StringsKey.language_settings_title to "language settings title",
+        StringsKey.language_choose_hint to "language choose hint",
+        StringsKey.language_zh to "language zh",
+        StringsKey.language_en to "language en",
+        StringsKey.language_switch_hint to "language switch hint",
+        StringsKey.char_mgmt_title to "char mgmt title",
+        StringsKey.char_mgmt_new to "char mgmt new",
+        StringsKey.char_mgmt_delete_confirm to "char mgmt delete confirm",
+        StringsKey.char_mgmt_set_active to "char mgmt set active",
+        StringsKey.char_mgmt_empty to "char mgmt empty",
+        StringsKey.model_title to "model title",
+        StringsKey.model_path to "model path",
+        StringsKey.model_pick to "model pick",
+        StringsKey.model_quantization to "model quantization",
+        StringsKey.model_context_length to "model context length",
+        StringsKey.model_threads to "model threads",
+        StringsKey.model_gpu to "model gpu",
+        StringsKey.model_reset to "model reset",
+        StringsKey.model_load to "model load",
+        StringsKey.model_unload to "model unload",
+        StringsKey.model_loaded to "model loaded",
+        StringsKey.model_not_loaded to "model not loaded",
+        StringsKey.model_context_window to "model context window",
+        StringsKey.model_context_desc to "model context desc",
+        StringsKey.model_backend to "model backend",
+        StringsKey.model_backend_llama_desc to "model backend llama desc",
+        StringsKey.model_backend_litert_desc to "model backend litert desc",
+        StringsKey.model_gpu_desc to "model gpu desc",
+        StringsKey.model_path_hint to "model path hint",
+        StringsKey.model_status_ready to "model status ready",
+        StringsKey.model_status_missing to "model status missing",
+        StringsKey.model_apply to "model apply",
+        StringsKey.model_context_hint to "model context hint",
+        StringsKey.context_retain_label to "context retain label",
+        StringsKey.context_compress_hint to "context compress hint",
+        StringsKey.model_ready_generate to "model ready generate",
+        StringsKey.model_dir_not_configured to "model dir not configured",
+        StringsKey.model_invalid_config to "model invalid config",
+        StringsKey.model_missing_files to "model missing files",
+        StringsKey.model_package_ready to "model package ready",
+        StringsKey.image_provider_config to "image provider config",
+        StringsKey.image_http_desc to "image http desc",
+        StringsKey.image_local_sd_desc to "image local sd desc",
+        StringsKey.image_dreamlite_desc to "image dreamlite desc",
+        StringsKey.image_http_title to "image http title",
+        StringsKey.image_local_sd_title to "image local sd title",
+        StringsKey.image_dreamlite_title to "image dreamlite title",
+        StringsKey.image_status_sd to "image status sd",
+        StringsKey.image_status_dreamlite to "image status dreamlite",
+        StringsKey.image_local_width to "image local width",
+        StringsKey.image_local_height to "image local height",
+        StringsKey.image_local_steps to "image local steps",
+        StringsKey.image_local_cfg to "image local cfg",
+        StringsKey.image_local_seed to "image local seed",
+        StringsKey.image_enable_vulkan to "image enable vulkan",
+        StringsKey.image_template_hint to "image template hint",
+        StringsKey.image_mmproj_status to "image mmproj status",
+        StringsKey.voice_title to "voice title",
+        StringsKey.voice_output to "voice output",
+        StringsKey.voice_auto_read to "voice auto read",
+        StringsKey.voice_speed to "voice speed",
+        StringsKey.voice_pitch to "voice pitch",
+        StringsKey.voice_select to "voice select",
+        StringsKey.voice_test to "voice test",
+        StringsKey.voice_cloud_asr to "voice cloud asr",
+        StringsKey.profile_title to "profile title",
+        StringsKey.profile_nickname to "profile nickname",
+        StringsKey.profile_avatar to "profile avatar",
+        StringsKey.profile_birthday to "profile birthday",
+        StringsKey.profile_gender to "profile gender",
+        StringsKey.profile_gender_male to "profile gender male",
+        StringsKey.profile_gender_female to "profile gender female",
+        StringsKey.profile_gender_other to "profile gender other",
+        StringsKey.profile_interests to "profile interests",
+        StringsKey.skills_title to "skills title",
+        StringsKey.skills_empty to "skills empty",
+        StringsKey.role_edit_title to "role edit title",
+        StringsKey.role_create_title to "role create title",
+        StringsKey.role_field_name to "role field name",
+        StringsKey.role_field_description to "role field description",
+        StringsKey.role_field_persona to "role field persona",
+        StringsKey.role_field_speaking_style to "role field speaking style",
+        StringsKey.role_field_background to "role field background",
+        StringsKey.role_field_rules to "role field rules",
+        StringsKey.role_field_taboos to "role field taboos",
+        StringsKey.role_field_opening to "role field opening",
+        StringsKey.role_field_example_dialogue to "role field example dialogue",
+        StringsKey.role_field_avatar to "role field avatar",
+        StringsKey.role_field_gallery to "role field gallery",
+        StringsKey.role_field_image_style to "role field image style",
+        StringsKey.role_field_voice_profile to "role field voice profile",
+        StringsKey.role_field_voice_mode to "role field voice mode",
+        StringsKey.role_field_voice_display to "role field voice display",
+        StringsKey.role_delete_title to "role delete title",
+        StringsKey.role_delete_confirm to "role delete confirm",
+        StringsKey.role_name_required to "role name required",
+        StringsKey.role_pick_image to "role pick image",
+        StringsKey.role_tab_basic to "role tab basic",
+        StringsKey.role_tab_persona to "role tab persona",
+        StringsKey.role_tab_image to "role tab image",
+        StringsKey.role_tab_voice to "role tab voice",
+        StringsKey.role_edit_card_title to "role edit card title",
+        StringsKey.role_create_card_title to "role create card title",
+        StringsKey.role_avatar_icon to "role avatar icon",
+        StringsKey.role_avatar_icon_hint to "role avatar icon hint",
+        StringsKey.role_avatar_preview to "role avatar preview",
+        StringsKey.role_unnamed to "role unnamed",
+        StringsKey.role_persona_core to "role persona core",
+        StringsKey.role_persona_core_hint to "role persona core hint",
+        StringsKey.role_speaking_style_hint to "role speaking style hint",
+        StringsKey.role_background_story to "role background story",
+        StringsKey.role_background_hint to "role background hint",
+        StringsKey.role_rules_hint to "role rules hint",
+        StringsKey.role_taboos_hint to "role taboos hint",
+        StringsKey.role_example_dialogue_hint to "role example dialogue hint",
+        StringsKey.role_avatar_image to "role avatar image",
+        StringsKey.role_remove_avatar to "role remove avatar",
+        StringsKey.role_pick_avatar_image to "role pick avatar image",
+        StringsKey.role_gallery_uri to "role gallery uri",
+        StringsKey.role_voice_mode_system to "role voice mode system",
+        StringsKey.role_voice_mode_clone to "role voice mode clone",
+        StringsKey.role_uploaded_clips to "role uploaded clips",
+        StringsKey.role_no_clips_hint to "role no clips hint",
+        StringsKey.role_stop to "role stop",
+        StringsKey.role_play to "role play",
+        StringsKey.role_upload_new_clip to "role upload new clip",
+        StringsKey.role_clone_note to "role clone note",
+        StringsKey.role_voice_display_hint to "role voice display hint",
+        StringsKey.role_voice_package_uri to "role voice package uri",
+        StringsKey.role_voice_package_hint to "role voice package hint",
+        StringsKey.role_default_moss_note to "role default moss note",
+        StringsKey.role_name_placeholder to "role name placeholder",
+        StringsKey.role_desc_placeholder to "role desc placeholder",
+        StringsKey.role_opening_placeholder to "role opening placeholder",
+        StringsKey.toast_permission_denied to "toast permission denied",
+        StringsKey.toast_model_load_failed to "toast model load failed",
+        StringsKey.toast_generate_failed to "toast generate failed",
+        StringsKey.toast_saved to "toast saved",
+        StringsKey.toast_deleted to "toast deleted",
+        StringsKey.toast_network_error to "toast network error",
+        StringsKey.snackbar_image_failed to "snackbar image failed",
+        StringsKey.default_session_title to "default session title",
+        StringsKey.toast_moss_fallback to "toast moss fallback",
+        StringsKey.err_model_not_loaded to "err model not loaded",
+        StringsKey.err_inference to "err inference",
+        StringsKey.err_init_exception to "err init exception",
+        StringsKey.hint_input_msg to "hint input msg",
+        StringsKey.hint_suggestion_ready to "hint suggestion ready",
+        StringsKey.hint_suggestion_loading to "hint suggestion loading",
+        StringsKey.hint_suggestion_failed to "hint suggestion failed",
+        StringsKey.msg_compressing_context to "msg compressing context",
+        StringsKey.voice_recognition_mode to "voice recognition mode",
+        StringsKey.voice_recognition_backend to "voice recognition backend",
+        StringsKey.voice_model_directory to "voice model directory",
+        StringsKey.voice_model_status to "voice model status",
+        StringsKey.voice_cloud_asr_label to "voice cloud asr label",
+        StringsKey.voice_cloud_response_field to "voice cloud response field",
+        StringsKey.voice_moss_directory to "voice moss directory",
+        StringsKey.voice_moss_status to "voice moss status",
+        StringsKey.voice_local_clone to "voice local clone",
+        StringsKey.voice_output_mode to "voice output mode",
+        StringsKey.voice_default_timbre to "voice default timbre",
+        StringsKey.voice_role_voice to "voice role voice",
+        StringsKey.voice_not_configured to "voice not configured",
+        StringsKey.voice_configured to "voice configured",
+        StringsKey.voice_local_sensevoice to "voice local sensevoice",
+        StringsKey.voice_cloud_http_asr to "voice cloud http asr",
+        StringsKey.voice_moss_nano_default to "voice moss nano default",
+        StringsKey.voice_fallback_tts to "voice fallback tts",
+        StringsKey.voice_clone_default to "voice clone default",
+        StringsKey.voice_role_voice_hint to "voice role voice hint",
+        StringsKey.voice_desc to "voice desc",
+        StringsKey.voice_auto_read_desc to "voice auto read desc",
+        StringsKey.voice_ready to "voice ready",
+        StringsKey.voice_local_not_configured to "voice local not configured",
+        StringsKey.voice_moss_not_configured to "voice moss not configured",
+        StringsKey.voice_invalid_config to "voice invalid config",
+        StringsKey.voice_missing_files to "voice missing files",
+        StringsKey.home_discover to "home discover",
+        StringsKey.home_sort to "home sort",
+        StringsKey.home_sort_hot to "home sort hot",
+        StringsKey.home_sort_newest to "home sort newest",
+        StringsKey.home_sort_name to "home sort name",
+        StringsKey.home_search_hint to "home search hint",
+        StringsKey.home_create_your_role to "home create your role",
+        StringsKey.home_create_hint to "home create hint",
+        StringsKey.home_create to "home create",
+        StringsKey.home_show_mature to "home show mature",
+        StringsKey.home_role_detail to "home role detail",
+        StringsKey.home_not_found to "home not found",
+        StringsKey.home_by_author to "home by author",
+        StringsKey.home_imported to "home imported",
+        StringsKey.home_unlocked to "home unlocked",
+        StringsKey.home_start_chat_btn to "home start chat btn",
+        StringsKey.home_unlock_to_favorite to "home unlock to favorite",
+        StringsKey.home_generating to "home generating",
+        StringsKey.home_generate_image to "home generate image",
+        StringsKey.home_edit_character to "home edit character",
+        StringsKey.home_mature_label to "home mature label",
+        StringsKey.chat_quick_continue to "chat quick continue",
+        StringsKey.chat_quick_generate_img to "chat quick generate img",
+        StringsKey.char_mgmt_persona_label to "char mgmt persona label",
+        StringsKey.char_mgmt_style_label to "char mgmt style label",
+        StringsKey.char_mgmt_image_label to "char mgmt image label",
+        StringsKey.char_mgmt_voice_label to "char mgmt voice label",
+        StringsKey.char_mgmt_avatar_configured to "char mgmt avatar configured",
+        StringsKey.char_mgmt_avatar_missing to "char mgmt avatar missing",
+        StringsKey.profile_tab_personality to "profile tab personality",
+        StringsKey.profile_change_avatar_hint to "profile change avatar hint",
+        StringsKey.profile_click_to_change to "profile click to change",
+        StringsKey.profile_name_placeholder to "profile name placeholder",
+        StringsKey.profile_gender_placeholder to "profile gender placeholder",
+        StringsKey.profile_age_label to "profile age label",
+        StringsKey.profile_age_placeholder to "profile age placeholder",
+        StringsKey.profile_bio_label to "profile bio label",
+        StringsKey.profile_bio_placeholder to "profile bio placeholder",
+        StringsKey.profile_intro_label to "profile intro label",
+        StringsKey.profile_intro_placeholder to "profile intro placeholder",
+        StringsKey.profile_tags_placeholder to "profile tags placeholder",
+        StringsKey.profile_important_label to "profile important label",
+        StringsKey.profile_important_placeholder to "profile important placeholder",
+        StringsKey.profile_help_text to "profile help text",
+        StringsKey.skills_used_count to "skills used count",
+        StringsKey.skills_delete_confirm to "skills delete confirm",
+        StringsKey.skills_custom_empty_title to "skills custom empty title",
+        StringsKey.skills_custom_create_hint to "skills custom create hint",
+        StringsKey.detail_persona to "detail persona",
+        StringsKey.detail_voice to "detail voice",
+        StringsKey.detail_image_style to "detail image style",
+        StringsKey.discover_import_failed to "discover import failed",
+        StringsKey.discover_image_added to "discover image added",
+        StringsKey.discover_image_generated to "discover image generated",
+        StringsKey.voice_policy_no_text to "voice policy no text",
+        StringsKey.voice_policy_generating to "voice policy generating",
+        StringsKey.voice_policy_not_ready to "voice policy not ready",
+        StringsKey.toast_record_permission_denied to "toast record permission denied"
+    )
+
+    val translations: Map<AppLanguage, Map<StringsKey, String>> = mapOf(
+        AppLanguage.ZH to ZH,
+        AppLanguage.EN to EN
+    )
+
+    fun get(lang: AppLanguage, key: StringsKey): String {
+        return translations[lang]?.get(key) ?: ZH[key] ?: key.name
+    }
+
+    fun get(lang: AppLanguage, key: StringsKey, vararg args: Any?): String {
+        val format = get(lang, key)
+        return format.format(*args)
+    }
+
+    @Composable
+    fun txt(key: StringsKey): String {
+        return get(LocalLanguage.current, key)
+    }
+
+    @Composable
+    fun txt(key: StringsKey, vararg args: Any?): String {
+        return get(LocalLanguage.current, key, *args)
+    }
+}

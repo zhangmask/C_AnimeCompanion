@@ -8,6 +8,9 @@ enum class MemoryFilter(val category: String?) {
     FACT("fact"),
     PREFERENCE("preference"),
     EVENT("event"),
+    BEHAVIOR("behavior"),
+    KNOWLEDGE("knowledge"),
+    SKILL("skill"),
     RELATION("relation"),
     TIME("time"),
     OTHER("other")

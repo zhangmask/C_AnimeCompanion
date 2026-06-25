@@ -82,6 +82,10 @@ import com.companion.chat.ui.theme.BrandPrimaryContainer
 import com.companion.chat.ui.theme.BrandSuccess
 import com.companion.chat.ui.theme.BrandSurfaceContainer
 import com.companion.chat.data.local.entity.RoleCard
+import com.companion.chat.locale.AppLanguage
+import com.companion.chat.locale.LocalLanguage
+import com.companion.chat.locale.Strings
+import com.companion.chat.locale.StringsKey
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -178,7 +182,7 @@ fun ConversationDrawerSheet(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "\u5BF9\u8BDD\u5217\u8868",
+                    text = Strings.txt(StringsKey.drawer_title),
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF1C1B1F),
@@ -194,7 +198,7 @@ fun ConversationDrawerSheet(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = "\u5173\u95ED",
+                        contentDescription = Strings.txt(StringsKey.close),
                         tint = Color(0xFF49454F),
                         modifier = Modifier.size(18.dp)
                     )
@@ -216,7 +220,7 @@ fun ConversationDrawerSheet(
                     onValueChange = onSearchQueryChange,
                     modifier = Modifier.weight(1f),
                     singleLine = true,
-                    placeholder = { Text("\u641C\u7D22\u5BF9\u8BDD\u6216\u89D2\u8272", fontSize = 13.sp) },
+                    placeholder = { Text(Strings.txt(StringsKey.drawer_search_hint), fontSize = 13.sp) },
                     shape = RoundedCornerShape(12.dp),
                     textStyle = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
                     colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
@@ -234,7 +238,7 @@ fun ConversationDrawerSheet(
                 ) {
                     Icon(
                         imageVector = Icons.Default.FilterList,
-                        contentDescription = "\u7B5B\u9009",
+                        contentDescription = Strings.txt(StringsKey.filter),
                         tint = if (dateFilter != DateFilter.ALL) BrandPrimary else Color(0xFF49454F),
                         modifier = Modifier.size(20.dp)
                     )
@@ -244,14 +248,14 @@ fun ConversationDrawerSheet(
             // Show current filter label if not "all"
             if (dateFilter != DateFilter.ALL) {
                 val filterLabel = when (dateFilter) {
-                    DateFilter.TODAY -> "\u4ECA\u5929"
-                    DateFilter.YESTERDAY -> "\u6628\u5929"
-                    DateFilter.WEEK -> "\u672C\u5468"
-                    DateFilter.MONTH -> "\u672C\u6708"
+                    DateFilter.TODAY -> Strings.txt(StringsKey.drawer_filter_today)
+                    DateFilter.YESTERDAY -> Strings.txt(StringsKey.drawer_filter_yesterday)
+                    DateFilter.WEEK -> Strings.txt(StringsKey.drawer_filter_week)
+                    DateFilter.MONTH -> Strings.txt(StringsKey.drawer_filter_month)
                     else -> ""
                 }
                 Text(
-                    text = "\u7B5B\u9009: $filterLabel",
+                    text = Strings.txt(StringsKey.drawer_filter_label, filterLabel),
                     fontSize = 11.sp,
                     color = BrandPrimary,
                     fontWeight = FontWeight.Medium,
@@ -290,27 +294,27 @@ fun ConversationDrawerSheet(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        text = "\u7B5B\u9009\u5BF9\u8BDD",
+                                        text = Strings.txt(StringsKey.drawer_filter_title),
                                         fontSize = 18.sp,
                                         fontWeight = FontWeight.Bold,
                                         modifier = Modifier.weight(1f)
                                     )
                                     IconButton(onClick = { showFilterSheet = false }, modifier = Modifier.size(32.dp)) {
-                                        Icon(Icons.Default.Close, "\u5173\u95ED", tint = Color(0xFF49454F), modifier = Modifier.size(20.dp))
+                                        Icon(Icons.Default.Close, Strings.txt(StringsKey.close), tint = Color(0xFF49454F), modifier = Modifier.size(20.dp))
                                     }
                                 }
-                                Text(text = "\u65F6\u95F4", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF49454F))
+                                Text(text = Strings.txt(StringsKey.drawer_filter_time_section), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF49454F))
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
                                     DateFilter.entries.forEach { filter ->
                                         val label = when (filter) {
-                                            DateFilter.ALL -> "\u5168\u90E8"
-                                            DateFilter.TODAY -> "\u4ECA\u5929"
-                                            DateFilter.YESTERDAY -> "\u6628\u5929"
-                                            DateFilter.WEEK -> "\u672C\u5468"
-                                            DateFilter.MONTH -> "\u672C\u6708"
+                                            DateFilter.ALL -> Strings.txt(StringsKey.drawer_filter_all)
+                                            DateFilter.TODAY -> Strings.txt(StringsKey.drawer_filter_today)
+                                            DateFilter.YESTERDAY -> Strings.txt(StringsKey.drawer_filter_yesterday)
+                                            DateFilter.WEEK -> Strings.txt(StringsKey.drawer_filter_week)
+                                            DateFilter.MONTH -> Strings.txt(StringsKey.drawer_filter_month)
                                         }
                                         val isSelected = dateFilter == filter
                                         FilterChip(
@@ -344,7 +348,7 @@ fun ConversationDrawerSheet(
                                     color = BrandPrimary
                                 ) {
                                     Box(contentAlignment = Alignment.Center) {
-                                        Text("\u786E\u8BA4", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = Color.White)
+                                        Text(Strings.txt(StringsKey.confirm), fontSize = 15.sp, fontWeight = FontWeight.Medium, color = Color.White)
                                     }
                                 }
                             }
@@ -366,9 +370,9 @@ fun ConversationDrawerSheet(
                 ) {
                     Text(
                         text = when {
-                            searchQuery.isNotBlank() -> "\u672A\u627E\u5230\u5339\u914D\u7684\u5BF9\u8BDD"
-                            dateFilter != DateFilter.ALL -> "\u8BE5\u65F6\u95F4\u6BB5\u5185\u6682\u65E0\u5BF9\u8BDD"
-                            else -> "\u6682\u65E0\u5BF9\u8BDD"
+                            searchQuery.isNotBlank() -> Strings.txt(StringsKey.drawer_empty_no_match)
+                            dateFilter != DateFilter.ALL -> Strings.txt(StringsKey.drawer_empty_period)
+                            else -> Strings.txt(StringsKey.drawer_empty_none)
                         },
                         fontSize = 14.sp,
                         color = BrandOutline
@@ -466,7 +470,7 @@ fun ConversationDrawerSheet(
                                         )
                                         Spacer(modifier = Modifier.width(8.dp))
                                         Text(
-                                            text = "\u65B0\u5EFA\u5BF9\u8BDD",
+                                            text = Strings.txt(StringsKey.drawer_new_chat),
                                             fontSize = 16.sp,
                                             fontWeight = FontWeight.Medium,
                                             color = Color.White
@@ -491,9 +495,9 @@ fun ConversationDrawerSheet(
                                     ) {
                                         Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                                             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                                                Text("\u9009\u62E9\u89D2\u8272", fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                                                Text(Strings.txt(StringsKey.drawer_choose_character), fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
                                                 IconButton(onClick = { showCharacterPicker = false }, modifier = Modifier.size(32.dp)) {
-                                                    Icon(Icons.Default.Close, "\u5173\u95ED", tint = Color(0xFF49454F), modifier = Modifier.size(20.dp))
+                                                    Icon(Icons.Default.Close, Strings.txt(StringsKey.close), tint = Color(0xFF49454F), modifier = Modifier.size(20.dp))
                                                 }
                                             }
                                             Surface(
@@ -505,19 +509,19 @@ fun ConversationDrawerSheet(
                                                         Icon(Icons.Default.Add, null, tint = Color.White, modifier = Modifier.size(20.dp))
                                                     }
                                                     Column(modifier = Modifier.weight(1f)) {
-                                                        Text("\u521B\u5EFA\u65B0\u89D2\u8272", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = BrandPrimary)
-                                                        Text("\u81EA\u5B9A\u4E49\u4EBA\u8BBE\u3001\u5934\u50CF\u548C\u8BED\u97F3", fontSize = 12.sp, color = Color(0xFF49454F))
+                                                        Text(Strings.txt(StringsKey.drawer_create_new_character), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = BrandPrimary)
+                                                        Text(Strings.txt(StringsKey.drawer_new_character_hint), fontSize = 12.sp, color = Color(0xFF49454F))
                                                     }
                                                 }
                                             }
                                             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                                 Box(modifier = Modifier.weight(1f).height(1.dp).background(Color(0xFFE8E4EC)))
-                                                Text("\u5DF2\u6709\u89D2\u8272", fontSize = 11.sp, color = Color(0xFF79747E))
+                                                Text(Strings.txt(StringsKey.drawer_existing_characters), fontSize = 11.sp, color = Color(0xFF79747E))
                                                 Box(modifier = Modifier.weight(1f).height(1.dp).background(Color(0xFFE8E4EC)))
                                             }
                                             if (roleCards.isEmpty()) {
                                                 Box(modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp), contentAlignment = Alignment.Center) {
-                                                    Text("\u8FD8\u6CA1\u6709\u89D2\u8272\u5361\uFF0C\u5148\u521B\u5EFA\u4E00\u4E2A\u5427", fontSize = 13.sp, color = Color(0xFF79747E))
+                                                    Text(Strings.txt(StringsKey.drawer_no_character_hint), fontSize = 13.sp, color = Color(0xFF79747E))
                                                 }
                                             } else {
                                                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -537,7 +541,7 @@ fun ConversationDrawerSheet(
                                                                         Text(role.name, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF1C1B1F))
                                                                         if (role.isActive) {
                                                                             Surface(shape = RoundedCornerShape(9999.dp), color = BrandPrimary) {
-                                                                                Text("\u4F7F\u7528\u4E2D", fontSize = 10.sp, fontWeight = FontWeight.Medium, color = Color.White, modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp))
+                                                                                Text(Strings.txt(StringsKey.drawer_active_tag), fontSize = 10.sp, fontWeight = FontWeight.Medium, color = Color.White, modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp))
                                                                             }
                                                                         }
                                                                     }
@@ -554,7 +558,7 @@ fun ConversationDrawerSheet(
                                                 border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE8E4EC))
                                             ) {
                                                 Box(contentAlignment = Alignment.Center) {
-                                                    Text("\u7A7A\u767D\u5BF9\u8BDD\uFF08\u4E0D\u4F7F\u7528\u89D2\u8272\uFF09", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = Color(0xFF49454F))
+                                                    Text(Strings.txt(StringsKey.drawer_blank_chat), fontSize = 13.sp, fontWeight = FontWeight.Medium, color = Color(0xFF49454F))
                                                 }
                                             }
                                         }
@@ -689,7 +693,7 @@ private fun SessionItem(
                 IconButton(onClick = onConfirmEditing, modifier = Modifier.size(32.dp)) {
                     Icon(
                         imageVector = Icons.Default.Check,
-                        contentDescription = "\u786E\u8BA4",
+                        contentDescription = Strings.txt(StringsKey.confirm),
                         tint = BrandPrimary,
                         modifier = Modifier.size(18.dp)
                     )
@@ -698,7 +702,7 @@ private fun SessionItem(
                 IconButton(onClick = onCancelEditing, modifier = Modifier.size(32.dp)) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = "\u53D6\u6D88",
+                        contentDescription = Strings.txt(StringsKey.cancel),
                         tint = Color(0xFFB3261E),
                         modifier = Modifier.size(18.dp)
                     )
@@ -714,10 +718,12 @@ private fun SessionItem(
                         overflow = TextOverflow.Ellipsis
                     )
                     Spacer(modifier = Modifier.height(4.dp))
-                    val subtitle = remember(session) {
+                    val lang = LocalLanguage.current
+                    val msgSuffix = Strings.txt(StringsKey.drawer_msg_count_suffix)
+                    val subtitle = remember(session, lang) {
                         val msgCount = session.messages.count { it.role.name != "SYSTEM" }
-                        val timeStr = formatSessionTime(session.createdAt)
-                        "${msgCount}\u6761\u6D88\u606F \u00B7 $timeStr"
+                        val timeStr = formatSessionTime(session.createdAt, lang)
+                        "$msgCount $msgSuffix · $timeStr"
                     }
                     Text(
                         text = subtitle,
@@ -741,7 +747,7 @@ private fun SessionItem(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Edit,
-                                contentDescription = "\u7F16\u8F91\u6807\u9898",
+                                contentDescription = Strings.txt(StringsKey.drawer_edit_title),
                                 tint = BrandOutline,
                                 modifier = Modifier.size(16.dp)
                             )
@@ -752,7 +758,7 @@ private fun SessionItem(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Delete,
-                                contentDescription = "\u5220\u9664\u4F1A\u8BDD",
+                                contentDescription = Strings.txt(StringsKey.drawer_delete_session),
                                 tint = Color(0xFFB3261E),
                                 modifier = Modifier.size(16.dp)
                             )
@@ -820,7 +826,7 @@ private fun filterByDate(
     }
 }
 
-private fun formatSessionTime(timestamp: Long): String {
+private fun formatSessionTime(timestamp: Long, lang: AppLanguage): String {
     val now = System.currentTimeMillis()
     val diff = now - timestamp
     val seconds = diff / 1000
@@ -829,10 +835,10 @@ private fun formatSessionTime(timestamp: Long): String {
     val days = hours / 24
 
     return when {
-        seconds < 60 -> "\u521A\u521A"
-        minutes < 60 -> "${minutes}\u5206\u949F\u524D"
-        hours < 24 -> "${hours}\u5C0F\u65F6\u524D"
-        days < 7 -> "${days}\u5929\u524D"
+        seconds < 60 -> Strings.get(lang, StringsKey.drawer_time_just_now)
+        minutes < 60 -> "$minutes${Strings.get(lang, StringsKey.drawer_time_min_ago)}"
+        hours < 24 -> "$hours${Strings.get(lang, StringsKey.drawer_time_hour_ago)}"
+        days < 7 -> "$days${Strings.get(lang, StringsKey.drawer_time_day_ago)}"
         else -> {
             val sdf = SimpleDateFormat("MM/dd HH:mm", Locale.getDefault())
             sdf.format(Date(timestamp))

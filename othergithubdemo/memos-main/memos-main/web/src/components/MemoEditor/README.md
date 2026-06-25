@@ -1,0 +1,143 @@
+# MemoEditor Architecture
+
+## Overview
+
+MemoEditor uses a three-layer architecture for better separation of concerns and testability. It ships two editor implementations — a WYSIWYG rich-text editor (Tiptap/ProseMirror, the default) and a plain-text textarea — behind a single `EditorController` contract, so all layers above the editor boundary are mode-agnostic.
+
+## Architecture
+
+```
+┌─────────────────────────────────────────┐
+│   Presentation Layer (Components)       │
+│   - EditorToolbar, EditorContent, etc.  │
+└─────────────────┬───────────────────────┘
+                  │ EditorController
+┌─────────────────▼───────────────────────┐
+│   State Layer (Reducer + Context)       │
+│   - state/, useEditorContext()          │
+│   - state.content  ← markdown (source  │
+│     of truth for both editor modes)     │
+└─────────────────┬───────────────────────┘
+                  │
+┌─────────────────▼───────────────────────┐
+│   Service Layer (Business Logic)        │
+│   - services/ (pure functions)          │
+└─────────────────────────────────────────┘
+```
+
+## Directory Structure
+
+```
+MemoEditor/
+├── state/                  # State management (reducer, actions, context)
+├── services/               # Business logic (pure functions)
+├── components/             # UI components
+│   ├── EditorContent.tsx   # Hosts the active editor; exposes mode-routing controller
+│   ├── EditorToolbar.tsx   # Toolbar including the mode toggle button
+│   └── ...
+├── hooks/                  # React hooks (utilities)
+│   ├── useMemoInit.ts      # Initializes editor content; load guard for WYSIWYG
+│   └── ...
+├── PlainEditor/            # Plain textarea (raw mode) implementation
+│   └── index.tsx             # Bare textarea implementing EditorController directly
+├── Editor/                 # Tiptap WYSIWYG implementation (default)
+│   ├── index.tsx             # Editor component; implements EditorController
+│   ├── extensions.ts         # Canonical schema-relevant extension set (shared with codec)
+│   ├── markdownCodec.ts      # Headless parse/serialize helpers (singleton editor)
+│   ├── PreservedBlock.ts     # Byte-for-byte preservation of tables, math, raw HTML
+│   ├── Tag.ts                # Memos #tag mark (markdownTokenizer + input rule)
+│   ├── tagMarkdown.ts        # Tag-aware Markdown: # escape on serialize, link-skip on parse
+│   ├── TagSuggestion.ts      # # popup for WYSIWYG mode
+│   └── suggestionMenu.tsx    # Shared suggestion popup renderer (used by TagSuggestion)
+├── Toolbar/                # Toolbar sub-components (InsertMenu, VisibilitySelector)
+├── editorMode.ts           # EditorMode type + localStorage persistence helpers
+├── constants.ts
+└── types/
+    ├── editorController.ts # EditorController interface (the cross-mode contract)
+    └── ...
+```
+
+## Key Concepts
+
+### State Management
+
+Uses `useReducer` + Context for predictable state transitions. All state changes go through action creators.
+
+`state.content` holds the document as a **markdown string** and is the single source of truth for both editor modes. Each editor serializes its current content into the reducer on every change via `onContentChange`; neither editor reads content back from the other.
+
+### Dual-mode editor
+
+`types/editorController.ts` defines the `EditorController` interface — `focus`, `getMarkdown`, `setMarkdown`, `insertMarkdown`, formatting toggles, etc. — that callers outside an editor implementation must use exclusively.
+
+- **WYSIWYG mode** (`Editor/`): Tiptap/ProseMirror rich-text editor. The default mode. Implements `EditorController` directly via `useImperativeHandle` in `Editor/index.tsx`.
+- **Raw mode** (`PlainEditor/`): a bare textarea with no in-editor assistance (no suggestion popups, list continuation, or keyboard markdown shortcuts) — just auto-grow and cursor-visibility scrolling. It implements `EditorController` directly (markdown is just the textarea value), so the toolbar's formatting toggles still work.
+
+`components/EditorContent.tsx` hosts whichever implementation `state.ui.editorMode` selects and exposes a single mode-routing `EditorController` facade to the rest of the component tree via `forwardRef`.
+
+### Mode toggle
+
+The toolbar button in `EditorToolbar.tsx` dispatches `SET_EDITOR_MODE` and calls `setPreferredEditorMode` (from `editorMode.ts`) to persist the preference per device in `localStorage["memos-editor-mode"]`. WYSIWYG is the default when no preference is stored.
+
+Mode switching is a markdown handoff: because both editors write into `state.content` on every keystroke, the incoming editor simply initializes from it — no content is ever pushed between editors directly.
+
+### Markdown fidelity layer (Editor)
+
+`Editor/extensions.ts` exports `buildExtensions()`, the canonical schema-relevant extension set. It is shared by the live editor and the headless `markdownCodec.ts` (parse/serialize/round-trip helpers over a singleton Tiptap instance) so parse and serialize behavior is identical in both contexts.
+
+`PreservedBlock.ts` handles syntax the WYSIWYG editor does not model richly: tables, `$$math$$`, and raw HTML are captured at parse time with their raw markdown source, shown as editable monospace literal text, and re-emitted byte-for-byte on serialize.
+
+`Tag.ts` models memos `#tags` as a `code: true` text mark, letting tags round-trip byte-identically even inside bold or heading spans. Its `#tag` lexing is a `markdownTokenizer` (the canonical `@tiptap/markdown` extension point); `tagMarkdown.ts` adds the two things that tokenizer can't do — on serialize it backslash-escapes a literal `#` that would otherwise re-parse into a tag (escapes are lexical, so there is no "escaped tag" node), and on parse it strips the tag mark from text inside link labels. The `#tag` grammar itself lives once in `utils/tag-grammar.ts` (`TAG_RUN`), shared by the tokenizer, the serialize-escape, and the read-only `remark-tag` renderer so they can't drift.
+
+### Why the markdown manager is worked around in several places
+
+`@tiptap/markdown` (3.26.0) exposes no public, per-instance hook for custom tokenizers or for text escaping, and it registers each extension's tokenizer onto the **global** `marked` singleton on every `new Editor()` — registrations it never removes. That one limitation is the reason for three otherwise-surprising choices, each documented in detail at its call site:
+
+- **`markdownCodec.ts` keeps a single editor instance** — re-creating editors would leak tokenizer registrations onto global `marked` and measurably degrade parse time.
+- **`PreservedBlock.ts` registers its tokenizers on `marked` once at module scope** (idempotent) instead of via the per-extension `markdownTokenizer`, to avoid that per-construction accumulation.
+- **`tagMarkdown.ts` composes onto the manager in `onBeforeCreate`** (escape, link-skip) because the relevant manager methods are `private` with no public seam.
+
+`Tag.ts` deliberately uses the canonical `markdownTokenizer` API and accepts the per-construction re-registration as its cost; `PreservedBlock.ts` refuses it for its seven tokenizers. The asymmetry is intentional — collapse both onto one path if upstream ever ships a public per-instance tokenizer hook.
+
+### Suggestions
+
+The `#` tag suggestion popup is a **WYSIWYG-only** feature: `Editor/TagSuggestion.ts`, using the shared `Editor/suggestionMenu.tsx` renderer. Raw mode is a plain textarea with no suggestions. (Formatting actions that a `/` command menu would once have offered — lists, code, link — are now available from the focus-mode `FormattingToolbar` header.)
+
+### Load guard
+
+`hooks/useMemoInit.ts` runs a round-trip check on every existing memo when the editor opens. If the preferred mode is WYSIWYG and `isLosslessRoundTrip` (from `markdownCodec.ts`) returns false for the memo's content, the editor falls back to raw mode for that session only (preference is not changed) and shows a toast. This is a safety net; the corpus tests are designed to make it never fire in practice.
+
+### Services
+
+Pure TypeScript functions containing business logic. No React hooks, easy to test.
+
+### Components
+
+Thin presentation components that dispatch actions and render UI.
+
+## Markdown fidelity contract
+
+The round-trip corpus tests in `web/tests/markdown-roundtrip.test.ts`, backed by fixtures under `web/tests/fixtures/markdown-corpus/`, enforce two guarantees:
+
+- **Supported syntax** (`supported/`): a parse → serialize → parse cycle produces an identical document tree (semantic equality; marker style may normalize).
+- **Preserved syntax** (`preserved/`): tables, math, and raw HTML round-trip byte-for-byte.
+
+## Usage
+
+```typescript
+import MemoEditor from "@/components/MemoEditor";
+
+<MemoEditor
+  memoName="memos/123"
+  onConfirm={(name) => console.log('Saved:', name)}
+  onCancel={() => console.log('Cancelled')}
+/>
+```
+
+## Testing
+
+Services are pure functions — easy to unit test without React.
+
+```typescript
+const state = mockEditorState();
+const result = await memoService.save(state, { memoName: 'memos/123' });
+```

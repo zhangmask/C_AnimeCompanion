@@ -2,7 +2,10 @@ package com.companion.chat
 
 import android.app.Application
 import android.content.Context
+import com.companion.chat.data.memory.MemoryDecayManager
+import com.companion.chat.data.memory.MemoryConfig
 import com.companion.chat.data.memory.MemoryLifecycleManager
+import com.companion.chat.data.memory.T1BatchProcessor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -22,18 +25,25 @@ class CompanionChatApplication : Application() {
 
         val sessionRepository = appContainer.chatSessionRepository
         val memoryRepository = appContainer.memoryRepository
-        val memoryLifecycleManager = MemoryLifecycleManager(memoryRepository, applicationScope)
+        val decayManager = MemoryDecayManager(appContainer.database.memoryDao())
+        val memoryLifecycleManager = MemoryLifecycleManager(
+            memoryRepository = memoryRepository,
+            decayManager = decayManager,
+            t1BatchProcessor = appContainer.t1BatchProcessor,
+            scope = applicationScope
+        )
         applicationScope.launch {
             runCatching {
                 logToFile("开始 ensureInitialized")
                 sessionRepository.ensureInitialized()
                 logToFile("ensureInitialized 完成")
-                memoryLifecycleManager.runStartupMaintenance()
+                memoryLifecycleManager.runDailyDecay()
                 logToFile("记忆生命周期维护完成")
                 memoryLifecycleManager.startPeriodicMaintenance()
                 logToFile("记忆周期性维护已启动")
             }.onFailure {
                 logToFile("ensureInitialized 失败: ${it.javaClass.simpleName}: ${it.message}")
+                android.util.Log.e("CompanionChat", "启动初始化失败", it)
             }
         }
 

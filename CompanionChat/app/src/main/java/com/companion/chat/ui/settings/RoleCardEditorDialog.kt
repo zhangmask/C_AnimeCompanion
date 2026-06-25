@@ -59,12 +59,20 @@ import coil3.compose.AsyncImage
 import com.companion.chat.data.local.entity.RoleCard
 import com.companion.chat.data.role.RoleAvatarStore
 import com.companion.chat.data.voice.VoiceClipScanner
+import com.companion.chat.locale.LocalLanguage
+import com.companion.chat.locale.Strings
+import com.companion.chat.locale.StringsKey
 
-private enum class RoleEditorSection(val label: String) {
-    BASIC("基础"),
-    PERSONA("人设"),
-    IMAGE("图片"),
-    VOICE("语音")
+private enum class RoleEditorSection {
+    BASIC, PERSONA, IMAGE, VOICE
+}
+
+@Composable
+private fun sectionLabel(section: RoleEditorSection): String = when (section) {
+    RoleEditorSection.BASIC   -> Strings.txt(StringsKey.role_tab_basic)
+    RoleEditorSection.PERSONA -> Strings.txt(StringsKey.role_tab_persona)
+    RoleEditorSection.IMAGE   -> Strings.txt(StringsKey.role_tab_image)
+    RoleEditorSection.VOICE   -> Strings.txt(StringsKey.role_tab_voice)
 }
 
 @Composable
@@ -128,11 +136,11 @@ fun RoleCardEditorDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = if (roleCard == null) "新建角色卡" else "编辑角色卡",
+                        text = if (roleCard == null) Strings.txt(StringsKey.role_create_card_title) else Strings.txt(StringsKey.role_edit_card_title),
                         style = MaterialTheme.typography.titleLarge
                     )
                     IconButton(onClick = onDismiss) {
-                        Icon(Icons.Default.Close, "关闭")
+                        Icon(Icons.Default.Close, Strings.txt(StringsKey.close))
                     }
                 }
 
@@ -144,7 +152,7 @@ fun RoleCardEditorDialog(
                         Tab(
                             selected = selectedSectionIndex == index,
                             onClick = { selectedSectionIndex = index },
-                            text = { Text(section.label, fontSize = MaterialTheme.typography.labelMedium.fontSize) }
+                            text = { Text(sectionLabel(section), fontSize = MaterialTheme.typography.labelMedium.fontSize) }
                         )
                     }
                 }
@@ -210,7 +218,7 @@ fun RoleCardEditorDialog(
                     horizontalArrangement = Arrangement.End
                 ) {
                     TextButton(onClick = onDismiss) {
-                        Text("取消")
+                        Text(Strings.txt(StringsKey.cancel))
                     }
                     Spacer(Modifier.width(8.dp))
                     TextButton(
@@ -225,7 +233,7 @@ fun RoleCardEditorDialog(
                             )
                         }
                     ) {
-                        Text("保存")
+                        Text(Strings.txt(StringsKey.save))
                     }
                 }
             }
@@ -244,10 +252,10 @@ private fun BasicSection(
     openingMessage: String,
     onOpeningMessageChange: (String) -> Unit
 ) {
-    RoleCardField("名称", name, onNameChange)
-    RoleCardField("简介", description, onDescriptionChange, minLines = 2)
-    RoleCardField("头像/图标标识", avatar, onAvatarChange)
-    RoleCardField("开场白", openingMessage, onOpeningMessageChange, minLines = 2)
+    RoleCardField(Strings.txt(StringsKey.role_field_name), name, onNameChange)
+    RoleCardField(Strings.txt(StringsKey.role_field_description), description, onDescriptionChange, minLines = 2)
+    RoleCardField(Strings.txt(StringsKey.role_avatar_icon), avatar, onAvatarChange)
+    RoleCardField(Strings.txt(StringsKey.role_field_opening), openingMessage, onOpeningMessageChange, minLines = 2)
 }
 
 @Composable
@@ -265,12 +273,12 @@ private fun PersonaSection(
     exampleDialogue: String,
     onExampleDialogueChange: (String) -> Unit
 ) {
-    RoleCardField("核心人设", persona, onPersonaChange, minLines = 4)
-    RoleCardField("说话风格", speakingStyle, onSpeakingStyleChange, minLines = 2)
-    RoleCardField("背景设定", background, onBackgroundChange, minLines = 2)
-    RoleCardField("行为规则", rules, onRulesChange, minLines = 2)
-    RoleCardField("禁止项", taboos, onTaboosChange, minLines = 2)
-    RoleCardField("示例对话", exampleDialogue, onExampleDialogueChange, minLines = 3)
+    RoleCardField(Strings.txt(StringsKey.role_persona_core), persona, onPersonaChange, minLines = 4)
+    RoleCardField(Strings.txt(StringsKey.role_field_speaking_style), speakingStyle, onSpeakingStyleChange, minLines = 2)
+    RoleCardField(Strings.txt(StringsKey.role_background_story), background, onBackgroundChange, minLines = 2)
+    RoleCardField(Strings.txt(StringsKey.role_field_rules), rules, onRulesChange, minLines = 2)
+    RoleCardField(Strings.txt(StringsKey.role_field_taboos), taboos, onTaboosChange, minLines = 2)
+    RoleCardField(Strings.txt(StringsKey.role_field_example_dialogue), exampleDialogue, onExampleDialogueChange, minLines = 3)
 }
 
 @Composable
@@ -296,7 +304,7 @@ private fun ImageSection(
     }
 
     Text(
-        text = "头像图片",
+        text = Strings.txt(StringsKey.role_avatar_image),
         style = MaterialTheme.typography.labelLarge,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.padding(start = 4.dp)
@@ -313,7 +321,7 @@ private fun ImageSection(
         ) {
             AsyncImage(
                 model = avatarImageUri,
-                contentDescription = "头像预览",
+                contentDescription = Strings.txt(StringsKey.role_avatar_preview),
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp)),
@@ -331,7 +339,7 @@ private fun ImageSection(
             ) {
                 Icon(
                     Icons.Default.Close,
-                    "移除头像",
+                    Strings.txt(StringsKey.role_remove_avatar),
                     tint = Color.White,
                     modifier = Modifier.size(16.dp)
                 )
@@ -359,15 +367,15 @@ private fun ImageSection(
                 modifier = Modifier.size(20.dp)
             )
             Text(
-                text = "  选择头像图片",
+                text = "  " + Strings.txt(StringsKey.role_pick_avatar_image),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.primary
             )
         }
     }
 
-    RoleCardField("图库图片 URI（一行一个）", galleryImageUris, onGalleryImageUrisChange, minLines = 4)
-    RoleCardField("图片风格提示词", imageStylePrompt, onImageStylePromptChange, minLines = 3)
+    RoleCardField(Strings.txt(StringsKey.role_gallery_uri), galleryImageUris, onGalleryImageUrisChange, minLines = 4)
+    RoleCardField(Strings.txt(StringsKey.role_field_image_style), imageStylePrompt, onImageStylePromptChange, minLines = 3)
 }
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -414,12 +422,12 @@ private fun VoiceSection(
     }
 
     Text(
-        text = "语音模式",
+        text = Strings.txt(StringsKey.role_field_voice_mode),
         style = MaterialTheme.typography.labelLarge,
         color = MaterialTheme.colorScheme.onSurfaceVariant
     )
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        listOf("SYSTEM_TTS" to "系统 TTS", "CLONE" to "MOSS 本地克隆").forEach { (mode, label) ->
+        listOf("SYSTEM_TTS" to Strings.txt(StringsKey.role_voice_mode_system), "CLONE" to Strings.txt(StringsKey.role_voice_mode_clone)).forEach { (mode, label) ->
             FilterChip(
                 selected = voiceMode == mode,
                 onClick = { onVoiceModeChange(mode) },
@@ -429,7 +437,7 @@ private fun VoiceSection(
     }
 
     Text(
-        text = "已上传的语音片段",
+        text = Strings.txt(StringsKey.role_uploaded_clips),
         style = MaterialTheme.typography.labelMedium,
         fontWeight = FontWeight.SemiBold,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -438,7 +446,7 @@ private fun VoiceSection(
 
     if (clips.isEmpty()) {
         Text(
-            text = "暂无语音片段，请先上传一段参考音频（WAV 格式最佳）。",
+            text = Strings.txt(StringsKey.role_no_clips_hint),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(vertical = 8.dp)
@@ -495,7 +503,7 @@ private fun VoiceSection(
             ) {
                 Icon(
                     imageVector = if (isPlaying) Icons.Default.Stop else Icons.Default.PlayArrow,
-                    contentDescription = if (isPlaying) "停止" else "播放",
+                    contentDescription = if (isPlaying) Strings.txt(StringsKey.role_stop) else Strings.txt(StringsKey.role_play),
                     tint = Color.White,
                     modifier = Modifier.size(18.dp)
                 )
@@ -518,7 +526,7 @@ private fun VoiceSection(
             if (isSelected) {
                 Icon(
                     imageVector = Icons.Default.Check,
-                    contentDescription = "已选中",
+                    contentDescription = Strings.txt(StringsKey.selected),
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(20.dp)
                 )
@@ -551,20 +559,20 @@ private fun VoiceSection(
             modifier = Modifier.size(18.dp)
         )
         Text(
-            text = "  上传新语音片段",
+            text = "  " + Strings.txt(StringsKey.role_upload_new_clip),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 
     Text(
-        text = "选中的语音片段将作为该角色的默认语音。克隆后端不可用时会自动回退系统 TTS。",
+        text = Strings.txt(StringsKey.role_clone_note),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant
     )
 
-    RoleCardField("语音显示名称", voiceDisplayName, onVoiceDisplayNameChange)
-    RoleCardField("语音参考音频 URI", voiceProfileUri, onVoiceProfileUriChange)
+    RoleCardField(Strings.txt(StringsKey.role_field_voice_display), voiceDisplayName, onVoiceDisplayNameChange)
+    RoleCardField(Strings.txt(StringsKey.role_voice_package_uri), voiceProfileUri, onVoiceProfileUriChange)
 }
 
 @Composable

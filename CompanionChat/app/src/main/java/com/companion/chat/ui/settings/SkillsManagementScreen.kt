@@ -39,6 +39,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.companion.chat.data.local.entity.Skill
+import com.companion.chat.locale.LocalLanguage
+import com.companion.chat.locale.Strings
+import com.companion.chat.locale.StringsKey
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -59,18 +62,18 @@ fun SkillsManagementScreen(
         modifier = modifier,
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Skills 管理", style = MaterialTheme.typography.titleLarge) },
+                title = { Text(Strings.txt(StringsKey.skills_title), style = MaterialTheme.typography.titleLarge) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "返回"
+                            contentDescription = Strings.txt(StringsKey.back)
                         )
                     }
                 },
                 actions = {
                     IconButton(onClick = { showCreateDialog = true }) {
-                        Icon(Icons.Default.Add, contentDescription = "添加 Skill")
+                        Icon(Icons.Default.Add, contentDescription = Strings.txt(StringsKey.char_mgmt_new))
                     }
                 }
             )
@@ -85,14 +88,14 @@ fun SkillsManagementScreen(
         ) {
             item {
                 Text(
-                    text = "管理工作能力模板和自定义 skills",
+                    text = Strings.txt(StringsKey.settings_sub_skills),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
             uiState.activeSkill?.let { activeSkill ->
-                item { SkillsSectionTitle("当前激活") }
+                item { SkillsSectionTitle(Strings.txt(StringsKey.char_mgmt_set_active)) }
                 item {
                     SkillItem(
                         skill = activeSkill,
@@ -104,10 +107,10 @@ fun SkillsManagementScreen(
                 }
             }
 
-            item { SkillsSectionTitle("内置 Skill") }
+            item { SkillsSectionTitle(Strings.txt(StringsKey.skills_title)) }
             if (uiState.builtInSkills.isEmpty()) {
                 item {
-                    SkillsEmptyState("当前没有内置 Skill", "后续可在数据库初始化中补充。")
+                    SkillsEmptyState(Strings.txt(StringsKey.skills_empty), Strings.txt(StringsKey.skills_empty) + ".")
                 }
             } else {
                 items(uiState.builtInSkills, key = { it.id }) { skill ->
@@ -126,10 +129,10 @@ fun SkillsManagementScreen(
                 }
             }
 
-            item { SkillsSectionTitle("我的 Skills") }
+            item { SkillsSectionTitle(Strings.txt(StringsKey.settings_item_skills)) }
             if (uiState.customSkills.isEmpty()) {
                 item {
-                    SkillsEmptyState("还没有自定义 Skills", "点击右上角“+”创建你的自定义 skill。")
+                    SkillsEmptyState(Strings.txt(StringsKey.skills_custom_empty_title), Strings.txt(StringsKey.skills_custom_create_hint))
                 }
             } else {
                 items(uiState.customSkills, key = { it.id }) { skill ->
@@ -186,8 +189,8 @@ fun SkillsManagementScreen(
     deletingSkill?.let { skill ->
         AlertDialog(
             onDismissRequest = { deletingSkill = null },
-            title = { Text("删除 Skill") },
-            text = { Text("确认删除“${skill.name}”吗？") },
+            title = { Text(Strings.txt(StringsKey.role_delete_title)) },
+            text = { Text(Strings.txt(StringsKey.skills_delete_confirm, skill.name)) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -195,12 +198,12 @@ fun SkillsManagementScreen(
                         deletingSkill = null
                     }
                 ) {
-                    Text("删除")
+                    Text(Strings.txt(StringsKey.delete))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { deletingSkill = null }) {
-                    Text("取消")
+                    Text(Strings.txt(StringsKey.cancel))
                 }
             }
         )
@@ -247,12 +250,12 @@ private fun SkillItem(
                     }
                 }
                 if (isActive) {
-                    AssistChip(onClick = {}, label = { Text("使用中") })
+                    AssistChip(onClick = {}, label = { Text(Strings.txt(StringsKey.drawer_active_tag)) })
                 }
             }
 
             Text(
-                text = "已使用 ${skill.usageCount} 次",
+                text = Strings.txt(StringsKey.skills_used_count, skill.usageCount),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -260,17 +263,17 @@ private fun SkillItem(
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (!isActive) {
                     TextButton(onClick = onActivate) {
-                        Text("启用")
+                        Text(Strings.txt(StringsKey.enable))
                     }
                 }
                 onEdit?.let {
                     TextButton(onClick = it) {
-                        Text("编辑")
+                        Text(Strings.txt(StringsKey.edit))
                     }
                 }
                 onDelete?.let {
                     TextButton(onClick = it) {
-                        Text("删除")
+                        Text(Strings.txt(StringsKey.delete))
                     }
                 }
             }

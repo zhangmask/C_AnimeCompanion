@@ -13,6 +13,8 @@ import com.companion.chat.companion.CompanionRuntime
 import com.companion.chat.companion.CompanionTurnEvent
 import com.companion.chat.companion.PreferenceLearningCoordinator
 import com.companion.chat.companion.PreferenceLearningAdapter
+import com.companion.chat.data.memory.MemoryExtractLoop
+import com.companion.chat.locale.AppLanguage
 import com.companion.chat.data.context.ContextConfigRepository
 import com.companion.chat.data.context.ContextManager
 import com.companion.chat.data.context.DefaultContextManager
@@ -52,13 +54,14 @@ import com.companion.chat.engine.TtsFallbackEvent
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.companion.chat.locale.StringsKey
 
 enum class DateFilter { ALL, TODAY, YESTERDAY, WEEK, MONTH }
 
 data class ChatUiState(
     val messages: List<ChatMessage> = emptyList(),
     val inputText: String = "",
-    val inputHint: String = "输入消息...",
+    val inputHint: String = "",
     val selectedImages: List<Uri> = emptyList(),
     val isGenerating: Boolean = false,
     val isSuggesting: Boolean = false,
@@ -103,6 +106,11 @@ class ChatViewModel(
     application: Application,
     private val container: AppContainer = application.appContainer
 ) : AndroidViewModel(application) {
+
+    /** 语言文案 helper：从持久化读取当前语言，取对应翻译。面向用户的字符串用 [tr]。 */
+    private val languageRepo = com.companion.chat.locale.LanguageRepository(application)
+    private fun tr(key: com.companion.chat.locale.StringsKey, vararg args: Any): String =
+        com.companion.chat.locale.Strings.get(languageRepo.getLanguage(), key, *args)
 
     private val _uiState = MutableStateFlow(ChatUiState())
     val uiState: StateFlow<ChatUiState> = _uiState.asStateFlow()
@@ -157,10 +165,12 @@ class ChatViewModel(
         unifiedExtractionPromptBuilder = unifiedExtractionPromptBuilder,
         unifiedExtractionParser = unifiedExtractionParser,
         secondEngineManager = secondEngineManager,
+        memoryExtractLoop = container.memoryExtractLoop,
         engineStateProvider = { inferenceEngine.state.value },
         currentEngineConfigProvider = { inferenceEngine.getCurrentConfig() },
         baseSystemPromptProvider = { baseSystemPrompt },
-        logger = ::logToFile
+        logger = ::logToFile,
+        roleCardIdProvider = { currentRoleCardId }
     )
     private val companionRuntime = CompanionRuntime(
         roleCardRepository = roleCardRepository,
@@ -173,7 +183,8 @@ class ChatViewModel(
         postTurnLearning = PreferenceLearningAdapter(preferenceLearningCoordinator),
         promptAssembler = promptAssembler,
         memoryPromptBuilder = container.memoryPromptBuilder,
-        roleCardPromptBuilder = container.roleCardPromptBuilder
+        roleCardPromptBuilder = container.roleCardPromptBuilder,
+        appLanguage = languageRepo.getLanguage()
     )
     private var contextSettings: ContextSettings = ContextConfigRepository.DEFAULT_SETTINGS
     private var baseSystemPrompt: String = DEFAULT_BASE_SYSTEM_PROMPT
@@ -232,7 +243,7 @@ class ChatViewModel(
             app.openFileOutput("viewmodel_log.txt", Context.MODE_APPEND).use { fos ->
                 fos.write("$line\n".toByteArray())
             }
-            _uiState.update { it.copy(diagnosticLog = it.diagnosticLog + line + "\n") }
+            _uiState.update { it.copy(diagnosticLog = (it.diagnosticLog + line + "\n").let { if (it.count { c -> c == '\n' } > 200) it.substringAfter("\n") else it }) }
         } catch (e: Exception) {
             try {
                 val app = getApplication<Application>()
@@ -412,7 +423,7 @@ class ChatViewModel(
                     when (event) {
                         is TtsFallbackEvent.FallbackToSystem -> {
                             logToFile("TTS 回退: ${event.reason}")
-                            _events.tryEmit(ChatUiEvent.ShowToast("检测到 MOSS 延迟过大，已回退到系统 TTS"))
+                            _events.tryEmit(ChatUiEvent.ShowToast(tr(StringsKey.toast_moss_fallback)))
                         }
                     }
                 }
@@ -487,8 +498,8 @@ class ChatViewModel(
                 logToFile("图片生成失败: ${error.message}")
                 _uiState.update {
                     it.copy(
-                        imageGenerationState = ImageGenerationState.Error(error.message ?: "图片生成失败"),
-                        imageGenerationError = error.message ?: "图片生成失败"
+                        imageGenerationState = ImageGenerationState.Error(error.message ?: tr(StringsKey.snackbar_image_failed)),
+                        imageGenerationError = error.message ?: tr(StringsKey.snackbar_image_failed)
                     )
                 }
             }
@@ -722,8 +733,7 @@ $conversationSummary"""
         generateJob?.cancel()
         shouldSpeakNextAssistantResponse = autoSpeakResponse
         generateJob = viewModelScope.launch {
-            // 阶段一：规则即时提取始终执行（零成本、即时），阶段四 LLM 异步提取作为补充
-            storeRuleBasedMemoriesForMessage(userMessage)
+            // 改造后：移除规则即时提取，交由阶段四 LLM 统一提取
             generateResponse(userMessage.content.trim())
         }
     }
@@ -731,7 +741,7 @@ $conversationSummary"""
     private suspend fun generateResponse(userInput: String) {
         val engineState = inferenceEngine.state.value
         if (engineState !is InferenceState.Ready) {
-            updateAssistantMessage("模型未加载，请在设置中配置模型路径。")
+            updateAssistantMessage(tr(StringsKey.err_model_not_loaded))
             return
         }
 
@@ -800,7 +810,7 @@ $conversationSummary"""
                 }
             }
         } catch (e: Exception) {
-            updateAssistantMessage("推理出错: ${e.message}")
+            updateAssistantMessage(tr(StringsKey.err_inference, e.message ?: ""))
         } finally {
             finishStreaming()
         }
@@ -808,12 +818,15 @@ $conversationSummary"""
 
     private suspend fun buildMemoryContext(userInput: String): MemoryContext {
         return try {
-            val confirmedPreferencePrompt = buildConfirmedPreferencePrompt()
+            val confirmedPreferencePrompt = buildConfirmedPreferencePrompt(currentRoleCardId)
             val companionMemoryContext = companionRuntime.buildMemoryContext(userInput, currentRoleCardId)
             val persistentPrompt = companionMemoryContext.persistentPrompt
             val memoryPrompt = companionMemoryContext.retrievedPrompt
             if (confirmedPreferencePrompt.isNotBlank()) {
-                logToFile("confirmed 偏好注入: count=${preferenceRepository.getConfirmedPreferences().size}")
+                logToFile("confirmed 偏好注入: count=${
+            if (currentRoleCardId != null) preferenceRepository.getConfirmedPreferencesForRole(roleCardId = currentRoleCardId).size
+            else preferenceRepository.getConfirmedPreferences().size
+        }.size}")
             }
             if (persistentPrompt.isNotBlank()) {
                 logToFile("常驻长期记忆注入: count=${companionMemoryContext.persistentMemoryCount}")
@@ -843,24 +856,6 @@ $conversationSummary"""
         val retrievedPrompt: String = ""
     )
 
-    private suspend fun storeRuleBasedMemoriesForMessage(userMessage: ChatMessage) {
-        try {
-            if (userMessage.content.isBlank()) {
-                return
-            }
-            val sessionId = _uiState.value.currentSessionId.ifBlank { return }
-            val insertedMemories = memoryRepository.extractAndStoreMemories(
-                userMessage = userMessage.content,
-                sessionId = sessionId,
-                roleCardId = currentRoleCardId
-            )
-            if (insertedMemories.isNotEmpty()) {
-                logToFile("规则兜底记忆写入成功: count=${insertedMemories.size}")
-            }
-        } catch (e: Exception) {
-            logToFile("规则兜底记忆写入失败: ${e.message}")
-        }
-    }
 
     private fun appendAssistantToken(token: String) {
         // 过滤内部机制标记，不让用户看到
@@ -1030,7 +1025,7 @@ $conversationSummary"""
                     return@update state.copy(
                         messages = updatedMessages,
                         inputText = suggestionContent,
-                        inputHint = "对话建议已生成，可修改后发送",
+                        inputHint = tr(StringsKey.hint_suggestion_ready),
                         isGenerating = false,
                         isVoiceAutoSending = false
                     )
@@ -1099,7 +1094,7 @@ $conversationSummary"""
             it.copy(
                 isVoiceStarting = false,
                 showVoicePermissionDialog = false,
-                voiceInputError = "缺少录音权限，无法使用语音输入"
+                voiceInputError = tr(StringsKey.toast_record_permission_denied)
             )
         }
     }
@@ -1183,7 +1178,7 @@ $conversationSummary"""
             } catch (e: Exception) {
                 logToFile("!!! initializeEngine 异常 !!! ${e.javaClass.simpleName}: ${e.message}")
                 _uiState.update {
-                    it.copy(engineState = InferenceState.Error("初始化异常: ${e.message}"))
+                    it.copy(engineState = InferenceState.Error(tr(StringsKey.err_init_exception, e.message ?: "")))
                 }
             }
         }
@@ -1564,8 +1559,8 @@ $conversationSummary"""
         )
     }
 
-    private suspend fun buildConfirmedPreferencePrompt(): String {
-        return companionRuntime.buildConfirmedPreferencePrompt()
+    private suspend fun buildConfirmedPreferencePrompt(roleCardId: Long? = null): String {
+        return companionRuntime.buildConfirmedPreferencePrompt(roleCardId)
     }
 
     private suspend fun rebuildConversationWithContext(
@@ -1583,7 +1578,7 @@ $conversationSummary"""
             _uiState.update {
                 it.copy(
                     isCompressingContext = true,
-                    compressionMessage = "正在压缩上下文，请稍候..."
+                    compressionMessage = tr(StringsKey.msg_compressing_context)
                 )
             }
         }
@@ -1708,7 +1703,7 @@ $conversationSummary"""
             it.copy(
                 isSuggesting = true,
                 inputText = "",
-                inputHint = "生成对话建议中..."
+                inputHint = tr(StringsKey.hint_suggestion_loading)
             )
         }
 
@@ -1756,7 +1751,7 @@ $conversationSummary"""
                 _uiState.update {
                     it.copy(
                         inputText = "",
-                        inputHint = "建议生成失败，请重试"
+                        inputHint = tr(StringsKey.hint_suggestion_failed)
                     )
                 }
             } finally {
@@ -1773,7 +1768,7 @@ $conversationSummary"""
                 isSuggesting = false,
                 isGenerating = false,
                 inputText = "",
-                inputHint = "输入消息..."
+                inputHint = tr(StringsKey.hint_input_msg)
             )
         }
     }
@@ -1801,7 +1796,7 @@ $conversationHistory
     }
 
     companion object {
-        private const val DEFAULT_BASE_SYSTEM_PROMPT =
+        private val DEFAULT_BASE_SYSTEM_PROMPT =
             CompanionRuntime.DEFAULT_BASE_PROMPT
         private const val STAGE4_SUMMARY_TIMEOUT_MILLIS = 90_000L
 

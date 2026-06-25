@@ -170,10 +170,10 @@ class MemoryRetrieverTest {
 
         override fun observeAll(): Flow<List<Memory>> = flowOf(memories.toList())
 
-        override suspend fun getByLayer(layer: String): List<Memory> = memories.filter { it.layer == layer }
+        /* getByLayer removed
 
-        override suspend fun getPersistentMemories(): List<Memory> =
-            memories.filter { it.layer == "long_term" }.sortedByDescending { it.updatedAt }
+        override suspend fun getActiveMemories(minStrength: Double): List<Memory> =
+            memories.filter { it.strength >= 0.4 }.sortedByDescending { it.updatedAt }
 
         override suspend fun getByCategory(category: String): List<Memory> = memories.filter { it.category == category }
 
@@ -194,15 +194,5 @@ class MemoryRetrieverTest {
             }
         }
 
-        override suspend fun incrementReference(id: Long): Int {
-            incrementedIds += id
-            return 1
-        }
-
-        override suspend fun promoteToLongTerm(id: Long, now: Long): Int = 0
-
-        override suspend fun cleanupExpiredShortTerm(now: Long): Int = 0
-
-        override suspend fun getPromotableShortTerm(): List<Memory> = emptyList()
-    }
+        /* incrementReference removed */
 }

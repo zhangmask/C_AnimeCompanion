@@ -45,6 +45,9 @@ import com.companion.chat.ui.chat.components.TypingIndicator
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.companion.chat.locale.LocalLanguage
+import com.companion.chat.locale.Strings
+import com.companion.chat.locale.StringsKey
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -102,13 +105,13 @@ fun MessageBubble(
             onDismissRequest = { showFullScreenImage = null },
             confirmButton = {
                 TextButton(onClick = { showFullScreenImage = null }) {
-                    Text("关闭")
+                    Text(Strings.txt(StringsKey.close))
                 }
             },
             text = {
                 AsyncImage(
                     model = uri,
-                    contentDescription = "图片预览",
+                    contentDescription = Strings.txt(StringsKey.msg_image_loading),
                     modifier = Modifier.fillMaxWidth(),
                     contentScale = ContentScale.Fit
                 )
@@ -132,7 +135,7 @@ private fun AvatarIcon(isUser: Boolean, avatarUri: String? = null) {
         if (!avatarUri.isNullOrBlank()) {
             AsyncImage(
                 model = avatarUri,
-                contentDescription = if (isUser) "用户头像" else "AI头像",
+                contentDescription = if (isUser) Strings.txt(StringsKey.msg_avatar_me) else Strings.txt(StringsKey.msg_avatar_assistant),
                 modifier = Modifier
                     .size(30.dp)
                     .clip(CircleShape),
@@ -141,7 +144,7 @@ private fun AvatarIcon(isUser: Boolean, avatarUri: String? = null) {
         } else {
             Icon(
                 imageVector = if (isUser) Icons.Default.Person else Icons.Default.SmartToy,
-                contentDescription = if (isUser) "用户" else "AI",
+                contentDescription = if (isUser) Strings.txt(StringsKey.msg_avatar_me) else Strings.txt(StringsKey.msg_avatar_assistant),
                 tint = if (isUser) {
                     MaterialTheme.colorScheme.onPrimaryContainer
                 } else {
@@ -183,7 +186,7 @@ private fun BubbleContent(
                     message.images.forEach { uri ->
                         AsyncImage(
                             model = uri,
-                            contentDescription = "消息图片",
+                            contentDescription = Strings.txt(StringsKey.msg_image_loading),
                             modifier = Modifier
                                 .size(120.dp)
                                 .clip(RoundedCornerShape(8.dp))

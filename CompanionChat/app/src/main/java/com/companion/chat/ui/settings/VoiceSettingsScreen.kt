@@ -33,6 +33,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.companion.chat.data.voice.LocalSenseVoiceModelStatus
 import com.companion.chat.data.voice.MossTtsNanoModelStatus
 import com.companion.chat.data.voice.VoiceInputBackend
+import com.companion.chat.locale.AppLanguage
+import com.companion.chat.locale.LocalLanguage
+import com.companion.chat.locale.Strings
+import com.companion.chat.locale.StringsKey
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,7 +58,7 @@ fun VoiceSettingsScreen(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        text = "语音设置",
+                        text = Strings.txt(StringsKey.voice_title),
                         style = MaterialTheme.typography.titleLarge
                     )
                 },
@@ -62,7 +66,7 @@ fun VoiceSettingsScreen(
                     IconButton(onClick = onBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "返回"
+                            contentDescription = Strings.txt(StringsKey.back)
                         )
                     }
                 }
@@ -86,33 +90,33 @@ fun VoiceSettingsScreen(
             )
             Spacer(modifier = Modifier.height(24.dp))
             Text(
-                text = "语音设置",
+                text = Strings.txt(StringsKey.voice_title),
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.onSurface
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "语音输入默认使用本地 SenseVoice。默认使用 moss-tts-nano ONNX 模型进行语音克隆，缺模型或缺参考音频时自动回退系统 TTS。",
+                text = Strings.txt(StringsKey.voice_desc),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )
-            VoiceInfoRow("识别模式", voiceInputConfig.recognitionModeLabel)
-            VoiceInfoRow("识别后端", voiceInputConfig.backend.displayName())
-            VoiceInfoRow("模型目录", voiceInputConfig.localSenseVoiceModelDirectory.ifBlank { "未配置" })
-            VoiceInfoRow("模型状态", localModelStatus.displayName())
-            VoiceInfoRow("云 ASR", if (cloudAsrConfig.isConfigured) "已配置" else "未配置")
-            VoiceInfoRow("云响应字段", cloudAsrConfig.responseTextFieldPath)
-            VoiceInfoRow("MOSS 目录", voiceCloneConfig.mossModelDirectory.ifBlank { "未配置" })
-            VoiceInfoRow("MOSS 状态", mossModelStatus.displayName())
-            VoiceInfoRow("本地克隆", if (mossModelStatus is MossTtsNanoModelStatus.Ready) "MOSS TTS Nano（默认引擎）" else "回退系统 TTS")
-            VoiceInfoRow("输出模式", "MOSS 本地克隆（默认）")
-            VoiceInfoRow("默认音色", "moss_default_voice.wav")
-            VoiceInfoRow("角色语音", "在角色管理中配置参考音频 URI、模式和显示名称")
+            VoiceInfoRow(Strings.txt(StringsKey.voice_recognition_mode), voiceInputConfig.recognitionModeLabel)
+            VoiceInfoRow(Strings.txt(StringsKey.voice_recognition_backend), voiceInputConfig.backend.displayName(LocalLanguage.current))
+            VoiceInfoRow(Strings.txt(StringsKey.voice_model_directory), voiceInputConfig.localSenseVoiceModelDirectory.ifBlank { Strings.txt(StringsKey.voice_not_configured) })
+            VoiceInfoRow(Strings.txt(StringsKey.voice_model_status), localModelStatus.displayName(LocalLanguage.current))
+            VoiceInfoRow(Strings.txt(StringsKey.voice_cloud_asr_label), if (cloudAsrConfig.isConfigured) Strings.txt(StringsKey.voice_configured) else Strings.txt(StringsKey.voice_not_configured))
+            VoiceInfoRow(Strings.txt(StringsKey.voice_cloud_response_field), cloudAsrConfig.responseTextFieldPath)
+            VoiceInfoRow(Strings.txt(StringsKey.voice_moss_directory), voiceCloneConfig.mossModelDirectory.ifBlank { Strings.txt(StringsKey.voice_not_configured) })
+            VoiceInfoRow(Strings.txt(StringsKey.voice_moss_status), mossModelStatus.displayName(LocalLanguage.current))
+            VoiceInfoRow(Strings.txt(StringsKey.voice_local_clone), if (mossModelStatus is MossTtsNanoModelStatus.Ready) Strings.txt(StringsKey.voice_moss_nano_default) else Strings.txt(StringsKey.voice_fallback_tts))
+            VoiceInfoRow(Strings.txt(StringsKey.voice_output_mode), Strings.txt(StringsKey.voice_clone_default))
+            VoiceInfoRow(Strings.txt(StringsKey.voice_default_timbre), "moss_default_voice.wav")
+            VoiceInfoRow(Strings.txt(StringsKey.voice_role_voice), Strings.txt(StringsKey.voice_role_voice_hint))
 
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "语音输出",
+                text = Strings.txt(StringsKey.voice_output),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary
             )
@@ -123,11 +127,11 @@ fun VoiceSettingsScreen(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "AI 回复自动朗读",
+                        text = Strings.txt(StringsKey.voice_auto_read),
                         style = MaterialTheme.typography.bodyLarge
                     )
                     Text(
-                        text = "AI 开始回复 0.5 秒后，按句子自动朗读",
+                        text = Strings.txt(StringsKey.voice_auto_read_desc),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -141,27 +145,27 @@ fun VoiceSettingsScreen(
     }
 }
 
-private fun VoiceInputBackend.displayName(): String {
+private fun VoiceInputBackend.displayName(lang: AppLanguage): String {
     return when (this) {
-        VoiceInputBackend.LOCAL_SENSEVOICE -> "本地 SenseVoice ASR"
-        VoiceInputBackend.CLOUD_HTTP_ASR -> "云 HTTP ASR"
+        VoiceInputBackend.LOCAL_SENSEVOICE -> Strings.get(lang, StringsKey.voice_local_sensevoice)
+        VoiceInputBackend.CLOUD_HTTP_ASR -> Strings.get(lang, StringsKey.voice_cloud_http_asr)
     }
 }
 
-private fun LocalSenseVoiceModelStatus.displayName(): String {
+private fun LocalSenseVoiceModelStatus.displayName(lang: AppLanguage): String {
     return when (this) {
-        LocalSenseVoiceModelStatus.Ready -> "完整"
-        LocalSenseVoiceModelStatus.DirectoryNotConfigured -> "本地 SenseVoice 模型未配置"
-        is LocalSenseVoiceModelStatus.MissingFiles -> "文件缺失：${fileNames.joinToString()}"
+        LocalSenseVoiceModelStatus.Ready -> Strings.get(lang, StringsKey.voice_ready)
+        LocalSenseVoiceModelStatus.DirectoryNotConfigured -> Strings.get(lang, StringsKey.voice_local_not_configured)
+        is LocalSenseVoiceModelStatus.MissingFiles -> Strings.get(lang, StringsKey.voice_missing_files, fileNames.joinToString())
     }
 }
 
-private fun MossTtsNanoModelStatus.displayName(): String {
+private fun MossTtsNanoModelStatus.displayName(lang: AppLanguage): String {
     return when (this) {
-        MossTtsNanoModelStatus.Ready -> "完整"
-        MossTtsNanoModelStatus.DirectoryNotConfigured -> "moss-tts-nano 模型未配置"
-        is MossTtsNanoModelStatus.InvalidConfig -> "配置无效：$message"
-        is MossTtsNanoModelStatus.MissingFiles -> "文件缺失：${fileNames.joinToString()}"
+        MossTtsNanoModelStatus.Ready -> Strings.get(lang, StringsKey.voice_ready)
+        MossTtsNanoModelStatus.DirectoryNotConfigured -> Strings.get(lang, StringsKey.voice_moss_not_configured)
+        is MossTtsNanoModelStatus.InvalidConfig -> Strings.get(lang, StringsKey.voice_invalid_config, message)
+        is MossTtsNanoModelStatus.MissingFiles -> Strings.get(lang, StringsKey.voice_missing_files, fileNames.joinToString())
     }
 }
 

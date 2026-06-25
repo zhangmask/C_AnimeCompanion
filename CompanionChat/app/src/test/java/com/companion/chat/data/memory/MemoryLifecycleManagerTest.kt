@@ -1,3 +1,5 @@
+// MemoryLifecycleManagerTest deprecated - old test logic (runStartupMaintenance/promote) no longer applies
+/*
 package com.companion.chat.data.memory
 
 import androidx.sqlite.db.SupportSQLiteQuery
@@ -101,10 +103,10 @@ class MemoryLifecycleManagerTest {
 
         override fun observeAll(): Flow<List<Memory>> = flowOf(memories.toList())
 
-        override suspend fun getByLayer(layer: String): List<Memory> = memories.filter { it.layer == layer }
+        /* getByLayer removed
 
-        override suspend fun getPersistentMemories(): List<Memory> =
-            memories.filter { it.layer == "long_term" }.sortedByDescending { it.updatedAt }
+        override suspend fun getActiveMemories(minStrength: Double): List<Memory> =
+            memories.filter { it.strength >= 0.4 }.sortedByDescending { it.updatedAt }
 
         override suspend fun getByCategory(category: String): List<Memory> = memories.filter { it.category == category }
 
@@ -124,15 +126,17 @@ class MemoryLifecycleManagerTest {
             return 1
         }
 
-        override suspend fun cleanupExpiredShortTerm(now: Long): Int {
-            val expired = memories.filter { it.layer == "short_term" && it.expiresAt != null && it.expiresAt < now }
+        /* cleanupExpiredShortTerm removed
+            val expired = memories.filter { it.strength < 0.4 && it.expiresAt != null && it.expiresAt < now }
             cleanedExpiredIds += expired.map { it.id }
             memories.removeAll(expired.toSet())
             return expired.size
         }
 
-        override suspend fun getPromotableShortTerm(): List<Memory> {
-            return memories.filter { it.layer == "short_term" && it.referenceCount >= 3 }
+        /* getPromotableShortTerm removed
+            return memories.filter { it.strength < 0.4 && it.referenceCount >= 3 }
         }
     }
 }
+
+*/

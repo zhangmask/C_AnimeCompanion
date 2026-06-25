@@ -34,6 +34,9 @@ import androidx.compose.ui.unit.dp
 import com.companion.chat.ui.theme.BrandOutlineVariant
 import com.companion.chat.ui.theme.BrandPrimary
 import com.companion.chat.ui.theme.BrandPrimaryContainer
+import com.companion.chat.locale.LocalLanguage
+import com.companion.chat.locale.Strings
+import com.companion.chat.locale.StringsKey
 
 private const val PREFS_NAME = "app_settings"
 private const val KEY_DARK_MODE = "dark_mode" // "system", "light", "dark"
@@ -52,10 +55,10 @@ fun DarkModeSettingsScreen(
         modifier = modifier,
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("深色模式") },
+                title = { Text(Strings.txt(StringsKey.dark_mode_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = Strings.txt(StringsKey.back))
                     }
                 }
             )
@@ -69,9 +72,9 @@ fun DarkModeSettingsScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             val options = listOf(
-                "system" to "跟随系统",
-                "light" to "浅色模式",
-                "dark" to "深色模式"
+                "system" to Strings.txt(StringsKey.dark_mode_follow_system),
+                "light" to Strings.txt(StringsKey.dark_mode_off),
+                "dark" to Strings.txt(StringsKey.dark_mode_on)
             )
             options.forEach { (value, label) ->
                 DarkModeOption(

@@ -19,6 +19,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.companion.chat.data.local.entity.Skill
+import com.companion.chat.locale.LocalLanguage
+import com.companion.chat.locale.Strings
+import com.companion.chat.locale.StringsKey
 
 @Composable
 fun SkillEditorDialog(
@@ -34,7 +37,7 @@ fun SkillEditorDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = if (skill == null) "新建 Skill" else "编辑 Skill",
+                text = if (skill == null) Strings.txt(StringsKey.role_create_title) else Strings.txt(StringsKey.role_edit_title),
                 style = MaterialTheme.typography.titleLarge
             )
         },
@@ -49,13 +52,13 @@ fun SkillEditorDialog(
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("名称") },
+                    label = { Text(Strings.txt(StringsKey.role_field_name)) },
                     modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
-                    label = { Text("简介") },
+                    label = { Text(Strings.txt(StringsKey.role_field_description)) },
                     modifier = Modifier.fillMaxWidth(),
                     minLines = 2
                 )
@@ -70,12 +73,12 @@ fun SkillEditorDialog(
         },
         confirmButton = {
             TextButton(onClick = { onSave(name, description, systemPrompt) }) {
-                Text("保存")
+                Text(Strings.txt(StringsKey.save))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("取消")
+                Text(Strings.txt(StringsKey.cancel))
             }
         }
     )

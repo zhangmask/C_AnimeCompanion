@@ -8,12 +8,19 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.companion.chat.data.local.dao.ConversationDao
 import com.companion.chat.data.local.dao.MemoryDao
+import com.companion.chat.data.local.dao.MemoryEntityDao
+import com.companion.chat.data.local.dao.MemoryLinkDao
 import com.companion.chat.data.local.dao.MessageDao
 import com.companion.chat.data.local.dao.PreferenceDao
 import com.companion.chat.data.local.dao.RoleCardDao
 import com.companion.chat.data.local.dao.SkillDao
+import com.companion.chat.data.local.entity.AgentExperience
 import com.companion.chat.data.local.entity.ConversationEntity
 import com.companion.chat.data.local.entity.Memory
+import com.companion.chat.data.local.entity.MemoryEntity
+import com.companion.chat.data.local.entity.MemoryEntityMap
+import com.companion.chat.data.local.entity.MemoryLink
+import com.companion.chat.data.local.entity.MetaMemory
 import com.companion.chat.data.local.entity.MessageEntity
 import com.companion.chat.data.local.entity.RoleCard
 import com.companion.chat.data.local.entity.Skill
@@ -27,9 +34,14 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         Memory::class,
         UserPreference::class,
         Skill::class,
-        RoleCard::class
+        RoleCard::class,
+        MemoryLink::class,
+        MemoryEntity::class,
+        MemoryEntityMap::class,
+        AgentExperience::class,
+        MetaMemory::class
     ],
-    version = 4,
+    version = 6,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -38,6 +50,8 @@ abstract class CompanionDatabase : RoomDatabase() {
     abstract fun conversationDao(): ConversationDao
     abstract fun messageDao(): MessageDao
     abstract fun memoryDao(): MemoryDao
+    abstract fun memoryLinkDao(): MemoryLinkDao
+    abstract fun memoryEntityDao(): MemoryEntityDao
     abstract fun preferenceDao(): PreferenceDao
     abstract fun skillDao(): SkillDao
     abstract fun roleCardDao(): RoleCardDao
@@ -55,7 +69,7 @@ abstract class CompanionDatabase : RoomDatabase() {
                     CompanionDatabase::class.java,
                     DATABASE_NAME
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
                     .addCallback(DatabaseInitializationCallback())
                     .build()
                     .also { instance = it }
@@ -151,6 +165,103 @@ abstract class CompanionDatabase : RoomDatabase() {
                 db.execSQL("CREATE INDEX IF NOT EXISTS index_conversations_roleCardId ON conversations(roleCardId)")
                 db.execSQL("ALTER TABLE memories ADD COLUMN roleCardId INTEGER")
                 db.execSQL("CREATE INDEX IF NOT EXISTS index_memories_roleCardId ON memories(roleCardId)")
+            }
+        }
+
+        private val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE user_preferences ADD COLUMN roleCardId INTEGER")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_user_preferences_roleCardId ON user_preferences(roleCardId)")
+            }
+        }
+
+        private val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // 1. memories 表新增列（ALTER 添加新列）
+                db.execSQL("ALTER TABLE memories ADD COLUMN strength REAL NOT NULL DEFAULT 0.6")
+                db.execSQL("ALTER TABLE memories ADD COLUMN entityName TEXT")
+                db.execSQL("ALTER TABLE memories ADD COLUMN abstractionLevel INTEGER NOT NULL DEFAULT 2")
+                db.execSQL("ALTER TABLE memories ADD COLUMN l0Summary TEXT")
+                db.execSQL("ALTER TABLE memories ADD COLUMN l1Overview TEXT")
+                db.execSQL("ALTER TABLE memories ADD COLUMN lastAccessedAt INTEGER NOT NULL DEFAULT 0")
+
+                // 2. 迁移已有数据：layer 映射到 strength
+                db.execSQL("UPDATE memories SET strength = 0.5 WHERE layer = 'long_term'")
+                db.execSQL("UPDATE memories SET strength = 0.3 WHERE layer = 'short_term'")
+                db.execSQL("UPDATE memories SET strength = 0.8 WHERE source = 'manual'")
+
+                // 3. 新建 memory_links 表
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS memory_links (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        fromId INTEGER NOT NULL,
+                        toId INTEGER NOT NULL,
+                        linkType TEXT NOT NULL,
+                        weight REAL NOT NULL DEFAULT 1.0,
+                        createdAt INTEGER NOT NULL,
+                        updatedAt INTEGER NOT NULL,
+                        FOREIGN KEY (fromId) REFERENCES memories(id) ON DELETE CASCADE,
+                        FOREIGN KEY (toId) REFERENCES memories(id) ON DELETE CASCADE,
+                        UNIQUE(fromId, toId, linkType)
+                    )
+                """.trimIndent())
+                db.execSQL("CREATE INDEX IF NOT EXISTS idx_links_from ON memory_links(fromId)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS idx_links_to ON memory_links(toId)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS idx_links_type ON memory_links(linkType)")
+
+                // 4. 新建 memory_entities 表
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS memory_entities (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        name TEXT NOT NULL,
+                        normalizedName TEXT NOT NULL UNIQUE,
+                        type TEXT NOT NULL DEFAULT 'topic',
+                        linkedMemoryCount INTEGER NOT NULL DEFAULT 1,
+                        createdAt INTEGER NOT NULL,
+                        updatedAt INTEGER NOT NULL
+                    )
+                """.trimIndent())
+
+                // 5. 新建 memory_entity_map 表
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS memory_entity_map (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        entityId INTEGER NOT NULL,
+                        memoryId INTEGER NOT NULL,
+                        FOREIGN KEY (entityId) REFERENCES memory_entities(id) ON DELETE CASCADE,
+                        FOREIGN KEY (memoryId) REFERENCES memories(id) ON DELETE CASCADE,
+                        UNIQUE(entityId, memoryId)
+                    )
+                """.trimIndent())
+                db.execSQL("CREATE INDEX IF NOT EXISTS idx_entity_map_entity ON memory_entity_map(entityId)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS idx_entity_map_memory ON memory_entity_map(memoryId)")
+
+                // 6. 新建 agent_experiences 表
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS agent_experiences (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        situation TEXT NOT NULL,
+                        approach TEXT NOT NULL,
+                        reflect TEXT NOT NULL,
+                        outcome TEXT NOT NULL DEFAULT 'success',
+                        applyCount INTEGER NOT NULL DEFAULT 0,
+                        createdAt INTEGER NOT NULL,
+                        updatedAt INTEGER NOT NULL
+                    )
+                """.trimIndent())
+
+                // 7. 新建 meta_memories 表
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS meta_memories (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        content TEXT NOT NULL,
+                        category TEXT NOT NULL DEFAULT 'retrieval',
+                        applyCount INTEGER NOT NULL DEFAULT 0,
+                        confidence REAL NOT NULL DEFAULT 0.5,
+                        createdAt INTEGER NOT NULL,
+                        updatedAt INTEGER NOT NULL
+                    )
+                """.trimIndent())
             }
         }
 

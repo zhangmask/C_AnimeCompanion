@@ -45,7 +45,6 @@ class PreferenceMemoryDeriver {
         return ExtractedMemory(
             content = content,
             category = category,
-            layer = "short_term",
             source = MemoryRepository.MODEL_SOURCE
         )
     }

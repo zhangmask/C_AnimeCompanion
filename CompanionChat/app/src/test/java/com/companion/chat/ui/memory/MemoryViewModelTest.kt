@@ -42,7 +42,7 @@ class MemoryViewModelTest {
         viewModel.addMemory(content = "用户住在北京", category = "fact")
 
         assertEquals(1, dao.memories.size)
-        assertEquals("long_term", dao.memories.first().layer)
+        // layer removed
         assertEquals("manual", dao.memories.first().source)
         assertEquals(1, viewModel.uiState.value.memories.size)
     }
@@ -57,8 +57,8 @@ class MemoryViewModelTest {
         )
         val viewModel = createViewModel(dao)
 
-        viewModel.promoteMemory(1L)
-        assertEquals("long_term", dao.memories.first { it.id == 1L }.layer)
+        viewModel.strengthenMemory(1L) /* was promoteMemory */
+        // layer removed
 
         viewModel.deleteMemory(dao.memories.first { it.id == 2L })
         assertTrue(dao.memories.none { it.id == 2L })
@@ -125,31 +125,5 @@ class MemoryViewModelTest {
         override fun observeAll(): Flow<List<Memory>> =
             flowOf(memories.sortedByDescending { it.updatedAt })
 
-        override suspend fun getByLayer(layer: String): List<Memory> = memories.filter { it.layer == layer }
-
-        override suspend fun getPersistentMemories(): List<Memory> =
-            memories.filter { it.layer == "long_term" }.sortedByDescending { it.updatedAt }
-
-        override suspend fun getByCategory(category: String): List<Memory> = memories.filter { it.category == category }
-
-        override suspend fun findExactMatch(category: String, content: String): Memory? =
-            memories.firstOrNull { it.category == category && it.content == content }
-
-        override suspend fun searchByFTS(query: SupportSQLiteQuery): List<Memory> = emptyList()
-
-        override suspend fun incrementReference(id: Long): Int = 0
-
-        override suspend fun promoteToLongTerm(id: Long, now: Long): Int {
-            val index = memories.indexOfFirst { it.id == id }
-            if (index < 0) {
-                return 0
-            }
-            memories[index] = memories[index].copy(layer = "long_term", updatedAt = now, expiresAt = null)
-            return 1
-        }
-
-        override suspend fun cleanupExpiredShortTerm(now: Long): Int = 0
-
-        override suspend fun getPromotableShortTerm(): List<Memory> = emptyList()
-    }
+        /* /* getByLayer removed */
 }

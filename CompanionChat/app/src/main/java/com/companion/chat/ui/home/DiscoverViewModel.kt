@@ -20,6 +20,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import com.companion.chat.locale.AppLanguage
+import com.companion.chat.locale.LanguageRepository
+import com.companion.chat.locale.Strings
+import com.companion.chat.locale.StringsKey
 
 data class DiscoverUiState(
     val query: String = "",
@@ -58,6 +62,9 @@ class DiscoverViewModel(
         imageEngineSelector = defaultImageGenerationEngineSelector(application),
         roleCardRepository = defaultRoleCardRepository(application)
     )
+
+    private val languageRepo = LanguageRepository(getApplication())
+    private fun tr(key: StringsKey, vararg args: Any): String = Strings.get(languageRepo.getLanguage(), key, *args)
 
     private val _uiState = MutableStateFlow(DiscoverUiState(tags = repository.getTags()))
     val uiState: StateFlow<DiscoverUiState> = _uiState.asStateFlow()
@@ -117,7 +124,7 @@ class DiscoverViewModel(
                 selectRoleIfOpen(roleId)
                 onReady(id)
             }.onFailure { error ->
-                _uiState.update { it.copy(message = error.message ?: "导入角色失败") }
+                _uiState.update { it.copy(message = error.message ?: tr(StringsKey.discover_import_failed)) }
             }
         }
     }
@@ -145,13 +152,13 @@ class DiscoverViewModel(
                     _uiState.update {
                         it.copy(
                             isGeneratingImage = false,
-                            message = if (attached) "图片已加入角色图库" else "图片已生成: $uri"
+                            message = if (attached) tr(StringsKey.discover_image_added) else tr(StringsKey.discover_image_generated, uri)
                         )
                     }
                 }
                 .onFailure { error ->
                     _uiState.update {
-                        it.copy(isGeneratingImage = false, message = error.message ?: "图片生成失败")
+                        it.copy(isGeneratingImage = false, message = error.message ?: tr(StringsKey.snackbar_image_failed))
                     }
                 }
         }

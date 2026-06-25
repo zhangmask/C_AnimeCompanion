@@ -1,0 +1,1219 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.7/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:checkDebugAarMetadata UP-TO-DATE
+> Task :app:generateDebugResValues UP-TO-DATE
+> Task :app:mapDebugSourceSetPaths UP-TO-DATE
+> Task :app:generateDebugResources UP-TO-DATE
+> Task :app:mergeDebugResources UP-TO-DATE
+> Task :app:packageDebugResources UP-TO-DATE
+> Task :app:parseDebugLocalResources UP-TO-DATE
+> Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksDebug UP-TO-DATE
+> Task :app:processDebugMainManifest UP-TO-DATE
+> Task :app:processDebugManifest UP-TO-DATE
+> Task :app:processDebugManifestForPackage UP-TO-DATE
+> Task :app:processDebugResources UP-TO-DATE
+> Task :app:kspDebugKotlin UP-TO-DATE
+> Task :app:compileDebugKotlin UP-TO-DATE
+> Task :app:javaPreCompileDebug
+> Task :app:mergeDebugShaders
+> Task :app:compileDebugJavaWithJavac NO-SOURCE
+> Task :app:compileDebugShaders NO-SOURCE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :app:mergeDebugAssets
+> Task :app:desugarDebugFileDependencies
+> Task :app:compressDebugAssets
+> Task :app:dexBuilderDebug
+> Task :app:mergeDebugGlobalSynthetics
+> Task :app:processDebugJavaRes
+> Task :app:preReleaseBuild UP-TO-DATE
+
+> Task :app:configureCMakeRelease[arm64-v8a]
+[CXX5304] This version only understands SDK XML versions up to 3 but an SDK XML file of version 4 was encountered. This can happen if you use versions of Android Studio and the command-line tools that were released at different times.
+[CXX5304] This version only understands SDK XML versions up to 3 but an SDK XML file of version 4 was encountered. This can happen if you use versions of Android Studio and the command-line tools that were released at different times.
+
+> Task :app:checkDebugDuplicateClasses
+> Task :app:mergeDebugJavaResource
+> Task :app:buildCMakeRelease[arm64-v8a]
+C/C++: ninja: Entering directory `C:\Users\72952\OneDrive\Desktop\ui\CompanionChat\app\.cxx\Release\3ag461s2\arm64-v8a'
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/sample-cache.cpp:1:
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/sample-cache.h:6:
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/cache_dit.hpp:12:
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2996:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3039:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx,
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3100:17: warning: 'get_desc' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     std::string get_desc() {
+C/C++:                 ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2925:25: note: overridden virtual function is here
+C/C++:     virtual std::string get_desc() {
+C/C++:                         ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3104:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3186:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3239:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3326:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: 7 warnings generated.
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/thirdparty/zip.c:40:
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/thirdparty/./miniz.h:4988:9: warning: Using fopen, ftello, fseeko, stat() etc. path for file I/O - this path may not support large files. [-W#pragma-messages]
+C/C++: #pragma message(                                                               \
+C/C++:         ^
+C/C++: 1 warning generated.
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/upscaler.cpp:1:
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/upscaler.h:4:
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/esrgan.hpp:4:
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2996:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3039:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx,
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3100:17: warning: 'get_desc' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     std::string get_desc() {
+C/C++:                 ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2925:25: note: overridden virtual function is here
+C/C++:     virtual std::string get_desc() {
+C/C++:                         ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3104:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3186:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3239:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3326:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: 7 warnings generated.
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/util.cpp:14:
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/preprocessing.hpp:7:
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2996:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3039:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx,
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3100:17: warning: 'get_desc' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     std::string get_desc() {
+C/C++:                 ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2925:25: note: overridden virtual function is here
+C/C++:     virtual std::string get_desc() {
+C/C++:                         ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3104:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3186:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3239:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3326:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/util.cpp:350:31: warning: 'codecvt_utf8<char32_t>' is deprecated [-Wdeprecated-declarations]
+C/C++:     std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> converter;
+C/C++:                               ^
+C/C++: C:/Users/72952/AppData/Local/Android/Sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/c++/v1/codecvt:187:28: note: 'codecvt_utf8<char32_t>' has been explicitly marked deprecated here
+C/C++: class _LIBCPP_TEMPLATE_VIS _LIBCPP_DEPRECATED_IN_CXX17 codecvt_utf8
+C/C++:                            ^
+C/C++: C:/Users/72952/AppData/Local/Android/Sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/c++/v1/__config:798:41: note: expanded from macro '_LIBCPP_DEPRECATED_IN_CXX17'
+C/C++: #    define _LIBCPP_DEPRECATED_IN_CXX17 _LIBCPP_DEPRECATED
+C/C++:                                         ^
+C/C++: C:/Users/72952/AppData/Local/Android/Sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/c++/v1/__config:771:49: note: expanded from macro '_LIBCPP_DEPRECATED'
+C/C++: #      define _LIBCPP_DEPRECATED __attribute__((deprecated))
+C/C++:                                                 ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/util.cpp:350:10: warning: 'wstring_convert<std::codecvt_utf8<char32_t>, char32_t>' is deprecated [-Wdeprecated-declarations]
+C/C++:     std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> converter;
+C/C++:          ^
+C/C++: C:/Users/72952/AppData/Local/Android/Sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/c++/v1/locale:3603:28: note: 'wstring_convert<std::codecvt_utf8<char32_t>, char32_t>' has been explicitly marked deprecated here
+C/C++: class _LIBCPP_TEMPLATE_VIS _LIBCPP_DEPRECATED_IN_CXX17 wstring_convert
+C/C++:                            ^
+C/C++: C:/Users/72952/AppData/Local/Android/Sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/c++/v1/__config:798:41: note: expanded from macro '_LIBCPP_DEPRECATED_IN_CXX17'
+C/C++: #    define _LIBCPP_DEPRECATED_IN_CXX17 _LIBCPP_DEPRECATED
+C/C++:                                         ^
+C/C++: C:/Users/72952/AppData/Local/Android/Sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/c++/v1/__config:771:49: note: expanded from macro '_LIBCPP_DEPRECATED'
+C/C++: #      define _LIBCPP_DEPRECATED __attribute__((deprecated))
+C/C++:                                                 ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/util.cpp:355:31: warning: 'codecvt_utf8<char32_t>' is deprecated [-Wdeprecated-declarations]
+C/C++:     std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> converter;
+C/C++:                               ^
+C/C++: C:/Users/72952/AppData/Local/Android/Sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/c++/v1/codecvt:187:28: note: 'codecvt_utf8<char32_t>' has been explicitly marked deprecated here
+C/C++: class _LIBCPP_TEMPLATE_VIS _LIBCPP_DEPRECATED_IN_CXX17 codecvt_utf8
+C/C++:                            ^
+C/C++: C:/Users/72952/AppData/Local/Android/Sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/c++/v1/__config:798:41: note: expanded from macro '_LIBCPP_DEPRECATED_IN_CXX17'
+C/C++: #    define _LIBCPP_DEPRECATED_IN_CXX17 _LIBCPP_DEPRECATED
+C/C++:                                         ^
+C/C++: C:/Users/72952/AppData/Local/Android/Sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/c++/v1/__config:771:49: note: expanded from macro '_LIBCPP_DEPRECATED'
+C/C++: #      define _LIBCPP_DEPRECATED __attribute__((deprecated))
+C/C++:                                                 ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/util.cpp:355:10: warning: 'wstring_convert<std::codecvt_utf8<char32_t>, char32_t>' is deprecated [-Wdeprecated-declarations]
+C/C++:     std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> converter;
+C/C++:          ^
+C/C++: C:/Users/72952/AppData/Local/Android/Sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/c++/v1/locale:3603:28: note: 'wstring_convert<std::codecvt_utf8<char32_t>, char32_t>' has been explicitly marked deprecated here
+C/C++: class _LIBCPP_TEMPLATE_VIS _LIBCPP_DEPRECATED_IN_CXX17 wstring_convert
+C/C++:                            ^
+C/C++: C:/Users/72952/AppData/Local/Android/Sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/c++/v1/__config:798:41: note: expanded from macro '_LIBCPP_DEPRECATED_IN_CXX17'
+C/C++: #    define _LIBCPP_DEPRECATED_IN_CXX17 _LIBCPP_DEPRECATED
+C/C++:                                         ^
+C/C++: C:/Users/72952/AppData/Local/Android/Sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/c++/v1/__config:771:49: note: expanded from macro '_LIBCPP_DEPRECATED'
+C/C++: #      define _LIBCPP_DEPRECATED __attribute__((deprecated))
+C/C++:                                                 ^
+C/C++: 11 warnings generated.
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/stable-diffusion.cpp:1:
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2996:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3039:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx,
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3100:17: warning: 'get_desc' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     std::string get_desc() {
+C/C++:                 ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2925:25: note: overridden virtual function is here
+C/C++:     virtual std::string get_desc() {
+C/C++:                         ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3104:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3186:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3239:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3326:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/stable-diffusion.cpp:11:
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/auto_encoder_kl.hpp:4:
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/vae.hpp:225:9: warning: 'get_encoder_output_channels' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     int get_encoder_output_channels(int input_channels) {
+C/C++:         ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/vae.hpp:82:17: note: overridden virtual function is here
+C/C++:     virtual int get_encoder_output_channels(int input_channels) = 0;
+C/C++:                 ^
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/stable-diffusion.cpp:11:
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/auto_encoder_kl.hpp:68:10: warning: 'init_params' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     void init_params(ggml_context* ctx, const String2TensorStorage& tensor_storage_map = {}, const std::string prefix = "") {
+C/C++:          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2874:18: note: overridden virtual function is here
+C/C++:     virtual void init_params(ggml_context* ctx, const String2TensorStorage& tensor_storage_map = {}, const std::string prefix = "") {}
+C/C++:                  ^
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/stable-diffusion.cpp:11:
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/auto_encoder_kl.hpp:834:9: warning: 'get_encoder_output_channels' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     int get_encoder_output_channels(int input_channels) {
+C/C++:         ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/vae.hpp:82:17: note: overridden virtual function is here
+C/C++:     virtual int get_encoder_output_channels(int input_channels) = 0;
+C/C++:                 ^
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/stable-diffusion.cpp:12:
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/conditioner.hpp:9:
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/llm.hpp:119:22: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:         ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                      ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/stable-diffusion.cpp:12:
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/conditioner.hpp:1198:10: warning: 'set_weight_adapter' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     void set_weight_adapter(const std::shared_ptr<WeightAdapter>& adapter) {
+C/C++:          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/conditioner.hpp:123:18: note: overridden virtual function is here
+C/C++:     virtual void set_weight_adapter(const std::shared_ptr<WeightAdapter>& adapter) {}
+C/C++:                  ^
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/stable-diffusion.cpp:15:
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:14:
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/wan.hpp:1199:13: warning: 'get_encoder_output_channels' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:         int get_encoder_output_channels(int input_channels) {
+C/C++:             ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/vae.hpp:82:17: note: overridden virtual function is here
+C/C++:     virtual int get_encoder_output_channels(int input_channels) = 0;
+C/C++:                 ^
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/stable-diffusion.cpp:15:
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:111:10: warning: 'set_flash_attention_enabled' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     void set_flash_attention_enabled(bool enabled) {
+C/C++:          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:64:18: note: overridden virtual function is here
+C/C++:     virtual void set_flash_attention_enabled(bool enabled)           = 0;
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:181:10: warning: 'set_flash_attention_enabled' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     void set_flash_attention_enabled(bool enabled) {
+C/C++:          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:64:18: note: overridden virtual function is here
+C/C++:     virtual void set_flash_attention_enabled(bool enabled)           = 0;
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:250:10: warning: 'set_flash_attention_enabled' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     void set_flash_attention_enabled(bool enabled) {
+C/C++:          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:64:18: note: overridden virtual function is here
+C/C++:     virtual void set_flash_attention_enabled(bool enabled)           = 0;
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:324:10: warning: 'set_flash_attention_enabled' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     void set_flash_attention_enabled(bool enabled) {
+C/C++:          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:64:18: note: overridden virtual function is here
+C/C++:     virtual void set_flash_attention_enabled(bool enabled)           = 0;
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:393:10: warning: 'set_flash_attention_enabled' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     void set_flash_attention_enabled(bool enabled) {
+C/C++:          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:64:18: note: overridden virtual function is here
+C/C++:     virtual void set_flash_attention_enabled(bool enabled)           = 0;
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:466:10: warning: 'set_flash_attention_enabled' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     void set_flash_attention_enabled(bool enabled) {
+C/C++:          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:64:18: note: overridden virtual function is here
+C/C++:     virtual void set_flash_attention_enabled(bool enabled)           = 0;
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:535:10: warning: 'set_flash_attention_enabled' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     void set_flash_attention_enabled(bool enabled) {
+C/C++:          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:64:18: note: overridden virtual function is here
+C/C++:     virtual void set_flash_attention_enabled(bool enabled)           = 0;
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:612:10: warning: 'set_flash_attention_enabled' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     void set_flash_attention_enabled(bool enabled) {
+C/C++:          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:64:18: note: overridden virtual function is here
+C/C++:     virtual void set_flash_attention_enabled(bool enabled)           = 0;
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:681:10: warning: 'set_flash_attention_enabled' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     void set_flash_attention_enabled(bool enabled) {
+C/C++:          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:64:18: note: overridden virtual function is here
+C/C++:     virtual void set_flash_attention_enabled(bool enabled)           = 0;
+C/C++:                  ^
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/stable-diffusion.cpp:23:
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/tae.hpp:560:10: warning: 'get_param_tensors' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     void get_param_tensors(std::map<std::string, ggml_tensor*>& tensors, const std::string prefix) {
+C/C++:          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/vae.hpp:216:18: note: overridden virtual function is here
+C/C++:     virtual void get_param_tensors(std::map<std::string, ggml_tensor*>& tensors, const std::string prefix)         = 0;
+C/C++:                  ^
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/stable-diffusion.cpp:23:
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/tae.hpp:577:9: warning: 'get_encoder_output_channels' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     int get_encoder_output_channels(int input_channels) {
+C/C++:         ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/vae.hpp:82:17: note: overridden virtual function is here
+C/C++:     virtual int get_encoder_output_channels(int input_channels) = 0;
+C/C++:                 ^
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/stable-diffusion.cpp:23:
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/tae.hpp:622:10: warning: 'get_param_tensors' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     void get_param_tensors(std::map<std::string, ggml_tensor*>& tensors, const std::string prefix) {
+C/C++:          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/vae.hpp:216:18: note: overridden virtual function is here
+C/C++:     virtual void get_param_tensors(std::map<std::string, ggml_tensor*>& tensors, const std::string prefix)         = 0;
+C/C++:                  ^
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/stable-diffusion.cpp:23:
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/tae.hpp:639:9: warning: 'get_encoder_output_channels' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     int get_encoder_output_channels(int input_channels) {
+C/C++:         ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/vae.hpp:82:17: note: overridden virtual function is here
+C/C++:     virtual int get_encoder_output_channels(int input_channels) = 0;
+C/C++:                 ^
+C/C++: 26 warnings generated.
+
+> Task :app:mergeLibDexDebug
+> Task :app:configureCMakeRelease[armeabi-v7a]
+> Task :app:mergeProjectDexDebug
+> Task :app:mergeExtDexDebug
+> Task :app:buildCMakeRelease[armeabi-v7a]
+C/C++: ninja: Entering directory `C:\Users\72952\OneDrive\Desktop\ui\CompanionChat\app\.cxx\Release\3ag461s2\armeabi-v7a'
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/sample-cache.cpp:1:
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/sample-cache.h:6:
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/cache_dit.hpp:12:
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:194:88: warning: format specifies type 'size_t' (aka 'unsigned int') but the argument has type 'int64_t' (aka 'long long') [-Wformat]
+C/C++:     printf("%s (%s): shape(%zu, %zu, %zu, %zu)\n", mark, ggml_type_name(tensor->type), tensor->ne[0], tensor->ne[1], tensor->ne[2], tensor->ne[3]);
+C/C++:                            ~~~                                                         ^~~~~~~~~~~~~
+C/C++:                            %lld
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:194:103: warning: format specifies type 'size_t' (aka 'unsigned int') but the argument has type 'int64_t' (aka 'long long') [-Wformat]
+C/C++:     printf("%s (%s): shape(%zu, %zu, %zu, %zu)\n", mark, ggml_type_name(tensor->type), tensor->ne[0], tensor->ne[1], tensor->ne[2], tensor->ne[3]);
+C/C++:                                 ~~~                                                                   ^~~~~~~~~~~~~
+C/C++:                                 %lld
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:194:118: warning: format specifies type 'size_t' (aka 'unsigned int') but the argument has type 'int64_t' (aka 'long long') [-Wformat]
+C/C++:     printf("%s (%s): shape(%zu, %zu, %zu, %zu)\n", mark, ggml_type_name(tensor->type), tensor->ne[0], tensor->ne[1], tensor->ne[2], tensor->ne[3]);
+C/C++:                                      ~~~                                                                             ^~~~~~~~~~~~~
+C/C++:                                      %lld
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:194:133: warning: format specifies type 'size_t' (aka 'unsigned int') but the argument has type 'int64_t' (aka 'long long') [-Wformat]
+C/C++:     printf("%s (%s): shape(%zu, %zu, %zu, %zu)\n", mark, ggml_type_name(tensor->type), tensor->ne[0], tensor->ne[1], tensor->ne[2], tensor->ne[3]);
+C/C++:                                           ~~~                                                                                       ^~~~~~~~~~~~~
+C/C++:                                           %lld
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2996:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3039:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx,
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3100:17: warning: 'get_desc' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     std::string get_desc() {
+C/C++:                 ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2925:25: note: overridden virtual function is here
+C/C++:     virtual std::string get_desc() {
+C/C++:                         ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3104:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3186:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3239:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3326:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: 11 warnings generated.
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/upscaler.cpp:1:
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/upscaler.h:4:
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/esrgan.hpp:4:
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:194:88: warning: format specifies type 'size_t' (aka 'unsigned int') but the argument has type 'int64_t' (aka 'long long') [-Wformat]
+C/C++:     printf("%s (%s): shape(%zu, %zu, %zu, %zu)\n", mark, ggml_type_name(tensor->type), tensor->ne[0], tensor->ne[1], tensor->ne[2], tensor->ne[3]);
+C/C++:                            ~~~                                                         ^~~~~~~~~~~~~
+C/C++:                            %lld
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:194:103: warning: format specifies type 'size_t' (aka 'unsigned int') but the argument has type 'int64_t' (aka 'long long') [-Wformat]
+C/C++:     printf("%s (%s): shape(%zu, %zu, %zu, %zu)\n", mark, ggml_type_name(tensor->type), tensor->ne[0], tensor->ne[1], tensor->ne[2], tensor->ne[3]);
+C/C++:                                 ~~~                                                                   ^~~~~~~~~~~~~
+C/C++:                                 %lld
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:194:118: warning: format specifies type 'size_t' (aka 'unsigned int') but the argument has type 'int64_t' (aka 'long long') [-Wformat]
+C/C++:     printf("%s (%s): shape(%zu, %zu, %zu, %zu)\n", mark, ggml_type_name(tensor->type), tensor->ne[0], tensor->ne[1], tensor->ne[2], tensor->ne[3]);
+C/C++:                                      ~~~                                                                             ^~~~~~~~~~~~~
+C/C++:                                      %lld
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:194:133: warning: format specifies type 'size_t' (aka 'unsigned int') but the argument has type 'int64_t' (aka 'long long') [-Wformat]
+C/C++:     printf("%s (%s): shape(%zu, %zu, %zu, %zu)\n", mark, ggml_type_name(tensor->type), tensor->ne[0], tensor->ne[1], tensor->ne[2], tensor->ne[3]);
+C/C++:                                           ~~~                                                                                       ^~~~~~~~~~~~~
+C/C++:                                           %lld
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2996:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3039:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx,
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3100:17: warning: 'get_desc' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     std::string get_desc() {
+C/C++:                 ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2925:25: note: overridden virtual function is here
+C/C++:     virtual std::string get_desc() {
+C/C++:                         ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3104:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3186:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3239:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3326:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: 11 warnings generated.
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/thirdparty/zip.c:40:
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/thirdparty/./miniz.h:4988:9: warning: Using fopen, ftello, fseeko, stat() etc. path for file I/O - this path may not support large files. [-W#pragma-messages]
+C/C++: #pragma message(                                                               \
+C/C++:         ^
+C/C++: 1 warning generated.
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/util.cpp:14:
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/preprocessing.hpp:7:
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:194:88: warning: format specifies type 'size_t' (aka 'unsigned int') but the argument has type 'int64_t' (aka 'long long') [-Wformat]
+C/C++:     printf("%s (%s): shape(%zu, %zu, %zu, %zu)\n", mark, ggml_type_name(tensor->type), tensor->ne[0], tensor->ne[1], tensor->ne[2], tensor->ne[3]);
+C/C++:                            ~~~                                                         ^~~~~~~~~~~~~
+C/C++:                            %lld
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:194:103: warning: format specifies type 'size_t' (aka 'unsigned int') but the argument has type 'int64_t' (aka 'long long') [-Wformat]
+C/C++:     printf("%s (%s): shape(%zu, %zu, %zu, %zu)\n", mark, ggml_type_name(tensor->type), tensor->ne[0], tensor->ne[1], tensor->ne[2], tensor->ne[3]);
+C/C++:                                 ~~~                                                                   ^~~~~~~~~~~~~
+C/C++:                                 %lld
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:194:118: warning: format specifies type 'size_t' (aka 'unsigned int') but the argument has type 'int64_t' (aka 'long long') [-Wformat]
+C/C++:     printf("%s (%s): shape(%zu, %zu, %zu, %zu)\n", mark, ggml_type_name(tensor->type), tensor->ne[0], tensor->ne[1], tensor->ne[2], tensor->ne[3]);
+C/C++:                                      ~~~                                                                             ^~~~~~~~~~~~~
+C/C++:                                      %lld
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:194:133: warning: format specifies type 'size_t' (aka 'unsigned int') but the argument has type 'int64_t' (aka 'long long') [-Wformat]
+C/C++:     printf("%s (%s): shape(%zu, %zu, %zu, %zu)\n", mark, ggml_type_name(tensor->type), tensor->ne[0], tensor->ne[1], tensor->ne[2], tensor->ne[3]);
+C/C++:                                           ~~~                                                                                       ^~~~~~~~~~~~~
+C/C++:                                           %lld
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2996:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3039:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx,
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3100:17: warning: 'get_desc' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     std::string get_desc() {
+C/C++:                 ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2925:25: note: overridden virtual function is here
+C/C++:     virtual std::string get_desc() {
+C/C++:                         ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3104:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3186:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3239:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3326:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/util.cpp:350:31: warning: 'codecvt_utf8<char32_t>' is deprecated [-Wdeprecated-declarations]
+C/C++:     std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> converter;
+C/C++:                               ^
+C/C++: C:/Users/72952/AppData/Local/Android/Sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/c++/v1/codecvt:187:28: note: 'codecvt_utf8<char32_t>' has been explicitly marked deprecated here
+C/C++: class _LIBCPP_TEMPLATE_VIS _LIBCPP_DEPRECATED_IN_CXX17 codecvt_utf8
+C/C++:                            ^
+C/C++: C:/Users/72952/AppData/Local/Android/Sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/c++/v1/__config:798:41: note: expanded from macro '_LIBCPP_DEPRECATED_IN_CXX17'
+C/C++: #    define _LIBCPP_DEPRECATED_IN_CXX17 _LIBCPP_DEPRECATED
+C/C++:                                         ^
+C/C++: C:/Users/72952/AppData/Local/Android/Sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/c++/v1/__config:771:49: note: expanded from macro '_LIBCPP_DEPRECATED'
+C/C++: #      define _LIBCPP_DEPRECATED __attribute__((deprecated))
+C/C++:                                                 ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/util.cpp:350:10: warning: 'wstring_convert<std::codecvt_utf8<char32_t>, char32_t>' is deprecated [-Wdeprecated-declarations]
+C/C++:     std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> converter;
+C/C++:          ^
+C/C++: C:/Users/72952/AppData/Local/Android/Sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/c++/v1/locale:3603:28: note: 'wstring_convert<std::codecvt_utf8<char32_t>, char32_t>' has been explicitly marked deprecated here
+C/C++: class _LIBCPP_TEMPLATE_VIS _LIBCPP_DEPRECATED_IN_CXX17 wstring_convert
+C/C++:                            ^
+C/C++: C:/Users/72952/AppData/Local/Android/Sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/c++/v1/__config:798:41: note: expanded from macro '_LIBCPP_DEPRECATED_IN_CXX17'
+C/C++: #    define _LIBCPP_DEPRECATED_IN_CXX17 _LIBCPP_DEPRECATED
+C/C++:                                         ^
+C/C++: C:/Users/72952/AppData/Local/Android/Sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/c++/v1/__config:771:49: note: expanded from macro '_LIBCPP_DEPRECATED'
+C/C++: #      define _LIBCPP_DEPRECATED __attribute__((deprecated))
+C/C++:                                                 ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/util.cpp:355:31: warning: 'codecvt_utf8<char32_t>' is deprecated [-Wdeprecated-declarations]
+C/C++:     std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> converter;
+C/C++:                               ^
+C/C++: C:/Users/72952/AppData/Local/Android/Sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/c++/v1/codecvt:187:28: note: 'codecvt_utf8<char32_t>' has been explicitly marked deprecated here
+C/C++: class _LIBCPP_TEMPLATE_VIS _LIBCPP_DEPRECATED_IN_CXX17 codecvt_utf8
+C/C++:                            ^
+C/C++: C:/Users/72952/AppData/Local/Android/Sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/c++/v1/__config:798:41: note: expanded from macro '_LIBCPP_DEPRECATED_IN_CXX17'
+C/C++: #    define _LIBCPP_DEPRECATED_IN_CXX17 _LIBCPP_DEPRECATED
+C/C++:                                         ^
+C/C++: C:/Users/72952/AppData/Local/Android/Sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/c++/v1/__config:771:49: note: expanded from macro '_LIBCPP_DEPRECATED'
+C/C++: #      define _LIBCPP_DEPRECATED __attribute__((deprecated))
+C/C++:                                                 ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/util.cpp:355:10: warning: 'wstring_convert<std::codecvt_utf8<char32_t>, char32_t>' is deprecated [-Wdeprecated-declarations]
+C/C++:     std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> converter;
+C/C++:          ^
+C/C++: C:/Users/72952/AppData/Local/Android/Sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/c++/v1/locale:3603:28: note: 'wstring_convert<std::codecvt_utf8<char32_t>, char32_t>' has been explicitly marked deprecated here
+C/C++: class _LIBCPP_TEMPLATE_VIS _LIBCPP_DEPRECATED_IN_CXX17 wstring_convert
+C/C++:                            ^
+C/C++: C:/Users/72952/AppData/Local/Android/Sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/c++/v1/__config:798:41: note: expanded from macro '_LIBCPP_DEPRECATED_IN_CXX17'
+C/C++: #    define _LIBCPP_DEPRECATED_IN_CXX17 _LIBCPP_DEPRECATED
+C/C++:                                         ^
+C/C++: C:/Users/72952/AppData/Local/Android/Sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/c++/v1/__config:771:49: note: expanded from macro '_LIBCPP_DEPRECATED'
+C/C++: #      define _LIBCPP_DEPRECATED __attribute__((deprecated))
+C/C++:                                                 ^
+C/C++: 15 warnings generated.
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/stable-diffusion.cpp:1:
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:194:88: warning: format specifies type 'size_t' (aka 'unsigned int') but the argument has type 'int64_t' (aka 'long long') [-Wformat]
+C/C++:     printf("%s (%s): shape(%zu, %zu, %zu, %zu)\n", mark, ggml_type_name(tensor->type), tensor->ne[0], tensor->ne[1], tensor->ne[2], tensor->ne[3]);
+C/C++:                            ~~~                                                         ^~~~~~~~~~~~~
+C/C++:                            %lld
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:194:103: warning: format specifies type 'size_t' (aka 'unsigned int') but the argument has type 'int64_t' (aka 'long long') [-Wformat]
+C/C++:     printf("%s (%s): shape(%zu, %zu, %zu, %zu)\n", mark, ggml_type_name(tensor->type), tensor->ne[0], tensor->ne[1], tensor->ne[2], tensor->ne[3]);
+C/C++:                                 ~~~                                                                   ^~~~~~~~~~~~~
+C/C++:                                 %lld
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:194:118: warning: format specifies type 'size_t' (aka 'unsigned int') but the argument has type 'int64_t' (aka 'long long') [-Wformat]
+C/C++:     printf("%s (%s): shape(%zu, %zu, %zu, %zu)\n", mark, ggml_type_name(tensor->type), tensor->ne[0], tensor->ne[1], tensor->ne[2], tensor->ne[3]);
+C/C++:                                      ~~~                                                                             ^~~~~~~~~~~~~
+C/C++:                                      %lld
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:194:133: warning: format specifies type 'size_t' (aka 'unsigned int') but the argument has type 'int64_t' (aka 'long long') [-Wformat]
+C/C++:     printf("%s (%s): shape(%zu, %zu, %zu, %zu)\n", mark, ggml_type_name(tensor->type), tensor->ne[0], tensor->ne[1], tensor->ne[2], tensor->ne[3]);
+C/C++:                                           ~~~                                                                                       ^~~~~~~~~~~~~
+C/C++:                                           %lld
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2996:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3039:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx,
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3100:17: warning: 'get_desc' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     std::string get_desc() {
+C/C++:                 ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2925:25: note: overridden virtual function is here
+C/C++:     virtual std::string get_desc() {
+C/C++:                         ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3104:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3186:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3239:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3326:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/stable-diffusion.cpp:11:
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/auto_encoder_kl.hpp:4:
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/vae.hpp:225:9: warning: 'get_encoder_output_channels' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     int get_encoder_output_channels(int input_channels) {
+C/C++:         ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/vae.hpp:82:17: note: overridden virtual function is here
+C/C++:     virtual int get_encoder_output_channels(int input_channels) = 0;
+C/C++:                 ^
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/stable-diffusion.cpp:11:
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/auto_encoder_kl.hpp:68:10: warning: 'init_params' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     void init_params(ggml_context* ctx, const String2TensorStorage& tensor_storage_map = {}, const std::string prefix = "") {
+C/C++:          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2874:18: note: overridden virtual function is here
+C/C++:     virtual void init_params(ggml_context* ctx, const String2TensorStorage& tensor_storage_map = {}, const std::string prefix = "") {}
+C/C++:                  ^
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/stable-diffusion.cpp:11:
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/auto_encoder_kl.hpp:834:9: warning: 'get_encoder_output_channels' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     int get_encoder_output_channels(int input_channels) {
+C/C++:         ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/vae.hpp:82:17: note: overridden virtual function is here
+C/C++:     virtual int get_encoder_output_channels(int input_channels) = 0;
+C/C++:                 ^
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/stable-diffusion.cpp:12:
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/conditioner.hpp:9:
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/llm.hpp:119:22: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:         ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                      ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/stable-diffusion.cpp:12:
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/conditioner.hpp:1198:10: warning: 'set_weight_adapter' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     void set_weight_adapter(const std::shared_ptr<WeightAdapter>& adapter) {
+C/C++:          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/conditioner.hpp:123:18: note: overridden virtual function is here
+C/C++:     virtual void set_weight_adapter(const std::shared_ptr<WeightAdapter>& adapter) {}
+C/C++:                  ^
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/stable-diffusion.cpp:15:
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:14:
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/wan.hpp:1199:13: warning: 'get_encoder_output_channels' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:         int get_encoder_output_channels(int input_channels) {
+C/C++:             ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/vae.hpp:82:17: note: overridden virtual function is here
+C/C++:     virtual int get_encoder_output_channels(int input_channels) = 0;
+C/C++:                 ^
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/stable-diffusion.cpp:15:
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:111:10: warning: 'set_flash_attention_enabled' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     void set_flash_attention_enabled(bool enabled) {
+C/C++:          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:64:18: note: overridden virtual function is here
+C/C++:     virtual void set_flash_attention_enabled(bool enabled)           = 0;
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:181:10: warning: 'set_flash_attention_enabled' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     void set_flash_attention_enabled(bool enabled) {
+C/C++:          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:64:18: note: overridden virtual function is here
+C/C++:     virtual void set_flash_attention_enabled(bool enabled)           = 0;
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:250:10: warning: 'set_flash_attention_enabled' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     void set_flash_attention_enabled(bool enabled) {
+C/C++:          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:64:18: note: overridden virtual function is here
+C/C++:     virtual void set_flash_attention_enabled(bool enabled)           = 0;
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:324:10: warning: 'set_flash_attention_enabled' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     void set_flash_attention_enabled(bool enabled) {
+C/C++:          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:64:18: note: overridden virtual function is here
+C/C++:     virtual void set_flash_attention_enabled(bool enabled)           = 0;
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:393:10: warning: 'set_flash_attention_enabled' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     void set_flash_attention_enabled(bool enabled) {
+C/C++:          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:64:18: note: overridden virtual function is here
+C/C++:     virtual void set_flash_attention_enabled(bool enabled)           = 0;
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:466:10: warning: 'set_flash_attention_enabled' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     void set_flash_attention_enabled(bool enabled) {
+C/C++:          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:64:18: note: overridden virtual function is here
+C/C++:     virtual void set_flash_attention_enabled(bool enabled)           = 0;
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:535:10: warning: 'set_flash_attention_enabled' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     void set_flash_attention_enabled(bool enabled) {
+C/C++:          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:64:18: note: overridden virtual function is here
+C/C++:     virtual void set_flash_attention_enabled(bool enabled)           = 0;
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:612:10: warning: 'set_flash_attention_enabled' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     void set_flash_attention_enabled(bool enabled) {
+C/C++:          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:64:18: note: overridden virtual function is here
+C/C++:     virtual void set_flash_attention_enabled(bool enabled)           = 0;
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:681:10: warning: 'set_flash_attention_enabled' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     void set_flash_attention_enabled(bool enabled) {
+C/C++:          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:64:18: note: overridden virtual function is here
+C/C++:     virtual void set_flash_attention_enabled(bool enabled)           = 0;
+C/C++:                  ^
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/stable-diffusion.cpp:23:
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/tae.hpp:560:10: warning: 'get_param_tensors' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     void get_param_tensors(std::map<std::string, ggml_tensor*>& tensors, const std::string prefix) {
+C/C++:          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/vae.hpp:216:18: note: overridden virtual function is here
+C/C++:     virtual void get_param_tensors(std::map<std::string, ggml_tensor*>& tensors, const std::string prefix)         = 0;
+C/C++:                  ^
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/stable-diffusion.cpp:23:
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/tae.hpp:577:9: warning: 'get_encoder_output_channels' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     int get_encoder_output_channels(int input_channels) {
+C/C++:         ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/vae.hpp:82:17: note: overridden virtual function is here
+C/C++:     virtual int get_encoder_output_channels(int input_channels) = 0;
+C/C++:                 ^
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/stable-diffusion.cpp:23:
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/tae.hpp:622:10: warning: 'get_param_tensors' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     void get_param_tensors(std::map<std::string, ggml_tensor*>& tensors, const std::string prefix) {
+C/C++:          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/vae.hpp:216:18: note: overridden virtual function is here
+C/C++:     virtual void get_param_tensors(std::map<std::string, ggml_tensor*>& tensors, const std::string prefix)         = 0;
+C/C++:                  ^
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/stable-diffusion.cpp:23:
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/tae.hpp:639:9: warning: 'get_encoder_output_channels' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     int get_encoder_output_channels(int input_channels) {
+C/C++:         ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/vae.hpp:82:17: note: overridden virtual function is here
+C/C++:     virtual int get_encoder_output_channels(int input_channels) = 0;
+C/C++:                 ^
+C/C++: 30 warnings generated.
+
+> Task :app:configureCMakeRelease[x86_64]
+> Task :app:buildCMakeRelease[x86_64]
+C/C++: ninja: Entering directory `C:\Users\72952\OneDrive\Desktop\ui\CompanionChat\app\.cxx\Release\3ag461s2\x86_64'
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/upscaler.cpp:1:
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/upscaler.h:4:
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/esrgan.hpp:4:
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2996:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3039:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx,
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3100:17: warning: 'get_desc' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     std::string get_desc() {
+C/C++:                 ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2925:25: note: overridden virtual function is here
+C/C++:     virtual std::string get_desc() {
+C/C++:                         ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3104:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3186:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3239:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3326:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: 7 warnings generated.
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/util.cpp:14:
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/preprocessing.hpp:7:
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2996:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3039:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx,
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3100:17: warning: 'get_desc' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     std::string get_desc() {
+C/C++:                 ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2925:25: note: overridden virtual function is here
+C/C++:     virtual std::string get_desc() {
+C/C++:                         ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3104:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3186:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3239:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3326:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/util.cpp:350:31: warning: 'codecvt_utf8<char32_t>' is deprecated [-Wdeprecated-declarations]
+C/C++:     std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> converter;
+C/C++:                               ^
+C/C++: C:/Users/72952/AppData/Local/Android/Sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/c++/v1/codecvt:187:28: note: 'codecvt_utf8<char32_t>' has been explicitly marked deprecated here
+C/C++: class _LIBCPP_TEMPLATE_VIS _LIBCPP_DEPRECATED_IN_CXX17 codecvt_utf8
+C/C++:                            ^
+C/C++: C:/Users/72952/AppData/Local/Android/Sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/c++/v1/__config:798:41: note: expanded from macro '_LIBCPP_DEPRECATED_IN_CXX17'
+C/C++: #    define _LIBCPP_DEPRECATED_IN_CXX17 _LIBCPP_DEPRECATED
+C/C++:                                         ^
+C/C++: C:/Users/72952/AppData/Local/Android/Sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/c++/v1/__config:771:49: note: expanded from macro '_LIBCPP_DEPRECATED'
+C/C++: #      define _LIBCPP_DEPRECATED __attribute__((deprecated))
+C/C++:                                                 ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/util.cpp:350:10: warning: 'wstring_convert<std::codecvt_utf8<char32_t>, char32_t>' is deprecated [-Wdeprecated-declarations]
+C/C++:     std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> converter;
+C/C++:          ^
+C/C++: C:/Users/72952/AppData/Local/Android/Sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/c++/v1/locale:3603:28: note: 'wstring_convert<std::codecvt_utf8<char32_t>, char32_t>' has been explicitly marked deprecated here
+C/C++: class _LIBCPP_TEMPLATE_VIS _LIBCPP_DEPRECATED_IN_CXX17 wstring_convert
+C/C++:                            ^
+C/C++: C:/Users/72952/AppData/Local/Android/Sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/c++/v1/__config:798:41: note: expanded from macro '_LIBCPP_DEPRECATED_IN_CXX17'
+C/C++: #    define _LIBCPP_DEPRECATED_IN_CXX17 _LIBCPP_DEPRECATED
+C/C++:                                         ^
+C/C++: C:/Users/72952/AppData/Local/Android/Sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/c++/v1/__config:771:49: note: expanded from macro '_LIBCPP_DEPRECATED'
+C/C++: #      define _LIBCPP_DEPRECATED __attribute__((deprecated))
+C/C++:                                                 ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/util.cpp:355:31: warning: 'codecvt_utf8<char32_t>' is deprecated [-Wdeprecated-declarations]
+C/C++:     std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> converter;
+C/C++:                               ^
+C/C++: C:/Users/72952/AppData/Local/Android/Sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/c++/v1/codecvt:187:28: note: 'codecvt_utf8<char32_t>' has been explicitly marked deprecated here
+C/C++: class _LIBCPP_TEMPLATE_VIS _LIBCPP_DEPRECATED_IN_CXX17 codecvt_utf8
+C/C++:                            ^
+C/C++: C:/Users/72952/AppData/Local/Android/Sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/c++/v1/__config:798:41: note: expanded from macro '_LIBCPP_DEPRECATED_IN_CXX17'
+C/C++: #    define _LIBCPP_DEPRECATED_IN_CXX17 _LIBCPP_DEPRECATED
+C/C++:                                         ^
+C/C++: C:/Users/72952/AppData/Local/Android/Sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/c++/v1/__config:771:49: note: expanded from macro '_LIBCPP_DEPRECATED'
+C/C++: #      define _LIBCPP_DEPRECATED __attribute__((deprecated))
+C/C++:                                                 ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/util.cpp:355:10: warning: 'wstring_convert<std::codecvt_utf8<char32_t>, char32_t>' is deprecated [-Wdeprecated-declarations]
+C/C++:     std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> converter;
+C/C++:          ^
+C/C++: C:/Users/72952/AppData/Local/Android/Sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/c++/v1/locale:3603:28: note: 'wstring_convert<std::codecvt_utf8<char32_t>, char32_t>' has been explicitly marked deprecated here
+C/C++: class _LIBCPP_TEMPLATE_VIS _LIBCPP_DEPRECATED_IN_CXX17 wstring_convert
+C/C++:                            ^
+C/C++: C:/Users/72952/AppData/Local/Android/Sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/c++/v1/__config:798:41: note: expanded from macro '_LIBCPP_DEPRECATED_IN_CXX17'
+C/C++: #    define _LIBCPP_DEPRECATED_IN_CXX17 _LIBCPP_DEPRECATED
+C/C++:                                         ^
+C/C++: C:/Users/72952/AppData/Local/Android/Sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/c++/v1/__config:771:49: note: expanded from macro '_LIBCPP_DEPRECATED'
+C/C++: #      define _LIBCPP_DEPRECATED __attribute__((deprecated))
+C/C++:                                                 ^
+C/C++: 11 warnings generated.
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/sample-cache.cpp:1:
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/sample-cache.h:6:
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/cache_dit.hpp:12:
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2996:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3039:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx,
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3100:17: warning: 'get_desc' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     std::string get_desc() {
+C/C++:                 ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2925:25: note: overridden virtual function is here
+C/C++:     virtual std::string get_desc() {
+C/C++:                         ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3104:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3186:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3239:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3326:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: 7 warnings generated.
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/thirdparty/zip.c:40:
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/thirdparty/./miniz.h:4988:9: warning: Using fopen, ftello, fseeko, stat() etc. path for file I/O - this path may not support large files. [-W#pragma-messages]
+C/C++: #pragma message(                                                               \
+C/C++:         ^
+C/C++: 1 warning generated.
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/stable-diffusion.cpp:1:
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2996:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3039:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx,
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3100:17: warning: 'get_desc' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     std::string get_desc() {
+C/C++:                 ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2925:25: note: overridden virtual function is here
+C/C++:     virtual std::string get_desc() {
+C/C++:                         ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3104:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3186:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3239:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:3326:18: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/stable-diffusion.cpp:11:
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/auto_encoder_kl.hpp:4:
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/vae.hpp:225:9: warning: 'get_encoder_output_channels' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     int get_encoder_output_channels(int input_channels) {
+C/C++:         ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/vae.hpp:82:17: note: overridden virtual function is here
+C/C++:     virtual int get_encoder_output_channels(int input_channels) = 0;
+C/C++:                 ^
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/stable-diffusion.cpp:11:
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/auto_encoder_kl.hpp:68:10: warning: 'init_params' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     void init_params(ggml_context* ctx, const String2TensorStorage& tensor_storage_map = {}, const std::string prefix = "") {
+C/C++:          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2874:18: note: overridden virtual function is here
+C/C++:     virtual void init_params(ggml_context* ctx, const String2TensorStorage& tensor_storage_map = {}, const std::string prefix = "") {}
+C/C++:                  ^
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/stable-diffusion.cpp:11:
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/auto_encoder_kl.hpp:834:9: warning: 'get_encoder_output_channels' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     int get_encoder_output_channels(int input_channels) {
+C/C++:         ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/vae.hpp:82:17: note: overridden virtual function is here
+C/C++:     virtual int get_encoder_output_channels(int input_channels) = 0;
+C/C++:                 ^
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/stable-diffusion.cpp:12:
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/conditioner.hpp:9:
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/llm.hpp:119:22: warning: 'forward' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:         ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) {
+C/C++:                      ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/ggml_extend.hpp:2941:26: note: overridden virtual function is here
+C/C++:     virtual ggml_tensor* forward(GGMLRunnerContext* ctx, ggml_tensor* x) = 0;
+C/C++:                          ^
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/stable-diffusion.cpp:12:
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/conditioner.hpp:1198:10: warning: 'set_weight_adapter' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     void set_weight_adapter(const std::shared_ptr<WeightAdapter>& adapter) {
+C/C++:          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/conditioner.hpp:123:18: note: overridden virtual function is here
+C/C++:     virtual void set_weight_adapter(const std::shared_ptr<WeightAdapter>& adapter) {}
+C/C++:                  ^
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/stable-diffusion.cpp:15:
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:14:
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/wan.hpp:1199:13: warning: 'get_encoder_output_channels' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:         int get_encoder_output_channels(int input_channels) {
+C/C++:             ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/vae.hpp:82:17: note: overridden virtual function is here
+C/C++:     virtual int get_encoder_output_channels(int input_channels) = 0;
+C/C++:                 ^
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/stable-diffusion.cpp:15:
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:111:10: warning: 'set_flash_attention_enabled' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     void set_flash_attention_enabled(bool enabled) {
+C/C++:          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:64:18: note: overridden virtual function is here
+C/C++:     virtual void set_flash_attention_enabled(bool enabled)           = 0;
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:181:10: warning: 'set_flash_attention_enabled' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     void set_flash_attention_enabled(bool enabled) {
+C/C++:          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:64:18: note: overridden virtual function is here
+C/C++:     virtual void set_flash_attention_enabled(bool enabled)           = 0;
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:250:10: warning: 'set_flash_attention_enabled' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     void set_flash_attention_enabled(bool enabled) {
+C/C++:          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:64:18: note: overridden virtual function is here
+C/C++:     virtual void set_flash_attention_enabled(bool enabled)           = 0;
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:324:10: warning: 'set_flash_attention_enabled' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     void set_flash_attention_enabled(bool enabled) {
+C/C++:          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:64:18: note: overridden virtual function is here
+C/C++:     virtual void set_flash_attention_enabled(bool enabled)           = 0;
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:393:10: warning: 'set_flash_attention_enabled' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     void set_flash_attention_enabled(bool enabled) {
+C/C++:          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:64:18: note: overridden virtual function is here
+C/C++:     virtual void set_flash_attention_enabled(bool enabled)           = 0;
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:466:10: warning: 'set_flash_attention_enabled' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     void set_flash_attention_enabled(bool enabled) {
+C/C++:          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:64:18: note: overridden virtual function is here
+C/C++:     virtual void set_flash_attention_enabled(bool enabled)           = 0;
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:535:10: warning: 'set_flash_attention_enabled' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     void set_flash_attention_enabled(bool enabled) {
+C/C++:          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:64:18: note: overridden virtual function is here
+C/C++:     virtual void set_flash_attention_enabled(bool enabled)           = 0;
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:612:10: warning: 'set_flash_attention_enabled' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     void set_flash_attention_enabled(bool enabled) {
+C/C++:          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:64:18: note: overridden virtual function is here
+C/C++:     virtual void set_flash_attention_enabled(bool enabled)           = 0;
+C/C++:                  ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:681:10: warning: 'set_flash_attention_enabled' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     void set_flash_attention_enabled(bool enabled) {
+C/C++:          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/diffusion_model.hpp:64:18: note: overridden virtual function is here
+C/C++:     virtual void set_flash_attention_enabled(bool enabled)           = 0;
+C/C++:                  ^
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/stable-diffusion.cpp:23:
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/tae.hpp:560:10: warning: 'get_param_tensors' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     void get_param_tensors(std::map<std::string, ggml_tensor*>& tensors, const std::string prefix) {
+C/C++:          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/vae.hpp:216:18: note: overridden virtual function is here
+C/C++:     virtual void get_param_tensors(std::map<std::string, ggml_tensor*>& tensors, const std::string prefix)         = 0;
+C/C++:                  ^
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/stable-diffusion.cpp:23:
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/tae.hpp:577:9: warning: 'get_encoder_output_channels' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     int get_encoder_output_channels(int input_channels) {
+C/C++:         ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/vae.hpp:82:17: note: overridden virtual function is here
+C/C++:     virtual int get_encoder_output_channels(int input_channels) = 0;
+C/C++:                 ^
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/stable-diffusion.cpp:23:
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/tae.hpp:622:10: warning: 'get_param_tensors' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     void get_param_tensors(std::map<std::string, ggml_tensor*>& tensors, const std::string prefix) {
+C/C++:          ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/vae.hpp:216:18: note: overridden virtual function is here
+C/C++:     virtual void get_param_tensors(std::map<std::string, ggml_tensor*>& tensors, const std::string prefix)         = 0;
+C/C++:                  ^
+C/C++: In file included from C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/stable-diffusion.cpp:23:
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/tae.hpp:639:9: warning: 'get_encoder_output_channels' overrides a member function but is not marked 'override' [-Winconsistent-missing-override]
+C/C++:     int get_encoder_output_channels(int input_channels) {
+C/C++:         ^
+C/C++: C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/third_party/stable-diffusion.cpp/src/vae.hpp:82:17: note: overridden virtual function is here
+C/C++:     virtual int get_encoder_output_channels(int input_channels) = 0;
+C/C++:                 ^
+C/C++: 26 warnings generated.
+
+> Task :app:mergeDebugJniLibFolders
+> Task :app:validateSigningDebug
+> Task :app:writeDebugAppMetadata
+> Task :app:writeDebugSigningConfigVersions
+> Task :app:mergeDebugNativeLibs
+> Task :app:stripDebugDebugSymbols
+
+> Task :app:packageDebug
+PackagingOptions.jniLibs.useLegacyPackaging should be set to true because android:extractNativeLibs is set to "true" in AndroidManifest.xml.
+
+> Task :app:createDebugApkListingFileRedirect
+> Task :app:assembleDebug
+
+BUILD SUCCESSFUL in 5m 33s
+42 actionable tasks: 27 executed, 15 up-to-date

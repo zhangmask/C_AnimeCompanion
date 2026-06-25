@@ -29,13 +29,16 @@ class SecondEngineManager(
     private val timeoutMillis: Long = 60_000L
 ) {
 
+    sealed class EngineState {
+        object Idle : EngineState()
+        data class Running(val engine: InferenceEngine, val job: kotlinx.coroutines.Job) : EngineState()
+        object Cancelled : EngineState()
+    }
+
+    @Volatile
+    private var state: EngineState = EngineState.Idle
+
     private val runMutex = Mutex()
-
-    @Volatile
-    private var activeEngine: InferenceEngine? = null
-
-    @Volatile
-    private var activeJob: Job? = null
 
     suspend fun runSummaryIfAllowed(
         config: EngineConfig,
@@ -53,8 +56,8 @@ class SecondEngineManager(
 
         return runMutex.withLock {
             val engine = engineFactory()
-            activeEngine = engine
-            activeJob = currentCoroutineContext()[Job]
+            val job = currentCoroutineContext()[kotlinx.coroutines.Job]
+            state = EngineState.Running(engine, job!!)
 
             try {
                 withTimeout(timeoutMillis) {
@@ -83,21 +86,26 @@ class SecondEngineManager(
             } finally {
                 engine.cancel()
                 engine.release()
-                activeEngine = null
-                activeJob = null
+                state = EngineState.Idle
             }
         }
     }
 
     fun cancelRunningSummary() {
-        activeEngine?.cancel()
-        activeJob?.cancel()
+        val s = state
+        if (s is EngineState.Running) {
+            s.engine.cancel()
+            s.job.cancel()
+            state = EngineState.Cancelled
+        }
     }
 
     fun release() {
         cancelRunningSummary()
-        activeEngine?.release()
-        activeEngine = null
-        activeJob = null
+        val s = state
+        if (s is EngineState.Running) {
+            s.engine.release()
+        }
+        state = EngineState.Idle
     }
 }

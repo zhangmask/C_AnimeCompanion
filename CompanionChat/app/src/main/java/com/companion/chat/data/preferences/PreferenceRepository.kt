@@ -8,7 +8,7 @@ class PreferenceRepository(
     private val nowProvider: () -> Long = { System.currentTimeMillis() }
 ) {
 
-    suspend fun mergePreferences(preferences: List<ExtractedPreference>) {
+    suspend fun mergePreferences(preferences: List<ExtractedPreference>, roleCardId: Long? = null) {
         preferences.forEach { preference ->
             val normalizedCategory = preference.category.trim().lowercase()
             val normalizedContent = normalizeContent(preference.content)
@@ -17,13 +17,14 @@ class PreferenceRepository(
             }
 
             val now = nowProvider()
-            val existing = preferenceDao.findExactMatch(normalizedCategory, normalizedContent)
+            val existing = preferenceDao.findExactMatchForRole(normalizedCategory, normalizedContent, roleCardId)
             if (existing == null) {
                 preferenceDao.insert(
                     UserPreference(
                         category = normalizedCategory,
                         content = normalizedContent,
                         confidence = 1,
+                        roleCardId = roleCardId,
                         createdAt = now,
                         updatedAt = now
                     )
@@ -41,6 +42,10 @@ class PreferenceRepository(
 
     suspend fun getConfirmedPreferences(minimumConfidence: Int = 3): List<UserPreference> {
         return preferenceDao.getConfirmed(minimumConfidence)
+    }
+
+    suspend fun getConfirmedPreferencesForRole(minimumConfidence: Int = 3, roleCardId: Long?): List<UserPreference> {
+        return preferenceDao.getConfirmedForRole(minimumConfidence, roleCardId)
     }
 
     fun normalizeContent(content: String): String {

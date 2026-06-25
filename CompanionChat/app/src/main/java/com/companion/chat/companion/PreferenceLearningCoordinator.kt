@@ -3,6 +3,8 @@ package com.companion.chat.companion
 import com.companion.chat.data.context.ContextConfigRepository
 import com.companion.chat.data.engine.EngineConfig
 import com.companion.chat.data.engine.InferenceState
+import com.companion.chat.data.memory.ExtractedMemory
+import com.companion.chat.data.memory.MemoryExtractLoop
 import com.companion.chat.data.memory.MemoryRepository
 import com.companion.chat.data.model.ChatMessage
 import com.companion.chat.data.model.MessageRole
@@ -26,10 +28,12 @@ class PreferenceLearningCoordinator(
     private val unifiedExtractionPromptBuilder: UnifiedExtractionPromptBuilder,
     private val unifiedExtractionParser: UnifiedExtractionParser,
     private val secondEngineManager: SecondEngineManager,
+    private val memoryExtractLoop: MemoryExtractLoop,  // [v2 新增] 统一提取循环
     private val engineStateProvider: () -> InferenceState,
     private val currentEngineConfigProvider: () -> EngineConfig?,
     private val baseSystemPromptProvider: () -> String,
-    private val logger: (String) -> Unit
+    private val logger: (String) -> Unit,
+    private val roleCardIdProvider: () -> Long? = { null }
 ) {
     private var delayJob: Job? = null
     private val lastSummaryTimestamps = mutableMapOf<String, Long>()
@@ -144,10 +148,7 @@ class PreferenceLearningCoordinator(
                 )
             }
             is SummaryRunResult.Failed -> {
-                val fallbackCount = storeFallbackRuleMemories(stableMessages, sessionId)
-                if (fallbackCount > 0) {
-                    logger("阶段四失败后记忆兜底成功: count=$fallbackCount, reason=$reason")
-                }
+
                 logger("阶段四失败: reason=$reason, message=${result.message}")
             }
         }
@@ -163,32 +164,47 @@ class PreferenceLearningCoordinator(
     ) {
         val rawSummaryPreview = result.content.replace("\n", "\\n").take(300)
         logger("阶段四原始输出: preview=$rawSummaryPreview")
+
+        // 使用 MemoryExtractLoop 统一提取 memories + entities + links + metaMemories
+        val extractResult = memoryExtractLoop.execute(
+            llmRawOutput = result.content,
+            sessionId = sessionId,
+            roleCardId = roleCardIdProvider()
+        )
+        logger("阶段四提取完成: memories=${extractResult.memories.size}, entities=${extractResult.entities.size}, links=${extractResult.links.size}")
+
+        // 兼容旧逻辑：从 user_preferences 派生记忆
         val extractionResult = unifiedExtractionParser.parse(result.content)
         val derivedMemories = preferenceMemoryDeriver.derive(extractionResult.userPreferences)
         if (derivedMemories.isNotEmpty()) {
             logger("阶段四偏好派生记忆: count=${derivedMemories.size}")
-        }
-        val storedModelMemories = memoryRepository.storeModelExtractedMemories(
-            extractedMemories = extractionResult.memories + derivedMemories,
-            sessionId = sessionId
-        )
-        if (storedModelMemories.isEmpty()) {
-            val fallbackCount = storeFallbackRuleMemories(stableMessages, sessionId)
-            if (fallbackCount > 0) {
-                logger("阶段四记忆兜底成功: count=$fallbackCount, reason=$reason")
+            for (mem in derivedMemories) {
+                memoryRepository.storeMemory(
+                    content = mem.content,
+                    category = mem.category,
+                    source = mem.source,
+                    sessionId = sessionId,
+                    roleCardId = roleCardIdProvider()
+                )
             }
         }
-        preferenceRepository.mergePreferences(extractionResult.userPreferences)
-        val confirmedPreferences = preferenceRepository.getConfirmedPreferences()
+
+        // 合并偏好
+        val rcId = roleCardIdProvider()
+        preferenceRepository.mergePreferences(extractionResult.userPreferences, rcId)
+        val confirmedPreferences = if (rcId != null) {
+            preferenceRepository.getConfirmedPreferencesForRole(roleCardId = rcId)
+        } else {
+            preferenceRepository.getConfirmedPreferences()
+        }
         logger(
             "阶段四偏好合并完成: merged=${extractionResult.userPreferences.size}, " +
                 "confirmed=${confirmedPreferences.size}, retryAttempt=$retryAttempt"
         )
         lastSummaryTimestamps[sessionId] = now
         logger(
-            "阶段四总结完成: reason=$reason, memoryCount=${storedModelMemories.size}, " +
+            "阶段四总结完成: reason=$reason, memoryCount=${extractResult.memories.size}, " +
                 "preferenceCount=${extractionResult.userPreferences.size}, " +
-                "extractedCount=${storedModelMemories.size + extractionResult.userPreferences.size}, " +
                 "sessionId=$sessionId"
         )
     }
@@ -210,11 +226,6 @@ class PreferenceLearningCoordinator(
             )
             return
         }
-
-        val fallbackCount = storeFallbackRuleMemories(stableMessages, sessionId)
-        if (fallbackCount > 0) {
-            logger("阶段四${resultLabel}后二次兜底成功: count=$fallbackCount, reason=$reason")
-        }
         logger("阶段四$resultLabel: reason=$reason, retry=$retryAttempt")
     }
 
@@ -235,26 +246,9 @@ class PreferenceLearningCoordinator(
         }
     }
 
-    private suspend fun storeFallbackRuleMemories(
-        messages: List<ChatMessage>,
-        sessionId: String
-    ): Int {
-        val userMessages = messages
-            .filter { it.role == MessageRole.USER }
-            .map { it.content.trim() }
-            .filter { it.isNotBlank() }
-        if (userMessages.isEmpty()) {
-            return 0
-        }
-        return memoryRepository.extractAndStoreMemoriesFromMessages(
-            userMessages = userMessages,
-            sessionId = sessionId
-        ).size
-    }
-
     private companion object {
-        const val STAGE4_IDLE_DELAY_MILLIS = 3 * 60 * 1000L
-        const val STAGE4_THROTTLE_MILLIS = 5 * 60 * 1000L
+        const val STAGE4_IDLE_DELAY_MILLIS = 30 * 1000L        // 30s
+        const val STAGE4_THROTTLE_MILLIS = 2 * 60 * 1000L      // 2min
         const val STAGE4_RETRY_DELAY_MILLIS = 3_000L
         const val MAX_STAGE4_RETRY_COUNT = 1
         const val MIN_STAGE4_MESSAGE_COUNT = 4

@@ -59,6 +59,8 @@ import com.companion.chat.ui.settings.SkillsManagementScreen
 import com.companion.chat.ui.settings.UserProfileScreen
 import com.companion.chat.ui.settings.VoiceSettingsScreen
 import com.companion.chat.ui.theme.CompanionChatTheme
+import com.companion.chat.locale.Strings
+import com.companion.chat.locale.StringsKey
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -94,11 +96,15 @@ class MainActivity : ComponentActivity() {
             }
 
             CompanionChatTheme(darkTheme = darkTheme) {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    MainApp()
+                val langRepo = remember { com.companion.chat.locale.LanguageRepository(context.applicationContext) }
+                var appLanguage by remember { mutableStateOf(langRepo.getLanguage()) }
+                com.companion.chat.locale.ProvideLanguage(language = appLanguage) {
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.background
+                    ) {
+                        MainApp(onLanguageChanged = { appLanguage = it })
+                    }
                 }
             }
         }
@@ -106,7 +112,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun MainApp() {
+fun MainApp(onLanguageChanged: (com.companion.chat.locale.AppLanguage) -> Unit = {}) {
     val application = LocalContext.current.applicationContext as CompanionChatApplication
     val viewModelFactory = remember(application) {
         AppViewModelFactory(application, application.appContainer)
@@ -162,10 +168,10 @@ fun MainApp() {
                                 Icon(
                                     imageVector = if (selected) screen.selectedIcon
                                     else screen.unselectedIcon,
-                                    contentDescription = screen.label
+                                    contentDescription = Strings.txt(screen.labelKey)
                                 )
                             },
-                            label = { Text(screen.label) }
+                            label = { Text(Strings.txt(screen.labelKey)) }
                         )
                     }
                 }
@@ -313,7 +319,10 @@ fun MainApp() {
                 )
             }
             composable(SettingsRoutes.LANGUAGE) {
-                LanguageSettingsScreen(onBack = { navController.popBackStack() })
+                LanguageSettingsScreen(
+                    onBack = { navController.popBackStack() },
+                    onLanguageChanged = onLanguageChanged
+                )
             }
             composable(SettingsRoutes.DARK_MODE) {
                 DarkModeSettingsScreen(onBack = { navController.popBackStack() })

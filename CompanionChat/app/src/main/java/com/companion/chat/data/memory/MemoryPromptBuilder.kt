@@ -1,132 +1,148 @@
 package com.companion.chat.data.memory
 
-import com.companion.chat.data.embedding.VectorRetriever
 import com.companion.chat.data.local.entity.Memory
+import com.companion.chat.data.local.entity.MetaMemory
+import com.companion.chat.locale.AppLanguage
+import com.companion.chat.locale.Strings
+import com.companion.chat.locale.StringsKey
 
-class MemoryPromptBuilder(
-    private val vectorRetriever: VectorRetriever? = null
-) {
-
-    private var allMemories: List<Memory> = emptyList()
-
-    /**
-     * 更新向量索引
-     * 应在记忆变化时调用
-     */
-    suspend fun updateIndex(memories: List<Memory>) {
-        allMemories = memories
-        val indexData = memories.map { memory ->
-            memory.id to "${memory.category} ${memory.content}"
-        }
-        vectorRetriever?.updateIndex(indexData)
-    }
+/**
+ * 记忆 Prompt 构建器 — 支持 L0/L1 分层注入 + Token 预算裁剪 + 多语言 + Meta-memory。
+ *
+ * 改造后：
+ * - [buildLayered] 使用 L0 摘要 + L1 概览按 token 预算裁剪
+ * - [build] 使用多语言标题（从 Strings.get 获取）
+ * - [buildMetaMemorySection] 注入元记忆
+ * - 废弃旧 VectorRetriever 依赖（检索移至 PprRetriever）
+ */
+class MemoryPromptBuilder {
 
     /**
-     * 使用向量检索相关记忆
-     * @param query 用户输入
-     * @param topK 返回前 K 个结果
-     * @return 相关记忆列表
+     * 构建基础记忆 section（多语言）。
      */
-    suspend fun retrieveRelevant(query: String, topK: Int = 5): List<Memory> {
-        if (allMemories.isEmpty() || vectorRetriever == null) return emptyList()
-
-        val relevantIds = vectorRetriever.retrieve(query, topK)
-        val memoryMap = allMemories.associateBy { it.id }
-
-        return relevantIds.mapNotNull { memoryMap[it] }
-    }
-
-    /**
-     * 使用向量检索相关记忆（带分数）
-     */
-    suspend fun retrieveRelevantWithScores(query: String, topK: Int = 5): List<Pair<Memory, Double>> {
-        if (allMemories.isEmpty() || vectorRetriever == null) return emptyList()
-
-        val results = vectorRetriever.retrieveWithScores(query, topK)
-        val memoryMap = allMemories.associateBy { it.id }
-
-        return results.mapNotNull { (id, score) ->
-            memoryMap[id]?.let { it to score }
-        }
-    }
-
-    fun build(memories: List<Memory>): String {
+    fun build(
+        memories: List<Memory>,
+        lang: AppLanguage = AppLanguage.ZH
+    ): String {
         return buildSection(
-            title = "从记忆中检索到的与当前对话相关的信息：",
-            memories = memories
+            title = Strings.get(lang, StringsKey.memory_retrieved_title),
+            note = Strings.get(lang, StringsKey.memory_user_note),
+            memories = memories,
+            lang = lang
         )
     }
 
-    fun buildPersistent(memories: List<Memory>): String {
-        return buildSection(
-            title = "长期记忆中的关键信息：",
-            memories = memories
-        )
-    }
-
-    fun buildCombined(
-        persistentMemories: List<Memory>,
-        retrievedMemories: List<Memory>
+    /**
+     * 构建分层注入的提示。
+     * 策略：先塞 L0 摘要列表（低成本快速扫描），再塞 L1 概览（按 token 预算裁剪）。
+     *
+     * @param memories 按评分降序排列的记忆
+     * @param tokenBudget 注入的总 token 预算（默认 1200）
+     * @param lang 语言
+     * @param metaMemories 元记忆（可选）
+     */
+    fun buildLayered(
+        memories: List<Memory>,
+        tokenBudget: Int = MemoryConfig.DEFAULT_TOKEN_BUDGET,
+        lang: AppLanguage = AppLanguage.ZH,
+        metaMemories: List<MetaMemory> = emptyList()
     ): String {
-        val sections = listOf(
-            buildPersistent(persistentMemories),
-            build(retrievedMemories)
-        ).filter { it.isNotBlank() }
+        if (memories.isEmpty()) return ""
 
-        return sections.joinToString(separator = "\n\n")
+        val sorted = memories.sortedByDescending { it.strength }
+        var usedTokens = 0
+
+        return buildString {
+            // 0. Meta-memory 提示（如果有）
+            if (metaMemories.isNotEmpty()) {
+                val metaSection = buildMetaMemorySection(metaMemories, lang)
+                appendLine(metaSection)
+                usedTokens += estimateTokens(metaSection)
+            }
+
+            // 1. L0 摘要列表（低成本快速扫描）
+            val l0Items = sorted.mapNotNull { it.l0Summary?.takeIf { s -> s.isNotBlank() } }
+            if (l0Items.isNotEmpty()) {
+                val l0Text = buildSummaryList(l0Items, lang)
+                appendLine(l0Text)
+                usedTokens += estimateTokens(l0Text)
+            }
+
+            // 2. L1 概览（按 token 预算裁剪）
+            val l1Items = mutableListOf<Memory>()
+            for (memory in sorted) {
+                val text = memory.l1Overview ?: memory.content
+                val tokens = estimateTokens(text)
+                if (usedTokens + tokens > tokenBudget) break
+                l1Items.add(memory)
+                usedTokens += tokens
+            }
+
+            if (l1Items.isNotEmpty()) {
+                appendLine(buildSection(
+                    title = Strings.get(lang, StringsKey.memory_retrieved_title),
+                    note = Strings.get(lang, StringsKey.memory_user_note),
+                    memories = l1Items,
+                    lang = lang
+                ))
+            }
+        }
     }
 
     /**
-     * 构建分层注入的提示
-     * 优先级：长期记忆 > 高相关性记忆 > 低相关性记忆
+     * 构建元记忆注入 section。
      */
-    suspend fun buildLayered(
-        persistentMemories: List<Memory>,
-        query: String,
-        maxMemories: Int = 10
+    fun buildMetaMemorySection(
+        metaMemories: List<MetaMemory>,
+        lang: AppLanguage = AppLanguage.ZH
     ): String {
-        val sections = mutableListOf<String>()
-
-        // 1. 长期记忆（始终注入）
-        if (persistentMemories.isNotEmpty()) {
-            sections.add(buildPersistent(persistentMemories))
-        }
-
-        // 2. 使用向量检索相关记忆
-        val relevantWithScores = retrieveRelevantWithScores(query, maxMemories)
-        if (relevantWithScores.isNotEmpty()) {
-            val relevantMemories = relevantWithScores.map { it.first }
-            sections.add(build(relevantMemories))
-        }
-
-        return sections.filter { it.isNotBlank() }.joinToString(separator = "\n\n")
+        if (metaMemories.isEmpty()) return ""
+        val title = Strings.get(lang, StringsKey.memory_meta_section_title)
+        val items = metaMemories.joinToString("\n") { "- ${it.content}" }
+        return "$title\n$items"
     }
 
-    private fun buildSection(title: String, memories: List<Memory>): String {
-        if (memories.isEmpty()) {
-            return ""
-        }
-
-        val items = memories.joinToString(separator = "\n") { memory ->
-            "- [${formatCategory(memory.category)}] ${memory.content}"
-        }
-
-        return "$title\n$USER_MEMORY_NOTE\n$items"
+    private fun buildSummaryList(items: List<String>, lang: AppLanguage): String {
+        val itemsText = items.joinToString("\n") { "- $it" }
+        return "${Strings.get(lang, StringsKey.memory_summary_title)}\n$itemsText"
     }
 
-    private fun formatCategory(category: String): String {
+    private fun buildSection(
+        title: String,
+        note: String,
+        memories: List<Memory>,
+        lang: AppLanguage
+    ): String {
+        if (memories.isEmpty()) return ""
+
+        val items = memories.joinToString("\n") { memory ->
+            "- [${formatCategory(memory.category, lang)}] ${
+                memory.l1Overview ?: memory.content
+            }"
+        }
+
+        return "$title\n$note\n$items"
+    }
+
+    private fun formatCategory(category: String, lang: AppLanguage): String {
         return when (category) {
-            "fact" -> "事实"
-            "preference" -> "偏好"
-            "event" -> "事件"
-            "relation", "relationship" -> "关系"
+            "fact" -> Strings.get(lang, StringsKey.memory_category_fact)
+            "preference" -> Strings.get(lang, StringsKey.memory_category_preference)
+            "event" -> Strings.get(lang, StringsKey.memory_category_event)
+            "behavior" -> Strings.get(lang, StringsKey.memory_category_behavior)
+            "knowledge" -> Strings.get(lang, StringsKey.memory_category_knowledge)
+            "skill" -> Strings.get(lang, StringsKey.memory_category_skill)
+            "relation", "relationship" -> Strings.get(lang, StringsKey.memory_category_relation)
             "time" -> "时间"
-            "other" -> "其他"
+            "other" -> Strings.get(lang, StringsKey.memory_category_other)
             else -> category
         }
     }
 
-    companion object {
-        private const val USER_MEMORY_NOTE = "以下内容均为用户本人的记忆，不代表助手自身。注意：不同记忆条目可能表达相同含义（如「喜欢篮球」和「爱打球」），请自行归一理解，避免重复引用。"
+    /** 粗略估算 token 数：中文每字2 tokens，英文每4字符1 token。 */
+    private fun estimateTokens(text: String): Int {
+        val chineseCount = text.count { it in '\u4e00'..'\u9fff' || it in '\u3000'..'\u303f' }
+        val otherCount = text.length - chineseCount
+        return (chineseCount * 2 + otherCount / 4) + 1
     }
 }

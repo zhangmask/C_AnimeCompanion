@@ -51,6 +51,10 @@ import com.companion.chat.data.image.StableDiffusionModelStatus
 import com.companion.chat.ui.theme.BrandOutlineVariant
 import com.companion.chat.ui.theme.BrandPrimary
 import com.companion.chat.ui.theme.BrandSurfaceContainer
+import com.companion.chat.locale.AppLanguage
+import com.companion.chat.locale.LocalLanguage
+import com.companion.chat.locale.Strings
+import com.companion.chat.locale.StringsKey
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -78,7 +82,7 @@ fun ModelConfigScreen(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        text = "模型配置",
+                        text = Strings.txt(StringsKey.model_title),
                         style = MaterialTheme.typography.titleLarge
                     )
                 },
@@ -86,7 +90,7 @@ fun ModelConfigScreen(
                     IconButton(onClick = onBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "返回"
+                            contentDescription = Strings.txt(StringsKey.back)
                         )
                     }
                 }
@@ -139,13 +143,13 @@ fun ModelConfigScreen(
                 )
                 Spacer(modifier = Modifier.height(20.dp))
                 Text(
-                    text = "上下文窗口大小",
+                    text = Strings.txt(StringsKey.model_context_window),
                     style = MaterialTheme.typography.headlineSmall,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "当前保留最近 $retainedRounds 轮完整对话。\n修改后会在下一次发送消息时生效。",
+                    text = Strings.txt(StringsKey.model_context_desc, retainedRounds),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -165,7 +169,7 @@ fun ModelConfigScreen(
                         tint = MaterialTheme.colorScheme.primary
                     )
                     Text(
-                        text = "推理后端",
+                        text = Strings.txt(StringsKey.model_backend),
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.padding(start = 10.dp)
@@ -174,7 +178,7 @@ fun ModelConfigScreen(
                 Spacer(modifier = Modifier.height(12.dp))
                 ModelRuntimeOptionItem(
                     title = "llama.cpp GGUF",
-                    description = "默认文本后端，读取外部 GGUF uncensor 模型。",
+                    description = Strings.txt(StringsKey.model_backend_llama_desc),
                     selected = modelConfig.runtime == ModelRuntime.LLAMA_CPP_GGUF,
                     onClick = {
                         viewModel.setRuntime(ModelRuntime.LLAMA_CPP_GGUF)
@@ -183,7 +187,7 @@ fun ModelConfigScreen(
                 )
                 ModelRuntimeOptionItem(
                     title = "LiteRT-LM",
-                    description = "可选多模态后端，继续支持图片输入链路。",
+                    description = Strings.txt(StringsKey.model_backend_litert_desc),
                     selected = modelConfig.runtime == ModelRuntime.LITERT_LM,
                     onClick = {
                         viewModel.setRuntime(ModelRuntime.LITERT_LM)
@@ -201,12 +205,12 @@ fun ModelConfigScreen(
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "GPU 加速",
+                                text = Strings.txt(StringsKey.model_gpu),
                                 style = MaterialTheme.typography.titleSmall,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                text = "使用 GPU 加速推理（LiteRT 后端）",
+                                text = Strings.txt(StringsKey.model_gpu_desc),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -221,17 +225,17 @@ fun ModelConfigScreen(
                     }
                 }
 
-                ModelConfigField("模型路径", modelConfig.modelPath) {
+                ModelConfigField(Strings.txt(StringsKey.model_path), modelConfig.modelPath) {
                     viewModel.updateModelPath(it)
                 }
                 Text(
-                    text = "留空使用默认路径：$resolvedModelPath",
+                    text = Strings.txt(StringsKey.model_path_hint, resolvedModelPath),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 4.dp)
                 )
                 Text(
-                    text = "图片 projector：${if (mmprojReady) "已就绪" else "缺失"}\n$resolvedMmprojPath",
+                    text = Strings.txt(StringsKey.image_mmproj_status, if (mmprojReady) Strings.txt(StringsKey.model_status_ready) else Strings.txt(StringsKey.model_status_missing)) + "\n$resolvedMmprojPath",
                     style = MaterialTheme.typography.bodySmall,
                     color = if (mmprojReady) {
                         MaterialTheme.colorScheme.onSurfaceVariant
@@ -261,7 +265,7 @@ fun ModelConfigScreen(
                     onClick = onModelConfigChanged,
                     modifier = Modifier.padding(top = 8.dp)
                 ) {
-                    Text("应用模型配置")
+                    Text(Strings.txt(StringsKey.model_apply))
                 }
             }
 
@@ -286,7 +290,7 @@ fun ModelConfigScreen(
             }
 
             Text(
-                text = "建议范围 3~20。轮数越大，保留原始上下文越多；轮数越小，越早触发压缩。",
+                text = Strings.txt(StringsKey.model_context_hint),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 20.dp)
@@ -300,43 +304,43 @@ fun ModelConfigScreen(
                     .padding(horizontal = 20.dp, vertical = 20.dp)
             ) {
                 Text(
-                    text = "图片生成 Provider 配置",
+                    text = Strings.txt(StringsKey.image_provider_config),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 ImageProviderOptionItem(
-                    title = "HTTP 联网生成",
-                    description = "使用通用 HTTP 图片接口，配置可真实生成图片",
+                    title = Strings.txt(StringsKey.image_http_title),
+                    description = Strings.txt(StringsKey.image_http_desc),
                     selected = imageConfig.provider == ImageGenerationProvider.HTTP,
                     onClick = {
                         viewModel.setImageProvider(ImageGenerationProvider.HTTP)
                     }
                 )
                 ImageProviderOptionItem(
-                    title = "本地 SD1.5 Hyper-SD",
-                    description = "stable-diffusion.cpp + Vulkan，本地私有出图",
+                    title = Strings.txt(StringsKey.image_local_sd_title),
+                    description = Strings.txt(StringsKey.image_local_sd_desc),
                     selected = imageConfig.provider == ImageGenerationProvider.LOCAL_STABLE_DIFFUSION_CPP,
                     onClick = {
                         viewModel.setImageProvider(ImageGenerationProvider.LOCAL_STABLE_DIFFUSION_CPP)
                     }
                 )
                 ImageProviderOptionItem(
-                    title = "本地 DreamLite",
-                    description = "端侧接入框架已准备，等待官方权重/端侧包",
+                    title = Strings.txt(StringsKey.image_dreamlite_title),
+                    description = Strings.txt(StringsKey.image_dreamlite_desc),
                     selected = imageConfig.provider == ImageGenerationProvider.LOCAL_DREAMLITE,
                     onClick = {
                         viewModel.setImageProvider(ImageGenerationProvider.LOCAL_DREAMLITE)
                     }
                 )
-                ImageConfigField("本地模型路径", imageConfig.localModelPath) {
+                ImageConfigField(Strings.txt(StringsKey.model_path), imageConfig.localModelPath) {
                     viewModel.updateLocalModelPath(it)
                 }
                 Text(
                     text = when (imageConfig.provider) {
                         ImageGenerationProvider.LOCAL_STABLE_DIFFUSION_CPP ->
-                            "Stable Diffusion 状态：${stableDiffusionModelStatus.displayName()}"
-                        else -> "DreamLite 状态：${dreamLiteModelStatus.displayName()}"
+                            Strings.txt(StringsKey.image_status_sd, stableDiffusionModelStatus.displayName(LocalLanguage.current))
+                        else -> Strings.txt(StringsKey.image_status_dreamlite, dreamLiteModelStatus.displayName(LocalLanguage.current))
                     },
                     style = MaterialTheme.typography.bodySmall,
                     color = if (
@@ -349,19 +353,19 @@ fun ModelConfigScreen(
                     },
                     modifier = Modifier.padding(top = 4.dp)
                 )
-                ImageConfigField("本地宽度", imageConfig.localWidth.toString()) {
+                ImageConfigField(Strings.txt(StringsKey.image_local_width), imageConfig.localWidth.toString()) {
                     viewModel.updateLocalWidth(it)
                 }
-                ImageConfigField("本地高度", imageConfig.localHeight.toString()) {
+                ImageConfigField(Strings.txt(StringsKey.image_local_height), imageConfig.localHeight.toString()) {
                     viewModel.updateLocalHeight(it)
                 }
-                ImageConfigField("本地 Steps", imageConfig.localSteps.toString()) {
+                ImageConfigField(Strings.txt(StringsKey.image_local_steps), imageConfig.localSteps.toString()) {
                     viewModel.updateLocalSteps(it)
                 }
-                ImageConfigField("本地 CFG Scale", imageConfig.localCfgScale.toString()) {
+                ImageConfigField(Strings.txt(StringsKey.image_local_cfg), imageConfig.localCfgScale.toString()) {
                     viewModel.updateLocalCfgScale(it)
                 }
-                ImageConfigField("本地 Seed（留空随机）", imageConfig.localSeed?.toString().orEmpty()) {
+                ImageConfigField(Strings.txt(StringsKey.image_local_seed), imageConfig.localSeed?.toString().orEmpty()) {
                     viewModel.updateLocalSeed(it)
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -370,7 +374,7 @@ fun ModelConfigScreen(
                         onCheckedChange = { viewModel.setLocalUseVulkan(it) }
                     )
                     Text(
-                        text = "启用 Vulkan",
+                        text = Strings.txt(StringsKey.image_enable_vulkan),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
@@ -394,7 +398,7 @@ fun ModelConfigScreen(
                     viewModel.updateTimeoutMillis(it)
                 }
                 Text(
-                    text = "模板支持 {{model}} 与 {{prompt}}。响应字段示例：data.0.url 或 data.0.b64_json。",
+                    text = Strings.txt(StringsKey.image_template_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 8.dp)
@@ -406,21 +410,21 @@ fun ModelConfigScreen(
     }
 }
 
-private fun DreamLiteModelStatus.displayName(): String {
+private fun DreamLiteModelStatus.displayName(lang: AppLanguage): String {
     return when (this) {
-        DreamLiteModelStatus.Ready -> "模型就绪，可以生成图片"
-        DreamLiteModelStatus.DirectoryNotConfigured -> "模型目录未配置"
-        is DreamLiteModelStatus.InvalidConfig -> "配置无效：$message"
-        is DreamLiteModelStatus.MissingFiles -> "文件缺失：${fileNames.joinToString()}"
+        DreamLiteModelStatus.Ready -> Strings.get(lang, StringsKey.model_ready_generate)
+        DreamLiteModelStatus.DirectoryNotConfigured -> Strings.get(lang, StringsKey.model_dir_not_configured)
+        is DreamLiteModelStatus.InvalidConfig -> Strings.get(lang, StringsKey.model_invalid_config, message)
+        is DreamLiteModelStatus.MissingFiles -> Strings.get(lang, StringsKey.model_missing_files, fileNames.joinToString())
     }
 }
 
-private fun StableDiffusionModelStatus.displayName(): String {
+private fun StableDiffusionModelStatus.displayName(lang: AppLanguage): String {
     return when (this) {
-        is StableDiffusionModelStatus.Ready -> "模型包已就绪：${config.modelName}"
-        StableDiffusionModelStatus.DirectoryNotConfigured -> "模型目录未配置"
-        is StableDiffusionModelStatus.InvalidConfig -> "配置无效：$message"
-        is StableDiffusionModelStatus.MissingFiles -> "文件缺失：${fileNames.joinToString()}"
+        is StableDiffusionModelStatus.Ready -> Strings.get(lang, StringsKey.model_package_ready, config.modelName)
+        StableDiffusionModelStatus.DirectoryNotConfigured -> Strings.get(lang, StringsKey.model_dir_not_configured)
+        is StableDiffusionModelStatus.InvalidConfig -> Strings.get(lang, StringsKey.model_invalid_config, message)
+        is StableDiffusionModelStatus.MissingFiles -> Strings.get(lang, StringsKey.model_missing_files, fileNames.joinToString())
     }
 }
 
@@ -578,12 +582,12 @@ private fun ContextWindowOptionItem(
         Spacer(modifier = Modifier.height(0.dp))
         Column(modifier = Modifier.padding(start = 12.dp)) {
             Text(
-                text = "保留最近 $rounds 轮",
+                text = Strings.txt(StringsKey.context_retain_label, rounds),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
-                text = "压缩阈值约为 ${rounds * 2 + 10} 条消息",
+                text = Strings.txt(StringsKey.context_compress_hint, rounds * 2 + 10),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

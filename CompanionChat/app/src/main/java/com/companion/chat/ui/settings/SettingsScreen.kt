@@ -76,6 +76,10 @@ import com.companion.chat.ui.theme.IconGradientGray
 import com.companion.chat.ui.theme.IconGradientGreen
 import com.companion.chat.ui.theme.IconGradientPink
 import com.companion.chat.ui.theme.IconGradientPurple
+import com.companion.chat.locale.AppLanguage
+import com.companion.chat.locale.LocalLanguage
+import com.companion.chat.locale.Strings
+import com.companion.chat.locale.StringsKey
 
 /**
  * ModelConfigScreen 的跳转目标
@@ -120,7 +124,7 @@ fun SettingsScreen(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        text = "设置",
+                        text = Strings.txt(StringsKey.settings_title),
                         style = MaterialTheme.typography.titleLarge
                     )
                 }
@@ -136,8 +140,8 @@ fun SettingsScreen(
         ) {
             // ── 我的形象 Profile Card ──
             ProfileCard(
-                nickname = userProfile.nickname.ifBlank { "设置昵称" },
-                bio = userProfile.bio.ifBlank { "设置你的个人信息，让 AI 伙伴更了解你" },
+                nickname = userProfile.nickname.ifBlank { Strings.txt(StringsKey.settings_hint_nickname) },
+                bio = userProfile.bio.ifBlank { Strings.txt(StringsKey.settings_hint_bio) },
                 gender = userProfile.gender,
                 age = userProfile.age,
                 rawBio = userProfile.bio,
@@ -151,40 +155,40 @@ fun SettingsScreen(
                 onEditClick = onNavigateToProfile
             )
 
-            SettingsSection(title = "角色") {
+            SettingsSection(title = Strings.txt(StringsKey.settings_section_characters)) {
                 SettingsItem(
                     icon = Icons.Default.Person,
-                    title = "角色管理",
-                    subtitle = "创建和切换陪伴角色卡",
+                    title = Strings.txt(StringsKey.settings_item_characters),
+                    subtitle = Strings.txt(StringsKey.settings_sub_characters),
                     onClick = onNavigateToCharacter,
                     iconBrush = IconGradientPurple
                 )
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                 SettingsItem(
                     icon = Icons.Default.Psychology,
-                    title = "Skills 管理",
-                    subtitle = "管理工作能力模板和自定义 skills",
+                    title = Strings.txt(StringsKey.settings_item_skills),
+                    subtitle = Strings.txt(StringsKey.settings_sub_skills),
                     onClick = onNavigateToSkills,
                     iconBrush = IconGradientPurple
                 )
             }
 
-            SettingsSection(title = "记忆") {
+            SettingsSection(title = Strings.txt(StringsKey.settings_section_memory)) {
                 SettingsItem(
                     icon = Icons.Default.Psychology,
-                    title = "记忆管理",
-                    subtitle = "查看、编辑和提升短期记忆",
+                    title = Strings.txt(StringsKey.settings_item_memory),
+                    subtitle = Strings.txt(StringsKey.settings_sub_memory),
                     onClick = onNavigateToMemory,
                     iconBrush = IconGradientBlue
                 )
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                 SettingsToggleItem(
                     icon = Icons.Default.Psychology,
-                    title = "自动学习偏好",
+                    title = Strings.txt(StringsKey.settings_item_auto_learn),
                     subtitle = if (autoPreferenceLearningEnabled) {
-                        "后台总结最近对话并逐步学习用户偏好"
+                        Strings.txt(StringsKey.settings_sub_learn_on)
                     } else {
-                        "已关闭后台偏好总结，不会自动触发阶段四学习"
+                        Strings.txt(StringsKey.settings_sub_learn_off)
                     },
                     checked = autoPreferenceLearningEnabled,
                     onCheckedChange = { enabled ->
@@ -195,65 +199,68 @@ fun SettingsScreen(
                 )
             }
 
-            SettingsSection(title = "模型") {
+            SettingsSection(title = Strings.txt(StringsKey.settings_section_model)) {
                 SettingsItem(
                     icon = Icons.Default.Memory,
-                    title = "模型配置",
-                    subtitle = "选择模型、GPU/CPU 后端",
+                    title = Strings.txt(StringsKey.settings_item_model),
+                    subtitle = Strings.txt(StringsKey.settings_sub_model),
                     onClick = { onNavigateToModel(ModelConfigScrollTarget.DEFAULT) },
                     iconBrush = IconGradientGold
                 )
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                 SettingsItem(
                     icon = Icons.Default.Memory,
-                    title = "上下文窗口大小",
-                    subtitle = "当前保留最近 $retainedRounds 轮对话",
+                    title = Strings.txt(StringsKey.settings_item_context_window),
+                    subtitle = Strings.txt(StringsKey.settings_sub_context, retainedRounds),
                     onClick = { onNavigateToModel(ModelConfigScrollTarget.CONTEXT_WINDOW) },
                     iconBrush = IconGradientGold
                 )
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                 SettingsItem(
                     icon = Icons.Default.Photo,
-                    title = "图片生成",
-                    subtitle = "配置联网图片生成 HTTP 接口",
+                    title = Strings.txt(StringsKey.settings_item_image),
+                    subtitle = Strings.txt(StringsKey.settings_sub_image),
                     onClick = { onNavigateToModel(ModelConfigScrollTarget.IMAGE_GENERATION) },
                     iconBrush = IconGradientGold
                 )
             }
 
-            SettingsSection(title = "语音") {
+            SettingsSection(title = Strings.txt(StringsKey.settings_section_voice)) {
                 SettingsItem(
                     icon = Icons.AutoMirrored.Filled.VolumeUp,
-                    title = "语音设置",
-                    subtitle = "语音输入输出、语速语调",
+                    title = Strings.txt(StringsKey.settings_item_voice),
+                    subtitle = Strings.txt(StringsKey.settings_sub_voice),
                     onClick = onNavigateToVoice,
                     iconBrush = IconGradientGreen
                 )
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                 SettingsItem(
                     icon = Icons.Default.Language,
-                    title = "语言",
-                    subtitle = "中文",
+                    title = Strings.txt(StringsKey.settings_item_language),
+                    subtitle = when (LocalLanguage.current) {
+                    AppLanguage.ZH -> Strings.txt(StringsKey.language_zh)
+                    AppLanguage.EN -> Strings.txt(StringsKey.language_en)
+                },
                     onClick = onNavigateToLanguage,
                     iconBrush = IconGradientGreen
                 )
             }
 
-            SettingsSection(title = "外观") {
+            SettingsSection(title = Strings.txt(StringsKey.settings_section_appearance)) {
                 SettingsItem(
                     icon = Icons.Default.DarkMode,
-                    title = "深色模式",
-                    subtitle = "跟随系统",
+                    title = Strings.txt(StringsKey.settings_item_dark_mode),
+                    subtitle = Strings.txt(StringsKey.dark_mode_follow_system),
                     onClick = onNavigateToDarkMode,
                     iconBrush = IconGradientPink
                 )
             }
 
-            SettingsSection(title = "关于") {
+            SettingsSection(title = Strings.txt(StringsKey.settings_section_about)) {
                 SettingsItem(
                     icon = Icons.Default.Info,
-                    title = "关于",
-                    subtitle = "版本 0.1.0",
+                    title = Strings.txt(StringsKey.settings_item_about),
+                    subtitle = Strings.txt(StringsKey.about_version) + " 0.1.0",
                     onClick = onNavigateToAbout,
                     iconBrush = IconGradientGray
                 )
@@ -463,7 +470,7 @@ private fun ProfileCard(
                         if (avatarUri.isNotBlank()) {
                             AsyncImage(
                                 model = avatarUri,
-                                contentDescription = "用户头像",
+                                contentDescription = Strings.txt(StringsKey.profile_avatar_desc),
                                 modifier = Modifier
                                     .size(64.dp)
                                     .clip(CircleShape),
@@ -490,7 +497,7 @@ private fun ProfileCard(
                     ) {
                         Icon(
                             imageVector = Icons.Default.CameraAlt,
-                            contentDescription = "更换头像",
+                            contentDescription = Strings.txt(StringsKey.profile_change_avatar),
                             tint = MaterialTheme.colorScheme.onPrimary,
                             modifier = Modifier.size(12.dp)
                         )
@@ -566,7 +573,7 @@ private fun ProfileCard(
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "编辑个人资料",
+                        text = Strings.txt(StringsKey.profile_edit_profile),
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )

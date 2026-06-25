@@ -44,6 +44,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.companion.chat.ui.theme.BrandOutlineLight
+import com.companion.chat.locale.LocalLanguage
+import com.companion.chat.locale.Strings
+import com.companion.chat.locale.StringsKey
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -57,7 +60,7 @@ fun ChatInputBar(
     onVoiceInput: () -> Unit,
     selectedImages: List<Uri>,
     onRemoveImage: (Uri) -> Unit,
-    inputHint: String = "输入消息...",
+    inputHint: String = Strings.txt(StringsKey.hint_input_msg),
     isVoiceStarting: Boolean = false,
     isVoiceListening: Boolean,
     isVoiceAutoSending: Boolean = false,
@@ -103,13 +106,13 @@ fun ChatInputBar(
                     ChatToolIconButton(
                         onClick = onPickImage,
                         icon = Icons.Default.AddPhotoAlternate,
-                        contentDescription = "上传图片"
+                        contentDescription = Strings.txt(StringsKey.input_pick_image)
                     )
                     ChatToolIconButton(
                         onClick = onSuggestReply,
                         enabled = !isSuggesting && !isGenerating,
                         icon = Icons.Default.AutoAwesome,
-                        contentDescription = if (isSuggesting) "正在生成建议" else "获取对话建议",
+                        contentDescription = if (isSuggesting) Strings.txt(StringsKey.hint_suggestion_loading) else Strings.txt(StringsKey.input_generate_image),
                         active = isSuggesting
                     )
                     Spacer(Modifier.width(2.dp))
@@ -153,7 +156,7 @@ fun ChatInputBar(
                         } else {
                             Icons.AutoMirrored.Filled.VolumeUp
                         },
-                        contentDescription = if (isVoiceSpeaking) "停止播放" else "朗读最近回复",
+                        contentDescription = if (isVoiceSpeaking) Strings.txt(StringsKey.input_stop_reading) else Strings.txt(StringsKey.input_read_aloud),
                         active = isVoiceSpeaking
                     )
                     Spacer(Modifier.width(4.dp))
@@ -167,7 +170,7 @@ fun ChatInputBar(
                         ) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.Send,
-                                contentDescription = "发送"
+                                contentDescription = Strings.txt(StringsKey.input_send)
                             )
                         }
                     } else {
@@ -203,7 +206,7 @@ private fun SelectedImagePreviewRow(
             ) {
                 AsyncImage(
                     model = uri,
-                    contentDescription = "选中的图片",
+                    contentDescription = Strings.txt(StringsKey.drawer_search_hint),
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
                 )
@@ -220,7 +223,7 @@ private fun SelectedImagePreviewRow(
                 ) {
                     Icon(
                         Icons.Default.Close,
-                        contentDescription = "移除图片",
+                        contentDescription = Strings.txt(StringsKey.close),
                         modifier = Modifier.size(14.dp)
                     )
                 }
@@ -291,10 +294,10 @@ private fun VoicePrimaryButton(
         Icon(
             imageVector = if (active) Icons.Default.Stop else Icons.Default.Mic,
             contentDescription = when {
-                active -> "停止语音输入"
-                isVoiceAutoSending -> "正在发送语音"
-                isGenerating -> "正在生成回复"
-                else -> "开始语音输入"
+                active -> Strings.txt(StringsKey.input_stop)
+                isVoiceAutoSending -> Strings.txt(StringsKey.input_voice)
+                isGenerating -> Strings.txt(StringsKey.chat_status_generating)
+                else -> Strings.txt(StringsKey.input_voice)
             }
         )
     }

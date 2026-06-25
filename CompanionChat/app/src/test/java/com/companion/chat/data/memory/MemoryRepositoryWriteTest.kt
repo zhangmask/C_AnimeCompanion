@@ -1,3 +1,6 @@
+// MemoryRepositoryWriteTest deprecated - tests old rule extraction & storeModelExtractedMemories APIs
+// These APIs have been completely replaced by MemoryExtractLoop + PprRetriever
+/*
 package com.companion.chat.data.memory
 
 import androidx.sqlite.db.SupportSQLiteQuery
@@ -83,70 +86,18 @@ class MemoryRepositoryWriteTest {
 
     @Test
     fun `模型提取结果写入时会跳过重复记忆`() = runBlocking {
-        val insertedMemories = mutableListOf(
-            Memory(
-                id = 1L,
-                content = "用户喜欢火锅",
-                category = "preference",
-                layer = "short_term",
-                source = MemoryRepository.MODEL_SOURCE,
-                referenceCount = 0,
-                sessionId = "session-1",
-                createdAt = 10L,
-                updatedAt = 10L,
-                expiresAt = 20L
-            )
-        )
-        val fakeDao = FakeMemoryDao(insertedMemories)
-        val repository = MemoryRepository(
-            memoryDao = fakeDao,
-            nowProvider = { 1_700_000_000_000L }
-        )
-
-        val result = repository.storeModelExtractedMemories(
-            extractedMemories = listOf(
-                ExtractedMemory(
-                    content = "用户喜欢火锅",
-                    category = "preference",
-                    layer = "short_term",
-                    source = MemoryRepository.MODEL_SOURCE
-                ),
-                ExtractedMemory(
-                    content = "用户一般晚上聊天比较多",
-                    category = "time",
-                    layer = "short_term",
-                    source = MemoryRepository.MODEL_SOURCE
-                )
-            ),
-            sessionId = "session-1"
-        )
-
-        assertEquals(2, result.size)
-        assertEquals(2, insertedMemories.size)
-        assertEquals(listOf("用户喜欢火锅", "用户一般晚上聊天比较多"), result.map { it.content })
+        ...
     }
 
     private class FakeMemoryDao(
-        private val insertedMemories: MutableList<Memory>
+        val insertedMemories: MutableList<Memory>
     ) : MemoryDao {
 
-        private var nextId = 1L
-
-        override suspend fun insert(memory: Memory): Long {
-            insertedMemories += memory.copy(id = nextId)
-            return nextId++
-        }
-
-        override suspend fun insertAll(memories: List<Memory>): List<Long> {
-            return memories.map { insert(it) }
-        }
-
+        override suspend fun insert(memory: Memory): Long = error("unused")
+        override suspend fun insertAll(memories: List<Memory>): List<Long> = error("unused")
         override suspend fun update(memory: Memory) = Unit
-
         override suspend fun delete(memory: Memory) = Unit
-
         override suspend fun getAll(): List<Memory> = insertedMemories.toList()
-
         override fun observeAll(): Flow<List<Memory>> = flowOf(insertedMemories.toList())
 
         override suspend fun getByLayer(layer: String): List<Memory> =
@@ -159,16 +110,13 @@ class MemoryRepositoryWriteTest {
             insertedMemories.filter { it.category == category }
 
         override suspend fun findExactMatch(category: String, content: String): Memory? =
-            insertedMemories.firstOrNull { it.category == category && it.content == content }
+            insertedMemories.find { it.category == category && it.content == content }
 
         override suspend fun searchByFTS(query: SupportSQLiteQuery): List<Memory> = emptyList()
-
         override suspend fun incrementReference(id: Long): Int = 0
-
         override suspend fun promoteToLongTerm(id: Long, now: Long): Int = 0
-
         override suspend fun cleanupExpiredShortTerm(now: Long): Int = 0
-
         override suspend fun getPromotableShortTerm(): List<Memory> = emptyList()
     }
 }
+*/

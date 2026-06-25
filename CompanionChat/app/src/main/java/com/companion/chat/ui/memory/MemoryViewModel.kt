@@ -55,7 +55,9 @@ class MemoryViewModel(
                 val repo = getApplication<Application>().appContainer.roleCardRepository
                 val roles = repo.getAllRoleCards()
                 _uiState.update { it.copy(roleCards = roles) }
-            } catch (_: Exception) {}
+            } catch (e: Exception) {
+                android.util.Log.e("MemoryViewModel", "加载角色失败", e)
+            }
         }
     }
 
@@ -70,24 +72,22 @@ class MemoryViewModel(
     }
 
     fun addMemory(content: String, category: String) {
-        if (content.isBlank()) {
-            return
-        }
+        if (content.isBlank()) return
         workerScope.launch {
-            memoryRepository.addManualMemory(content, category)
+            memoryRepository.storeMemory(
+                content = content,
+                category = category,
+                source = MemoryRepository.MANUAL_SOURCE
+            )
             refreshMemories()
         }
     }
 
-    fun updateMemory(memoryId: Long, content: String, category: String, layer: String) {
+    fun updateMemory(memoryId: Long, content: String, category: String) {
         val existing = allMemories.firstOrNull { it.id == memoryId } ?: return
         workerScope.launch {
             memoryRepository.updateMemory(
-                existing.copy(
-                    content = content,
-                    category = category,
-                    layer = layer
-                )
+                existing.copy(content = content, category = category)
             )
             refreshMemories()
         }
@@ -100,9 +100,10 @@ class MemoryViewModel(
         }
     }
 
-    fun promoteMemory(memoryId: Long) {
+    /** 改造后：废除 promoteMemory，改为 strengthenMemory */
+    fun strengthenMemory(memoryId: Long) {
         workerScope.launch {
-            memoryRepository.promoteMemory(memoryId)
+            memoryRepository.strengthenMemory(memoryId, 0.15)
             refreshMemories()
         }
     }

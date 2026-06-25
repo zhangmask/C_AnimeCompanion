@@ -101,6 +101,9 @@ import com.companion.chat.ui.theme.BrandOnSurfaceVariant
 import com.companion.chat.ui.theme.BrandOutlineLight
 import com.companion.chat.ui.theme.BrandSuccess
 import kotlinx.coroutines.delay
+import com.companion.chat.locale.LocalLanguage
+import com.companion.chat.locale.Strings
+import com.companion.chat.locale.StringsKey
 import kotlinx.coroutines.flow.collect
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -203,7 +206,7 @@ fun ChatScreen(
                     IconButton(onClick = { viewModel.toggleSessionDrawer() }) {
                         Icon(
                             imageVector = Icons.Default.Menu,
-                            contentDescription = "对话列表",
+                            contentDescription = Strings.txt(StringsKey.drawer_title),
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
@@ -221,15 +224,15 @@ fun ChatScreen(
                     )
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            text = "对话",
+                            text = Strings.txt(StringsKey.tab_chat),
                             style = MaterialTheme.typography.titleMedium
                         )
                         val engineLabel = when (val s = uiState.engineState) {
-                            is InferenceState.Idle -> "未连接"
-                            is InferenceState.Initializing -> "模型加载中"
-                            is InferenceState.Ready -> "已就绪"
-                            is InferenceState.Generating -> "生成中"
-                            is InferenceState.Error -> "错误"
+                            is InferenceState.Idle -> Strings.txt(StringsKey.chat_status_disconnected)
+                            is InferenceState.Initializing -> Strings.txt(StringsKey.chat_status_loading)
+                            is InferenceState.Ready -> Strings.txt(StringsKey.chat_status_ready)
+                            is InferenceState.Generating -> Strings.txt(StringsKey.chat_status_generating)
+                            is InferenceState.Error -> Strings.txt(StringsKey.chat_status_error)
                         }
                         val statusColor = when (uiState.engineState) {
                             is InferenceState.Ready -> BrandSuccess
@@ -279,7 +282,7 @@ fun ChatScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "直接输入第一条消息，或从左上角打开会话列表。",
+                        text = Strings.txt(StringsKey.chat_empty_hint),
                         modifier = Modifier.padding(horizontal = 32.dp),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -307,7 +310,7 @@ fun ChatScreen(
                             )
                             Spacer(Modifier.width(8.dp))
                             Text(
-                                text = uiState.compressionMessage.ifBlank { "正在压缩上下文..." },
+                                text = uiState.compressionMessage.ifBlank { Strings.txt(StringsKey.chat_compressing) },
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSecondaryContainer
                             )
@@ -536,7 +539,7 @@ private fun QuickActionsRow(
             },
             label = {
                 Text(
-                    text = "继续聊聊",
+                    text = Strings.txt(StringsKey.chat_quick_continue),
                     style = MaterialTheme.typography.labelMedium
                 )
             },
@@ -559,7 +562,7 @@ private fun QuickActionsRow(
             },
             label = {
                 Text(
-                    text = "生成此刻图片",
+                    text = Strings.txt(StringsKey.chat_quick_generate_img),
                     style = MaterialTheme.typography.labelMedium
                 )
             },

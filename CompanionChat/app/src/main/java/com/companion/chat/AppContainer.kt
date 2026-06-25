@@ -13,8 +13,13 @@ import com.companion.chat.data.image.LocalImageGenerationEngine
 import com.companion.chat.data.local.CompanionDatabase
 import com.companion.chat.data.embedding.OnnxEmbeddingEngine
 import com.companion.chat.data.embedding.VectorRetriever
+import com.companion.chat.data.memory.MemoryDecayManager
+import com.companion.chat.data.memory.MemoryExtractLoop
+import com.companion.chat.data.memory.MemoryGraphRepository
 import com.companion.chat.data.memory.MemoryPromptBuilder
 import com.companion.chat.data.memory.MemoryRepository
+import com.companion.chat.data.memory.PprRetriever
+import com.companion.chat.data.memory.T1BatchProcessor
 import com.companion.chat.data.preferences.PreferenceMemoryDeriver
 import com.companion.chat.data.preferences.PreferenceRepository
 import com.companion.chat.data.preferences.UnifiedExtractionParser
@@ -101,12 +106,34 @@ class AppContainer(
     }
     val promptAssembler: PromptAssembler by lazy { PromptAssembler() }
     val roleCardPromptBuilder: RoleCardPromptBuilder by lazy { RoleCardPromptBuilder() }
-    val memoryPromptBuilder: MemoryPromptBuilder by lazy { MemoryPromptBuilder(vectorRetriever) }
+    val memoryPromptBuilder: MemoryPromptBuilder by lazy { MemoryPromptBuilder() }
+    val memoryGraphRepository: MemoryGraphRepository by lazy {
+        MemoryGraphRepository(database.memoryLinkDao(), database.memoryEntityDao())
+    }
+    val pprRetriever: PprRetriever by lazy {
+        PprRetriever(database.memoryDao(), database.memoryLinkDao(), database.memoryEntityDao())
+    }
+    val memoryDecayManager: MemoryDecayManager by lazy { MemoryDecayManager(database.memoryDao()) }
+    val memoryExtractLoop: MemoryExtractLoop by lazy {
+        MemoryExtractLoop(
+            memoryRepository = memoryRepository,
+            memoryGraphRepository = memoryGraphRepository,
+            promptBuilder = unifiedExtractionPromptBuilder,
+            parser = unifiedExtractionParser
+        )
+    }
+    val t1BatchProcessor: T1BatchProcessor by lazy {
+        T1BatchProcessor(memoryRepository)
+    }
     val unifiedExtractionPromptBuilder: UnifiedExtractionPromptBuilder by lazy {
         UnifiedExtractionPromptBuilder()
     }
     val unifiedExtractionParser: UnifiedExtractionParser by lazy { UnifiedExtractionParser() }
     val preferenceMemoryDeriver: PreferenceMemoryDeriver by lazy { PreferenceMemoryDeriver() }
+    // MemoryExtractLoop instantiated in ChatViewModel scope
+
+    // 以下为遗留 DI，后续逐步迁移
+
 
     /** 应用启动时预热关键模型 */
     suspend fun warmUp() {
