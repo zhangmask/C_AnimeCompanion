@@ -225,7 +225,7 @@ fun MainApp(onLanguageChanged: (com.companion.chat.locale.AppLanguage) -> Unit =
                 ChatScreen(
                     viewModel = chatViewModel,
                     bottomBarHeight = chatBottomBarHeight,
-                    onRoleCardClick = { roleId -> navController.navigate(DiscoverRoutes.detail(roleId.toString())) }
+                    onRoleCardClick = { roleId -> navController.navigate(SettingsRoutes.editCharacter(roleId)) }
                 )
             }
             composable(Screen.MEMORY.route) {
