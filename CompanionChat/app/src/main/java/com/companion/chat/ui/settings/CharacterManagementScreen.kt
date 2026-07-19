@@ -61,6 +61,7 @@ fun CharacterManagementScreen(
     onBack: () -> Unit = {},
     onActivateRoleCard: suspend (Long) -> Unit = {},
     onStartChat: (Long) -> Unit = {},
+    onEditRoleCard: (Long) -> Unit = {},
     roleManagementViewModel: RoleManagementViewModel = viewModel(),
     editRoleId: Long? = null
 ) {
@@ -136,7 +137,7 @@ fun CharacterManagementScreen(
                         isActive = true,
                         onActivate = {},
                         onStartChat = { onStartChat(activeRole.id) },
-                        onEdit = { editingRoleCard = activeRole },
+                        onEdit = { onEditRoleCard(activeRole.id) },
                         onDelete = if (activeRole.isBuiltIn) null else ({ deletingRoleCard = activeRole })
                     )
                 }
@@ -165,7 +166,7 @@ fun CharacterManagementScreen(
                             }
                         },
                         onStartChat = { onStartChat(roleCard.id) },
-                        onEdit = { editingRoleCard = roleCard },
+                        onEdit = { onEditRoleCard(roleCard.id) },
                         onDelete = if (roleCard.isBuiltIn) null else ({ deletingRoleCard = roleCard })
                     )
                 }
@@ -176,7 +177,7 @@ fun CharacterManagementScreen(
     if (showCreateDialog) {
         RoleCardEditorSheet(
             onDismiss = { showCreateDialog = false },
-            onSave = { name, description, avatar, persona, speakingStyle, background, rules, taboos, openingMessage, exampleDialogue, avatarImageUri, galleryImageUris, imageStylePrompt, voiceProfileUri, voiceMode, voiceDisplayName ->
+            onSave = { name, description, avatar, persona, speakingStyle, background, rules, taboos, openingMessage, exampleDialogue, avatarImageUri, galleryImageUris, imageStylePrompt, voiceProfileUri, voiceMode, voiceDisplayName, tags ->
                 roleManagementViewModel.createRoleCard(
                     name = name,
                     description = description,
@@ -193,7 +194,8 @@ fun CharacterManagementScreen(
                     imageStylePrompt = imageStylePrompt,
                     voiceProfileUri = voiceProfileUri,
                     voiceMode = voiceMode,
-                    voiceDisplayName = voiceDisplayName
+                    voiceDisplayName = voiceDisplayName,
+                    tags = tags
                 )
                 showCreateDialog = false
             }
@@ -203,7 +205,7 @@ fun CharacterManagementScreen(
     editingRoleCard?.let { roleCard ->
         RoleCardEditorSheet(
             onDismiss = { editingRoleCard = null },
-            onSave = { name, description, avatar, persona, speakingStyle, background, rules, taboos, openingMessage, exampleDialogue, avatarImageUri, galleryImageUris, imageStylePrompt, voiceProfileUri, voiceMode, voiceDisplayName ->
+            onSave = { name, description, avatar, persona, speakingStyle, background, rules, taboos, openingMessage, exampleDialogue, avatarImageUri, galleryImageUris, imageStylePrompt, voiceProfileUri, voiceMode, voiceDisplayName, tags ->
                 roleManagementViewModel.updateRoleCard(
                     id = roleCard.id,
                     name = name,
@@ -221,7 +223,8 @@ fun CharacterManagementScreen(
                     imageStylePrompt = imageStylePrompt,
                     voiceProfileUri = voiceProfileUri,
                     voiceMode = voiceMode,
-                    voiceDisplayName = voiceDisplayName
+                    voiceDisplayName = voiceDisplayName,
+                    tags = tags
                 )
                 editingRoleCard = null
                 // If we came from discover page to edit a specific role, go back after saving
@@ -245,6 +248,7 @@ fun CharacterManagementScreen(
             existingVoiceProfileUri = roleCard.voiceProfileUri,
             existingVoiceMode = roleCard.voiceMode,
             existingVoiceDisplayName = roleCard.voiceDisplayName,
+            existingTags = roleCard.tags.joinToString(", "),
             isEditing = true
         )
     }

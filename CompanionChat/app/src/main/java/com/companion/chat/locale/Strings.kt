@@ -155,6 +155,9 @@ enum class StringsKey {
     memory_category_relation,   // 关系
     memory_category_other,      // 其他
     memory_strength_label,      // 强度
+    memory_strength_temporary,  // 临时
+    memory_strength_short_term, // 短期
+    memory_strength_long_term,  // 长期
 
     // ── SettingsScreen ──
     settings_title,             // 设置 / Settings
@@ -248,6 +251,7 @@ enum class StringsKey {
     model_backend,              // 推理后端 / Inference backend
     model_backend_llama_desc,   // 默认文本后端，读取外部 GGUF uncensor 模型。 / Default text backend, loads external GGUF model.
     model_backend_litert_desc,  // 可选多模态后端，继续支持图片输入链路。 / Optional multimodal backend for image input.
+    model_backend_mnn_desc,     // MNN 推理框架，ARM 优化，支持 Qwen3.5 多模态 INT4 量化模型。 / MNN inference framework with ARM optimization, supports Qwen3.5 multimodal INT4 quantized models.
     model_gpu_desc,             // 使用 GPU 加速推理（LiteRT 后端） / Use GPU for inference (LiteRT backend)
     model_path_hint,            // 留空使用默认路径：%s / Leave empty to use default path: %s
     model_status_ready,         // 已就绪 / Ready
@@ -366,6 +370,8 @@ enum class StringsKey {
     role_name_placeholder,      // 给角色取个名字 / Give the character a name
     role_desc_placeholder,      // 温柔治愈的邻家女孩 / Gentle healing girl next door
     role_opening_placeholder,   // 你好呀~今天想聊什么呢？ / Hi~ what shall we talk about today?
+    role_field_tags,            // 标签 / Tags
+    role_tags_add_hint,        // 添加标签 / Add tag
 
     // ── ChatViewModel Toast/Snackbar ──
     toast_permission_denied,    // 权限被拒绝 / Permission denied
@@ -396,6 +402,9 @@ enum class StringsKey {
     voice_cloud_response_field, // 云响应字段 / Cloud response field
     voice_moss_directory,       // MOSS 目录 / MOSS directory
     voice_moss_status,          // MOSS 状态 / MOSS status
+    voice_mnn_directory,        // MNN 目录 / MNN directory
+    voice_mnn_status,           // MNN 状态 / MNN status
+    voice_mnn_not_configured,   // MNN 未配置 / MNN not configured
     voice_local_clone,          // 本地克隆 / Local clone
     voice_output_mode,          // 输出模式 / Output mode
     voice_default_timbre,       // 默认音色 / Default voice
@@ -409,6 +418,8 @@ enum class StringsKey {
     voice_clone_default,        // MOSS 本地克隆（默认） / MOSS local clone (default)
     voice_role_voice_hint,      // 在角色管理中配置... / Configure in character management...
     voice_desc,                 // 语音输入默认使用... / Voice input uses local SenseVoice...
+    voice_interrupt_on_new,     // 发消息打断语音 / Interrupt on new msg
+    voice_interrupt_on_new_desc, // 发送新消息时... / When sending a new message...
     voice_auto_read_desc,       // AI 开始回复 0.5 秒后... / Auto-read 0.5s after AI starts replying
     voice_ready,                // 完整 / Complete
     voice_local_not_configured, // 本地 SenseVoice 模型未配置 / Local SenseVoice model not configured
@@ -442,6 +453,23 @@ enum class StringsKey {
     // ── ChatScreen 额外 ──
     chat_quick_continue,        // 继续聊聊 / Continue chatting
     chat_quick_generate_img,    // 生成此刻图片 / Generate scene image
+    chat_delete_message_confirm, // 确定删除这条消息？ / Delete this message?
+
+    // ── 消息长按悬浮工具栏 ──
+    msg_action_quote,           // 引用 / Quote
+    msg_action_speak,           // 播放 / Play
+    msg_action_pause,           // 暂停 / Pause
+    msg_action_delete,          // 删除 / Delete
+    msg_select_hint,            // 选择文字后点击上方按钮 / Select text then tap an action above
+    quote_label,                // 引用 / Quote
+    quote_from_user,            // 引用了我的消息 / Quoting my message
+    quote_from_assistant,       // 引用了助手的消息 / Quoting assistant's message
+    quote_clear,                // 取消引用 / Cancel quote
+    quote_edit_title,           // 编辑引用片段 / Edit quote snippet
+    quote_edit_hint,            // 调整或删除不需要的文字，确认后作为引用 / Trim or remove unwanted text, confirm to quote
+    quote_locate,               // 定位到原消息 / Locate original message
+    quote_no_text,              // 该消息只有图片，没有可引用的文字 / This message has only images, no text to quote
+    scroll_to_bottom,           // 回到最新消息 / Scroll to latest message
 
     // ── CharacterManagement 额外 ──
     char_mgmt_persona_label,    // 人设：%s / Persona: %s
@@ -631,6 +659,9 @@ object Strings {
         StringsKey.memory_category_relation to "关系",
         StringsKey.memory_category_other to "其他",
         StringsKey.memory_strength_label to "强度",
+        StringsKey.memory_strength_temporary to "临时",
+        StringsKey.memory_strength_short_term to "短期",
+        StringsKey.memory_strength_long_term to "长期",
         StringsKey.settings_title to "设置",
         StringsKey.settings_section_general to "通用",
         StringsKey.settings_item_language to "语言",
@@ -704,6 +735,7 @@ object Strings {
         StringsKey.model_backend to "推理后端",
         StringsKey.model_backend_llama_desc to "默认文本后端，读取外部 GGUF uncensor 模型。",
         StringsKey.model_backend_litert_desc to "可选多模态后端，继续支持图片输入链路。",
+        StringsKey.model_backend_mnn_desc to "MNN 推理框架，ARM 优化，支持 Qwen3.5 多模态 INT4 量化模型",
         StringsKey.model_gpu_desc to "使用 GPU 加速推理（LiteRT 后端）",
         StringsKey.model_path_hint to "留空使用默认路径：%s",
         StringsKey.model_status_ready to "已就绪",
@@ -810,6 +842,8 @@ object Strings {
         StringsKey.role_name_placeholder to "给角色取个名字",
         StringsKey.role_desc_placeholder to "温柔治愈的邻家女孩",
         StringsKey.role_opening_placeholder to "你好呀~今天想聊什么呢？",
+        StringsKey.role_field_tags to "标签",
+        StringsKey.role_tags_add_hint to "添加标签，回车确认",
         StringsKey.toast_permission_denied to "权限被拒绝",
         StringsKey.toast_model_load_failed to "模型加载失败",
         StringsKey.toast_generate_failed to "生成失败",
@@ -835,6 +869,9 @@ object Strings {
         StringsKey.voice_cloud_response_field to "云响应字段",
         StringsKey.voice_moss_directory to "MOSS 目录",
         StringsKey.voice_moss_status to "MOSS 状态",
+        StringsKey.voice_mnn_directory to "MNN 目录",
+        StringsKey.voice_mnn_status to "MNN 状态",
+        StringsKey.voice_mnn_not_configured to "MNN 模型未配置",
         StringsKey.voice_local_clone to "本地克隆",
         StringsKey.voice_output_mode to "输出模式",
         StringsKey.voice_default_timbre to "默认音色",
@@ -848,6 +885,8 @@ object Strings {
         StringsKey.voice_clone_default to "MOSS 本地克隆（默认）",
         StringsKey.voice_role_voice_hint to "在角色管理中配置...",
         StringsKey.voice_desc to "语音输入默认使用...",
+        StringsKey.voice_interrupt_on_new to "发消息打断语音",
+        StringsKey.voice_interrupt_on_new_desc to "发送新消息时，立即打断正在播放的语音，只播放最新回复",
         StringsKey.voice_auto_read_desc to "AI 开始回复 0.5 秒后...",
         StringsKey.voice_ready to "完整",
         StringsKey.voice_local_not_configured to "本地 SenseVoice 模型未配置",
@@ -877,6 +916,21 @@ object Strings {
         StringsKey.home_mature_label to "私密",
         StringsKey.chat_quick_continue to "继续聊聊",
         StringsKey.chat_quick_generate_img to "生成此刻图片",
+        StringsKey.chat_delete_message_confirm to "确定删除这条消息？",
+        StringsKey.msg_action_quote to "引用",
+        StringsKey.msg_action_speak to "播放",
+        StringsKey.msg_action_pause to "暂停",
+        StringsKey.msg_action_delete to "删除",
+        StringsKey.msg_select_hint to "选择文字后点击上方按钮",
+        StringsKey.quote_label to "引用",
+        StringsKey.quote_from_user to "引用了我的消息",
+        StringsKey.quote_from_assistant to "引用了助手的消息",
+        StringsKey.quote_clear to "取消引用",
+        StringsKey.quote_edit_title to "编辑引用片段",
+        StringsKey.quote_edit_hint to "调整或删除不需要的文字，确认后作为引用",
+        StringsKey.quote_locate to "定位到原消息",
+        StringsKey.quote_no_text to "该消息只有图片，没有可引用的文字",
+        StringsKey.scroll_to_bottom to "回到最新消息",
         StringsKey.char_mgmt_persona_label to "人设：%s",
         StringsKey.char_mgmt_style_label to "风格：%s",
         StringsKey.char_mgmt_image_label to "图片：头像%s，图库 %d 张",
@@ -911,7 +965,12 @@ object Strings {
         StringsKey.voice_policy_generating to "正在生成回复，请稍后再说",
         StringsKey.voice_policy_not_ready to "模型未就绪，语音内容已保留在输入框",
         StringsKey.toast_record_permission_denied to "缺少录音权限，无法使用语音输入",
-    )
+    
+        StringsKey.settings_section_characters to "角色",
+        StringsKey.settings_section_appearance to "外观",
+        StringsKey.settings_item_personalization to "个性化",
+        StringsKey.drawer_create_new_character to "创建新角色",
+)
 
     val EN: Map<StringsKey, String> = mapOf(
         StringsKey.back to "Back",
@@ -1042,6 +1101,9 @@ object Strings {
         StringsKey.memory_category_relation to "关系",
         StringsKey.memory_category_other to "其他",
         StringsKey.memory_strength_label to "强度",
+        StringsKey.memory_strength_temporary to "Temporary",
+        StringsKey.memory_strength_short_term to "Short-term",
+        StringsKey.memory_strength_long_term to "Long-term",
         StringsKey.settings_title to "Settings",
         StringsKey.settings_section_general to "General",
         StringsKey.settings_item_language to "Language",
@@ -1070,7 +1132,7 @@ object Strings {
         StringsKey.settings_item_auto_learn to "Auto learn preferences",
         StringsKey.settings_sub_learn_on to "Background summary learns user preferences",
         StringsKey.settings_sub_learn_off to "Background preference summary disabled...",
-        StringsKey.settings_sub_model to "CPU 后端 / Select model, GPU/CPU backend",
+        StringsKey.settings_sub_model to "Select model, GPU/CPU backend",
         StringsKey.settings_sub_context to "Currently keeping last %d rounds",
         StringsKey.settings_sub_image to "Configure online image generation HTTP API",
         StringsKey.settings_sub_voice to "Voice I/O, speed, and pitch",
@@ -1115,6 +1177,7 @@ object Strings {
         StringsKey.model_backend to "Inference backend",
         StringsKey.model_backend_llama_desc to "Default text backend, loads external GGUF model.",
         StringsKey.model_backend_litert_desc to "Optional multimodal backend for image input.",
+        StringsKey.model_backend_mnn_desc to "MNN inference framework with ARM optimization, supports Qwen3.5 multimodal INT4 quantized models",
         StringsKey.model_gpu_desc to "Use GPU for inference (LiteRT backend)",
         StringsKey.model_path_hint to "Leave empty to use default path: %s",
         StringsKey.model_status_ready to "Ready",
@@ -1221,6 +1284,8 @@ object Strings {
         StringsKey.role_name_placeholder to "Give the character a name",
         StringsKey.role_desc_placeholder to "Gentle healing girl next door",
         StringsKey.role_opening_placeholder to "Hi~ what shall we talk about today?",
+        StringsKey.role_field_tags to "Tags",
+        StringsKey.role_tags_add_hint to "Add tag, press enter to confirm",
         StringsKey.toast_permission_denied to "Permission denied",
         StringsKey.toast_model_load_failed to "Model load failed",
         StringsKey.toast_generate_failed to "Generation failed",
@@ -1246,6 +1311,9 @@ object Strings {
         StringsKey.voice_cloud_response_field to "Cloud response field",
         StringsKey.voice_moss_directory to "MOSS directory",
         StringsKey.voice_moss_status to "MOSS status",
+        StringsKey.voice_mnn_directory to "MNN directory",
+        StringsKey.voice_mnn_status to "MNN status",
+        StringsKey.voice_mnn_not_configured to "MNN model not configured",
         StringsKey.voice_local_clone to "Local clone",
         StringsKey.voice_output_mode to "Output mode",
         StringsKey.voice_default_timbre to "Default voice",
@@ -1259,6 +1327,8 @@ object Strings {
         StringsKey.voice_clone_default to "MOSS local clone (default)",
         StringsKey.voice_role_voice_hint to "Configure in character management...",
         StringsKey.voice_desc to "Voice input uses local SenseVoice...",
+        StringsKey.voice_interrupt_on_new to "Interrupt on new msg",
+        StringsKey.voice_interrupt_on_new_desc to "When sending a new message, immediately stop current TTS and only play the latest response",
         StringsKey.voice_auto_read_desc to "Auto-read 0.5s after AI starts replying",
         StringsKey.voice_ready to "Complete",
         StringsKey.voice_local_not_configured to "Local SenseVoice model not configured",
@@ -1287,7 +1357,22 @@ object Strings {
         StringsKey.home_edit_character to "Edit character card",
         StringsKey.home_mature_label to "Mature",
         StringsKey.chat_quick_continue to "Continue chatting",
-        StringsKey.chat_quick_generate_img to "Generate scene image",
+        StringsKey.chat_quick_generate_img to "Generate",
+        StringsKey.chat_delete_message_confirm to "Delete this message?",
+        StringsKey.msg_action_quote to "Quote",
+        StringsKey.msg_action_speak to "Play",
+        StringsKey.msg_action_pause to "Pause",
+        StringsKey.msg_action_delete to "Delete",
+        StringsKey.msg_select_hint to "Select text then tap an action above",
+        StringsKey.quote_label to "Quote",
+        StringsKey.quote_from_user to "Quoting my message",
+        StringsKey.quote_from_assistant to "Quoting assistant's message",
+        StringsKey.quote_clear to "Cancel quote",
+        StringsKey.quote_edit_title to "Edit quote snippet",
+        StringsKey.quote_edit_hint to "Trim or remove unwanted text, confirm to quote",
+        StringsKey.quote_locate to "Locate original message",
+        StringsKey.quote_no_text to "This message has only images, no text to quote",
+        StringsKey.scroll_to_bottom to "Scroll to latest",
         StringsKey.char_mgmt_persona_label to "Persona: %s",
         StringsKey.char_mgmt_style_label to "Style: %s",
         StringsKey.char_mgmt_image_label to "Image: avatar %s, gallery %d images",
@@ -1322,7 +1407,12 @@ object Strings {
         StringsKey.voice_policy_generating to "Generating reply, please wait",
         StringsKey.voice_policy_not_ready to "Model not ready, voice content kept in input box",
         StringsKey.toast_record_permission_denied to "Microphone permission denied",
-    )
+    
+        StringsKey.settings_section_characters to "Characters",
+        StringsKey.settings_section_appearance to "Appearance",
+        StringsKey.settings_item_personalization to "Personalization",
+        StringsKey.drawer_create_new_character to "Create new character",
+)
 
     val translations: Map<AppLanguage, Map<StringsKey, String>> = mapOf(
         AppLanguage.ZH to ZH,

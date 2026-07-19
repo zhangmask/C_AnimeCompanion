@@ -154,8 +154,8 @@ else()
 endif()
 
 # --- Shared path definitions (must come before any usage) ---
-set(THIRD_PARTY_UI_DIR "${CMAKE_CURRENT_LIST_DIR}/../../../../../../..")
-set(ONNXRUNTIME_ANDROID_HEADERS "${CMAKE_CURRENT_LIST_DIR}/../../../../../../onnxruntime-android/headers")
+set(THIRD_PARTY_UI_DIR "${CMAKE_CURRENT_LIST_DIR}/../../../..")
+set(ONNXRUNTIME_ANDROID_HEADERS "${CMAKE_CURRENT_LIST_DIR}/../../../../../sdk/onnxruntime-android/headers")
 
 # --- MOSS TTS SentencePiece Tokenizer JNI ---
 # sentencepiece 在项目根目录的 third_party/ 下 (4 层 ../)
@@ -194,7 +194,7 @@ endif()
 
 if (EXISTS "${ONNXRUNTIME_ANDROID_HEADERS}/onnxruntime_cxx_api.h")
     # Locate libonnxruntime.so (from AAR extraction or local copy)
-    set(ONNXRUNTIME_ANDROID_LIB_DIR "${CMAKE_CURRENT_LIST_DIR}/../../../../../../onnxruntime-android/jni/${ANDROID_ABI}")
+    set(ONNXRUNTIME_ANDROID_LIB_DIR "${CMAKE_CURRENT_LIST_DIR}/../../../../../sdk/onnxruntime-android/jni/${ANDROID_ABI}")
 
     find_library(ONNXRUNTIME_LIB onnxruntime
         PATHS "${ONNXRUNTIME_ANDROID_LIB_DIR}"
@@ -217,6 +217,7 @@ if (EXISTS "${ONNXRUNTIME_ANDROID_HEADERS}/onnxruntime_cxx_api.h")
         target_include_directories(companion_dreamlite PRIVATE
             "${ONNXRUNTIME_ANDROID_HEADERS}"
             "${THIRD_PARTY_UI_DIR}/third_party"
+            "${THIRD_PARTY_UI_DIR}/third_party/stable-diffusion.cpp/thirdparty"
             "${CMAKE_CURRENT_SOURCE_DIR}"
         )
         target_link_libraries(companion_dreamlite
@@ -225,9 +226,109 @@ if (EXISTS "${ONNXRUNTIME_ANDROID_HEADERS}/onnxruntime_cxx_api.h")
             log
         )
         message(STATUS "DreamLite JNI: ONNX Runtime found, building libcompanion_dreamlite.so")
+
+        # --- DreamLite standalone worker executable ---
+        # Runs ONE image generation in a fresh process and writes the PNG to a
+        # file path. The parent (LocalImageGenerationEngine) spawns this via
+        # ProcessBuilder for each generation; when the worker process exits,
+        # the OS reclaims ALL memory (including ORT scudo virtual mappings
+        # that mallopt cannot release). This guarantees a clean memory state
+        # for every generation, enabling unlimited consecutive generations
+        # with 4 ORT threads.
+        #
+        # Named libdreamlite_worker.so so AGP packages it in lib/<abi>/ and
+        # (with useLegacyPackaging=true) extracts it to nativeLibraryDir where
+        # ProcessBuilder can exec it. The .so suffix is cosmetic — this is a
+        # PIE executable, not a shared library.
+        add_executable(dreamlite_worker_bin
+            dreamlite_worker.cpp
+            pipeline.cpp
+            tokenizer.cpp
+        )
+        set_target_properties(dreamlite_worker_bin PROPERTIES
+            OUTPUT_NAME "dreamlite_worker"
+            PREFIX "lib"
+            SUFFIX ".so"
+        )
+        target_include_directories(dreamlite_worker_bin PRIVATE
+            "${ONNXRUNTIME_ANDROID_HEADERS}"
+            "${THIRD_PARTY_UI_DIR}/third_party"
+            "${THIRD_PARTY_UI_DIR}/third_party/stable-diffusion.cpp/thirdparty"
+            "${CMAKE_CURRENT_SOURCE_DIR}"
+        )
+        target_link_libraries(dreamlite_worker_bin
+            ${ONNXRUNTIME_LIB}
+            android
+            log
+        )
+        message(STATUS "DreamLite Worker: building libdreamlite_worker.so (standalone executable)")
     else()
         message(WARNING "DreamLite JNI: libonnxruntime.so not found, skipping companion_dreamlite")
     endif()
 else()
     message(WARNING "DreamLite JNI: ONNX Runtime headers not found at ${ONNXRUNTIME_ANDROID_HEADERS}, skipping companion_dreamlite")
+endif()
+
+# ── MNN JNI (MOSS TTS inference) ──
+# Only build for arm64-v8a (our target); libMNN.so is not available for other ABIs
+if (ANDROID_ABI STREQUAL "arm64-v8a")
+    set(MNN_INCLUDE_DIR "C:/Users/72952/OneDrive/Desktop/ui/reference/MNN/include")
+    set(MNN_LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../jniLibs/${ANDROID_ABI}")
+
+    add_library(MNN_SHARED SHARED IMPORTED)
+    set_target_properties(MNN_SHARED PROPERTIES
+        IMPORTED_LOCATION "${MNN_LIB_DIR}/libMNN.so")
+
+    add_library(mnn_jni SHARED
+        mnn_jni.cpp
+    )
+    target_include_directories(mnn_jni PRIVATE
+        "${MNN_INCLUDE_DIR}"
+        "${MNN_INCLUDE_DIR}/MNN"
+        "${MNN_INCLUDE_DIR}/expr"
+    )
+    target_link_libraries(mnn_jni
+        MNN_SHARED
+        android
+        log
+    )
+    # libmnn_jni.so 将被 gradle 自动打包；旧预编译版在后，新编译版在前
+    message(STATUS "MNN JNI: compiling mnn_jni.cpp from source, linked against libMNN.so")
+
+    # ── MNN LLM JNI (LLM 推理 + 多模态视觉) ──
+    set(MNN_LLM_INCLUDE_DIR "C:/Users/72952/OneDrive/Desktop/ui/reference/MNN/transformers/llm/engine/include")
+    set(MNN_CV_INCLUDE_DIR "C:/Users/72952/OneDrive/Desktop/ui/reference/MNN/tools/cv/include")
+
+    add_library(mnn_llm_jni SHARED
+        mnn_llm_jni.cpp
+    )
+    target_include_directories(mnn_llm_jni PRIVATE
+        "${MNN_INCLUDE_DIR}"
+        "${MNN_INCLUDE_DIR}/MNN"
+        "${MNN_INCLUDE_DIR}/expr"
+        "${MNN_LLM_INCLUDE_DIR}"
+        "${MNN_CV_INCLUDE_DIR}"
+    )
+    target_link_libraries(mnn_llm_jni
+        MNN_SHARED
+        android
+        log
+    )
+    message(STATUS "MNN LLM JNI: compiling mnn_llm_jni.cpp, linked against libMNN.so (LLM + vision)")
+
+    # ── MNN ASR JNI (SenseVoice 语音识别) ──
+    add_library(mnn_asr_jni SHARED
+        mnn_asr_jni.cpp
+    )
+    target_include_directories(mnn_asr_jni PRIVATE
+        "${MNN_INCLUDE_DIR}"
+        "${MNN_INCLUDE_DIR}/MNN"
+        "${MNN_INCLUDE_DIR}/expr"
+    )
+    target_link_libraries(mnn_asr_jni
+        MNN_SHARED
+        android
+        log
+    )
+    message(STATUS "MNN ASR JNI: compiling mnn_asr_jni.cpp for SenseVoice ASR")
 endif()

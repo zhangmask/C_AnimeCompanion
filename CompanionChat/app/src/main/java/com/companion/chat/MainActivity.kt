@@ -46,14 +46,19 @@ import com.companion.chat.ui.home.DiscoverRoleDetailScreen
 import com.companion.chat.ui.home.HomeScreen
 import com.companion.chat.ui.memory.MemoryScreen
 import com.companion.chat.ui.navigation.DiscoverRoutes
+import com.companion.chat.ui.navigation.ImageStudioRoutes
 import com.companion.chat.ui.navigation.Screen
 import com.companion.chat.ui.navigation.SettingsRoutes
+import com.companion.chat.ui.imagestudio.ImageStudioScreen
 import com.companion.chat.ui.settings.AboutScreen
 import com.companion.chat.ui.settings.CharacterManagementScreen
+import com.companion.chat.ui.settings.RoleCardEditScreen
 import com.companion.chat.ui.settings.DarkModeSettingsScreen
 import com.companion.chat.ui.settings.LanguageSettingsScreen
 import com.companion.chat.ui.settings.ModelConfigScreen
 import com.companion.chat.ui.settings.ModelConfigScrollTarget
+import com.companion.chat.ui.settings.CustomApiConfigListScreen
+import com.companion.chat.ui.settings.CustomApiConfigEditScreen
 import com.companion.chat.ui.settings.SettingsScreen
 import com.companion.chat.ui.settings.SkillsManagementScreen
 import com.companion.chat.ui.settings.UserProfileScreen
@@ -192,7 +197,7 @@ fun MainApp(onLanguageChanged: (com.companion.chat.locale.AppLanguage) -> Unit =
                 HomeScreen(
                     viewModel = discoverViewModel,
                     onOpenRole = { roleId -> navController.navigate(DiscoverRoutes.detail(roleId)) },
-                    onCreateRole = { navController.navigate(SettingsRoutes.CHARACTER) }
+                    onCreateRole = { navController.navigate(SettingsRoutes.editRoleCard(0L)) }
                 )
             }
             composable(
@@ -205,7 +210,7 @@ fun MainApp(onLanguageChanged: (com.companion.chat.locale.AppLanguage) -> Unit =
                     viewModel = discoverViewModel,
                     onBack = { navController.popBackStack() },
                     onEditRole = { importedRoleId ->
-                        navController.navigate(SettingsRoutes.editCharacter(importedRoleId))
+                        navController.navigate(SettingsRoutes.editRoleCard(importedRoleId))
                     },
                     onStartChat = { importedRoleId ->
                         coroutineScope.launch {
@@ -218,6 +223,9 @@ fun MainApp(onLanguageChanged: (com.companion.chat.locale.AppLanguage) -> Unit =
                                 restoreState = true
                             }
                         }
+                    },
+                    onNavigateToImageStudio = { importedRoleId ->
+                        navController.navigate(ImageStudioRoutes.imageStudio(importedRoleId))
                     }
                 )
             }
@@ -225,7 +233,12 @@ fun MainApp(onLanguageChanged: (com.companion.chat.locale.AppLanguage) -> Unit =
                 ChatScreen(
                     viewModel = chatViewModel,
                     bottomBarHeight = chatBottomBarHeight,
-                    onRoleCardClick = { roleId -> navController.navigate(SettingsRoutes.editCharacter(roleId)) }
+                    onRoleCardClick = { roleId ->
+                        navController.navigate(SettingsRoutes.editRoleCard(roleId))
+                    },
+                    onUserAvatarClick = {
+                        navController.navigate(SettingsRoutes.PROFILE)
+                    }
                 )
             }
             composable(Screen.MEMORY.route) {
@@ -235,7 +248,15 @@ fun MainApp(onLanguageChanged: (com.companion.chat.locale.AppLanguage) -> Unit =
                 SettingsScreen(
                     onNavigateToCharacter = { navController.navigate(SettingsRoutes.CHARACTER) },
                     onNavigateToSkills = { navController.navigate(SettingsRoutes.SKILLS) },
-                    onNavigateToMemory = { navController.navigate(Screen.MEMORY.route) },
+                    onNavigateToMemory = {
+                        navController.navigate(Screen.MEMORY.route) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
                     onNavigateToModel = { target ->
                         navController.navigate(SettingsRoutes.modelWithTarget(target.name))
                     },
@@ -262,7 +283,8 @@ fun MainApp(onLanguageChanged: (com.companion.chat.locale.AppLanguage) -> Unit =
                                 restoreState = true
                             }
                         }
-                    }
+                    },
+                    onEditRoleCard = { roleId -> navController.navigate(SettingsRoutes.editRoleCard(roleId)) }
                 )
             }
             composable(
@@ -286,7 +308,18 @@ fun MainApp(onLanguageChanged: (com.companion.chat.locale.AppLanguage) -> Unit =
                             }
                         }
                     },
-                    editRoleId = editRoleId
+                    editRoleId = editRoleId,
+                    onEditRoleCard = { roleId -> navController.navigate(SettingsRoutes.editRoleCard(roleId)) }
+                )
+            }
+            composable(
+                route = SettingsRoutes.EDIT_ROLE_CARD,
+                arguments = listOf(navArgument("roleId") { type = NavType.LongType })
+            ) { entry ->
+                val roleId = entry.arguments?.getLong("roleId") ?: 0L
+                RoleCardEditScreen(
+                    roleId = roleId,
+                    onBack = { navController.popBackStack() }
                 )
             }
             composable(SettingsRoutes.SKILLS) {
@@ -315,11 +348,35 @@ fun MainApp(onLanguageChanged: (com.companion.chat.locale.AppLanguage) -> Unit =
                     scrollTarget = scrollTarget,
                     onBack = { navController.popBackStack() },
                     onModelConfigChanged = { chatViewModel.initializeEngine() },
+                    onNavigateToCustomApiList = { navController.navigate(SettingsRoutes.CUSTOM_API_LIST) },
                     viewModel = viewModel(factory = viewModelFactory)
                 )
             }
             composable(SettingsRoutes.VOICE) {
                 VoiceSettingsScreen(
+                    onBack = { navController.popBackStack() },
+                    viewModel = viewModel(factory = viewModelFactory)
+                )
+            }
+            composable(SettingsRoutes.CUSTOM_API_LIST) {
+                CustomApiConfigListScreen(
+                    onBack = { navController.popBackStack() },
+                    onEdit = { configId -> navController.navigate(SettingsRoutes.customApiEdit(configId)) },
+                    viewModel = viewModel(factory = viewModelFactory)
+                )
+            }
+            composable(
+                SettingsRoutes.CUSTOM_API_EDIT,
+                arguments = listOf(
+                    navArgument("configId") {
+                        type = NavType.LongType
+                        defaultValue = -1L
+                    }
+                )
+            ) { backStackEntry ->
+                val configId = backStackEntry.arguments?.getLong("configId") ?: -1L
+                CustomApiConfigEditScreen(
+                    configId = configId,
                     onBack = { navController.popBackStack() },
                     viewModel = viewModel(factory = viewModelFactory)
                 )
@@ -338,6 +395,16 @@ fun MainApp(onLanguageChanged: (com.companion.chat.locale.AppLanguage) -> Unit =
             }
             composable(SettingsRoutes.PROFILE) {
                 UserProfileScreen(onNavigateBack = { navController.popBackStack() })
+            }
+            composable(
+                route = ImageStudioRoutes.IMAGE_STUDIO,
+                arguments = listOf(navArgument("roleId") { type = NavType.LongType })
+            ) { backStackEntry ->
+                val roleId = backStackEntry.arguments?.getLong("roleId") ?: 0L
+                ImageStudioScreen(
+                    roleId = roleId,
+                    onBack = { navController.popBackStack() }
+                )
             }
         }
     }

@@ -38,7 +38,11 @@ class ModelConfigViewModel(
     val uiState: StateFlow<ModelConfigUiState> = _uiState.asStateFlow()
 
     fun setRuntime(runtime: ModelRuntime) {
-        updateModelConfig(_uiState.value.modelConfig.copy(runtime = runtime, modelPath = ""))
+        updateModelConfig(_uiState.value.modelConfig.copy(runtime = runtime, modelPath = "", useCustomApi = false))
+    }
+
+    fun setUseCustomApi(enabled: Boolean) {
+        updateModelConfig(_uiState.value.modelConfig.copy(useCustomApi = enabled))
     }
 
     fun setBackend(backend: BackendType) {

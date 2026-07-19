@@ -36,9 +36,21 @@ class MemoryExtractLoop(
         val storedEntities = mutableListOf<MemoryEntity>()
         val storedLinks = mutableListOf<MemoryLink>()
 
-        // 4a. 写入记忆（去重）
+        // 4a. 写入记忆（关键词去重：相似的只增加权重，不重复存储）
         for (extracted in parseResult.memories) {
+            // 精确匹配跳过
             if (memoryRepository.findExactMatch(extracted.category, extracted.content) != null) continue
+
+            // 关键词相似搜索：如果找到相似记忆，只增加权重
+            val similar = memoryRepository.findSimilarByKeywords(extracted.category, extracted.content, limit = 3)
+            if (similar.isNotEmpty()) {
+                for (mem in similar) {
+                    memoryRepository.strengthenMemory(mem.id, MemoryConfig.STRENGTHEN_LLM_CONFIRM)
+                }
+                continue
+            }
+
+            // 无相似记忆，存储新记忆
             val memory = memoryRepository.storeMemory(
                 content = extracted.content,
                 category = extracted.category,

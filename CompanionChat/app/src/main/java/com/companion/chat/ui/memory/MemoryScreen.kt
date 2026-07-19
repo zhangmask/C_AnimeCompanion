@@ -19,6 +19,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -237,7 +241,15 @@ fun MemoryScreen(
             if (hasFilter) {
                 val filterParts = mutableListOf<String>()
                 if (uiState.filter != MemoryFilter.ALL) filterParts.add(filterLabel(uiState.filter, LocalLanguage.current))
-                if (strengthFilter != "all") filterParts.add("S:" + strengthFilter)
+                if (strengthFilter != "all") {
+                    val strengthLabel = when (strengthFilter) {
+                        "temporary" -> Strings.get(LocalLanguage.current, StringsKey.memory_strength_temporary)
+                        "short_term" -> Strings.get(LocalLanguage.current, StringsKey.memory_strength_short_term)
+                        "long_term" -> Strings.get(LocalLanguage.current, StringsKey.memory_strength_long_term)
+                        else -> strengthFilter
+                    }
+                    filterParts.add(strengthLabel)
+                }
                 if (selectedRoleCardId != null) {
                     val roleName = uiState.roleCards.find { it.id == selectedRoleCardId }?.name ?: Strings.txt(StringsKey.memory_unknown_role)
                     filterParts.add(Strings.txt(StringsKey.memory_role_prefix, roleName))
@@ -394,7 +406,12 @@ fun MemoryScreen(
                                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                                             contentPadding = PaddingValues(horizontal = 20.dp)
                                         ) {
-                                            val strengthOptions = listOf("all" to Strings.get(lang0, StringsKey.memory_layer_all), "weak" to "Weak (<0.4)", "strong" to "Strong (>=0.4)")
+                                            val strengthOptions = listOf(
+                                                "all" to Strings.get(lang0, StringsKey.memory_layer_all),
+                                                "temporary" to Strings.get(lang0, StringsKey.memory_strength_temporary),
+                                                "short_term" to Strings.get(lang0, StringsKey.memory_strength_short_term),
+                                                "long_term" to Strings.get(lang0, StringsKey.memory_strength_long_term)
+                                            )
                                             items(strengthOptions.size) { index ->
                                                 val (value, label) = strengthOptions[index]
                                                 val isSelected = tempStrengthFilter == value
@@ -523,7 +540,13 @@ fun MemoryScreen(
                     val displayMemories = uiState.memories.filter { memory ->
                         val matchesSearch = memorySearchQuery.isBlank() ||
                             memory.content.contains(memorySearchQuery, ignoreCase = true)
-                        val matchesStrength = strengthFilter == "all" || strengthFilter == "strong"
+                        val matchesStrength = when (strengthFilter) {
+                            "all" -> true
+                            "temporary" -> memory.strength < 0.3
+                            "short_term" -> memory.strength >= 0.3 && memory.strength < 0.6
+                            "long_term" -> memory.strength >= 0.6
+                            else -> true
+                        }
                         matchesSearch && matchesStrength
                     }
                     LazyColumn(
@@ -679,13 +702,13 @@ private fun MemoryCard(
                     bgColor = catBg,
                     textColor = catText
                 )
-                val (strengthBg, strengthText) = if (memory.strength >= 0.4) {
-                    MemoryLongBg to MemoryLongText
-                } else {
-                    MemoryShortBg to MemoryShortText
+                val (strengthBg, strengthText, strengthLabel) = when {
+                    memory.strength >= 0.6 -> Triple(MemoryLongBg, MemoryLongText, Strings.get(LocalLanguage.current, StringsKey.memory_strength_long_term))
+                    memory.strength >= 0.3 -> Triple(MemoryShortBg, MemoryShortText, Strings.get(LocalLanguage.current, StringsKey.memory_strength_short_term))
+                    else -> Triple(MemoryShortBg, MemoryShortText, Strings.get(LocalLanguage.current, StringsKey.memory_strength_temporary))
                 }
                 MemoryTag(
-                    text = "S=${"%.1f".format(memory.strength)}",
+                    text = strengthLabel,
                     bgColor = strengthBg,
                     textColor = strengthText
                 )
@@ -708,7 +731,7 @@ private fun MemoryCard(
                 FilledTonalIconButton(onClick = onDelete) {
                     Icon(Icons.Default.Delete, contentDescription = Strings.txt(StringsKey.memory_delete_action))
                 }
-                if (memory.strength < 0.4) {
+                if (memory.strength < 0.6) {
                     Spacer(modifier = Modifier.size(8.dp))
                     FilledTonalIconButton(onClick = onPromote) {
                         Icon(Icons.Default.KeyboardArrowUp, contentDescription = Strings.txt(StringsKey.memory_promote_action))
@@ -764,7 +787,7 @@ private fun MemoryEditorDialog(
 
     Dialog(
         onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
+        properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
     ) {
         Box(
             modifier = Modifier
@@ -776,12 +799,18 @@ private fun MemoryEditorDialog(
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .fillMaxHeight()
                     .clickable(enabled = false) { },
                 shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
                 color = Color.White
             ) {
                 Column(
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .fillMaxHeight()
+                        .statusBarsPadding()
+                        .navigationBarsPadding()
+                        .imePadding()
                 ) {
                     // ── Header ──
                     Row(
@@ -853,78 +882,39 @@ private fun MemoryEditorDialog(
                             .background(Color(0xFFE8E4EC))
                     )
 
-                    // ── Tab Content ──
-                    when (selectedTab) {
-                        0 -> {
-                            // Content tab
-                            OutlinedTextField(
-                                value = content,
-                                onValueChange = onContentChange,
-                                label = { Text(Strings.txt(StringsKey.memory_field_content)) },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 20.dp, vertical = 16.dp),
-                                minLines = 4
-                            )
-                        }
-                        1 -> {
-                            // Category tab - horizontal scrollable chips
-                            LazyRow(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 20.dp),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                contentPadding = PaddingValues(horizontal = 20.dp)
-                            ) {
-                                items(categories.size) { index ->
-                                    val cat = categories[index]
-                                    val isSelected = category == cat
-                                    FilterChip(
-                                        selected = isSelected,
-                                        onClick = { onCategoryChange(cat) },
-                                        label = { Text(categoryLabel(cat, LocalLanguage.current)) },
-                                        colors = FilterChipDefaults.filterChipColors(
-                                            selectedContainerColor = BrandPrimary,
-                                            selectedLabelColor = Color.White,
-                                            containerColor = BrandSurfaceContainer,
-                                            labelColor = BrandOutline
-                                        )
-                                    )
-                                }
-                            }
-                        }
-                        2 -> {
-                            // Character tab
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 20.dp, vertical = 16.dp)
-                            ) {
-                                // Global memory option
-                                FilterChip(
-                                    selected = characterName.isBlank(),
-                                    onClick = { onCharacterNameChange("") },
-                                    label = { Text(Strings.txt(StringsKey.memory_global)) },
-                                    colors = FilterChipDefaults.filterChipColors(
-                                        selectedContainerColor = BrandPrimary,
-                                        selectedLabelColor = Color.White,
-                                        containerColor = BrandSurfaceContainer,
-                                        labelColor = BrandOutline
-                                    )
+                    // ── Tab Content (fills remaining space + scrollable) ──
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                    ) {
+                        when (selectedTab) {
+                            0 -> {
+                                OutlinedTextField(
+                                    value = content,
+                                    onValueChange = onContentChange,
+                                    label = { Text(Strings.txt(StringsKey.memory_field_content)) },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 20.dp, vertical = 16.dp),
+                                    minLines = 4
                                 )
-                                Spacer(modifier = Modifier.height(12.dp))
-
-                                // Role cards
+                            }
+                            1 -> {
                                 LazyRow(
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 20.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    contentPadding = PaddingValues(horizontal = 20.dp)
                                 ) {
-                                    items(availableRoleCards.size) { index ->
-                                        val role = availableRoleCards[index]
-                                        val isSelected = characterName == role.name
+                                    items(categories.size) { index ->
+                                        val cat = categories[index]
+                                        val isSelected = category == cat
                                         FilterChip(
                                             selected = isSelected,
-                                            onClick = { onCharacterNameChange(role.name) },
-                                            label = { Text(role.name) },
+                                            onClick = { onCategoryChange(cat) },
+                                            label = { Text(categoryLabel(cat, LocalLanguage.current)) },
                                             colors = FilterChipDefaults.filterChipColors(
                                                 selectedContainerColor = BrandPrimary,
                                                 selectedLabelColor = Color.White,
@@ -935,11 +925,52 @@ private fun MemoryEditorDialog(
                                     }
                                 }
                             }
+                            2 -> {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 20.dp, vertical = 16.dp)
+                                ) {
+                                    // Global memory option
+                                    FilterChip(
+                                        selected = characterName.isBlank(),
+                                        onClick = { onCharacterNameChange("") },
+                                        label = { Text(Strings.txt(StringsKey.memory_global)) },
+                                        colors = FilterChipDefaults.filterChipColors(
+                                            selectedContainerColor = BrandPrimary,
+                                            selectedLabelColor = Color.White,
+                                            containerColor = BrandSurfaceContainer,
+                                            labelColor = BrandOutline
+                                        )
+                                    )
+                                    Spacer(modifier = Modifier.height(12.dp))
+
+                                    // Role cards
+                                    LazyRow(
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        items(availableRoleCards.size) { index ->
+                                            val role = availableRoleCards[index]
+                                            val isSelected = characterName == role.name
+                                            FilterChip(
+                                                selected = isSelected,
+                                                onClick = { onCharacterNameChange(role.name) },
+                                                label = { Text(role.name) },
+                                                colors = FilterChipDefaults.filterChipColors(
+                                                    selectedContainerColor = BrandPrimary,
+                                                    selectedLabelColor = Color.White,
+                                                    containerColor = BrandSurfaceContainer,
+                                                    labelColor = BrandOutline
+                                                )
+                                            )
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
-                }
 
-                    // ── Action Buttons ──
+                    // ── Action Buttons (固定在底部) ──
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -964,6 +995,7 @@ private fun MemoryEditorDialog(
             }
         }
     }
+}
 
 @Composable
 private fun EmptyState(

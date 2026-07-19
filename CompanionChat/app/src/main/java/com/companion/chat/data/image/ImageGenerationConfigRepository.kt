@@ -30,10 +30,10 @@ class ImageGenerationConfigRepository(
             ImageGenerationProvider.valueOf(
                 sharedPreferences.getString(
                     KEY_PROVIDER,
-                    ImageGenerationProvider.LOCAL_STABLE_DIFFUSION_CPP.name
+                    ImageGenerationProvider.LOCAL_DREAMLITE.name
                 ).orEmpty()
             )
-        }.getOrDefault(ImageGenerationProvider.LOCAL_STABLE_DIFFUSION_CPP)
+        }.getOrDefault(ImageGenerationProvider.LOCAL_DREAMLITE)
         return ImageGenerationConfig(
             baseUrl = sharedPreferences.getString(KEY_BASE_URL, "").orEmpty(),
             apiKey = sharedPreferences.getString(KEY_API_KEY, "").orEmpty(),

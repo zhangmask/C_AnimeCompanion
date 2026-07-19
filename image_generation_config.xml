@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='utf-8' standalone='yes' ?>
+<map>
+    <string name="provider">LOCAL_DREAMLITE</string>
+    <string name="local_model_path">/storage/emulated/0/Android/data/com.companion.chat/files/models/image/dreamlite</string>
+    <boolean name="local_use_vulkan" value="true" />
+    <int name="local_width" value="1024" />
+    <int name="local_height" value="1024" />
+    <int name="local_steps" value="4" />
+    <float name="local_cfg_scale" value="1.0" />
+    <int name="timeout_millis" value="60000" />
+</map>

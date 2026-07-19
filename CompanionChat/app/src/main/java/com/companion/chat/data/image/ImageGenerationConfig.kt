@@ -4,7 +4,7 @@ data class ImageGenerationConfig(
     val baseUrl: String = "",
     val apiKey: String = "",
     val model: String = "",
-    val provider: ImageGenerationProvider = ImageGenerationProvider.LOCAL_STABLE_DIFFUSION_CPP,
+    val provider: ImageGenerationProvider = ImageGenerationProvider.LOCAL_DREAMLITE,
     val localModelPath: String = "",
     val localWidth: Int = 512,
     val localHeight: Int = 512,
@@ -36,7 +36,13 @@ data class ImageGenerationRequest(
     val seed: Long? = null,
     val steps: Int = 24,
     val roleId: String = "",
-    val purpose: ImageGenerationPurpose = ImageGenerationPurpose.CHAT_SCENE
+    val purpose: ImageGenerationPurpose = ImageGenerationPurpose.CHAT_SCENE,
+    /** img2img: path to saved latents file for reference modification. Empty = txt2img. */
+    val referenceLatentsPath: String = "",
+    /** img2img strength: 0=no change, 1=full regeneration, 0.6=moderate edit. */
+    val strength: Float = 0.6f,
+    /** Where to save the final denoised latents for future img2img reuse. Empty = don't save. */
+    val outputLatentsPath: String = ""
 )
 
 sealed class ImageGenerationState {

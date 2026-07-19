@@ -6,6 +6,8 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import com.companion.chat.locale.AppLanguage
+import com.companion.chat.locale.LocalLanguage
 
 private val LightColorScheme = lightColorScheme(
     primary = BrandPrimary,
@@ -61,10 +63,11 @@ fun CompanionChatTheme(
     content: @Composable () -> Unit
 ) {
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
+    val typography = typographyFor(LocalLanguage.current)
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
+        typography = typography,
         shapes = AppShapes,
         content = content
     )

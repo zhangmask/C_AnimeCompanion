@@ -36,6 +36,19 @@ interface VoiceOutputEngine {
         queueMode: TtsQueueMode = TtsQueueMode.FLUSH
     )
 
+    /**
+     * 带 messageId 的合成播放：命中缓存则直接播放，合成完成后写回缓存。
+     * 默认实现退化为普通 speak（不缓存），由支持缓存的实现覆写。
+     */
+    suspend fun speakWithCache(
+        messageId: String,
+        text: String,
+        config: VoiceOutputConfig = VoiceOutputConfig(),
+        queueMode: TtsQueueMode = TtsQueueMode.FLUSH
+    ) {
+        speak(text, config, queueMode)
+    }
+
     fun stop()
 
     fun release()

@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import com.companion.chat.data.role.RoleCardRepository
 import com.companion.chat.data.voice.VoiceClipScanner
+import kotlinx.coroutines.runBlocking
 
 class DiscoverRoleRepository(
     private val sharedPreferences: SharedPreferences,
@@ -24,8 +25,37 @@ class DiscoverRoleRepository(
         includeMature: Boolean = false,
         sortMode: RoleSortMode = RoleSortMode.HOT
     ): List<DiscoverRoleCardItem> {
+        // Merge hardcoded discover roles with user-created roles from Room DB
+        val allRoles = roles.toMutableList()
+        if (roleCardRepository != null) {
+            runBlocking {
+                val userCards = roleCardRepository.getAllRoleCards()
+                userCards.forEach { card ->
+                    if (allRoles.none { it.name == card.name }) {
+                        allRoles.add(DiscoverRoleCard(
+                            id = "user_${card.id}",
+                            name = card.name,
+                            author = "用户创建",
+                            description = card.description.orEmpty(),
+                            persona = card.persona.orEmpty(),
+                            speakingStyle = card.speakingStyle.orEmpty(),
+                            background = card.background.orEmpty(),
+                            openingMessage = card.openingMessage.orEmpty(),
+                            coverImageUri = card.avatarImageUri.orEmpty(),
+                            imageStyle = card.imageStylePrompt.orEmpty(),
+                            voiceSummary = card.voiceDisplayName.orEmpty(),
+                            tags = card.tags,
+                            contentRating = ContentRating.SAFE,
+                            generationPreset = RoleGenerationPreset(imageProvider = "local", defaultPrompt = ""),
+                            heat = 0,
+                            createdAt = card.createdAt
+                        ))
+                    }
+                }
+            }
+        }
         val normalizedQuery = query.trim()
-        val filtered = roles.filter { role ->
+        val filtered = allRoles.filter { role ->
             val matchesQuery = normalizedQuery.isBlank() ||
                 role.name.contains(normalizedQuery, ignoreCase = true) ||
                 role.author.contains(normalizedQuery, ignoreCase = true) ||
@@ -61,9 +91,18 @@ class DiscoverRoleRepository(
     }
 
     fun unlock(roleId: String): RoleCollection {
+        // Toggle unlock state: allow switching back to locked.
+        // When unlocking (false→true), also mark as favorite (original behavior).
+        // When locking (true→false), leave favorite unchanged.
+        val current = getCollection(roleId)
+        val newUnlocked = !current.isUnlocked
         sharedPreferences.edit()
-            .putBoolean(key(roleId, KEY_UNLOCKED), true)
-            .putBoolean(key(roleId, KEY_FAVORITE), true)
+            .putBoolean(key(roleId, KEY_UNLOCKED), newUnlocked)
+            .apply {
+                if (newUnlocked) {
+                    putBoolean(key(roleId, KEY_FAVORITE), true)
+                }
+            }
             .apply()
         return getCollection(roleId)
     }
@@ -92,7 +131,8 @@ class DiscoverRoleRepository(
             imageStylePrompt = role.imageStyle,
             voiceProfileUri = defaultVoiceUri,
             voiceMode = "CLONE",
-            voiceDisplayName = role.voiceSummary
+            voiceDisplayName = role.voiceSummary,
+            tags = role.tags
         )
         sharedPreferences.edit()
             .putBoolean(key(roleId, KEY_UNLOCKED), true)

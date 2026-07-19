@@ -46,9 +46,24 @@ class MemoryRetriever(
         val normalized = userMessage.lowercase()
             .replace(PUNCTUATION_REGEX, " ")
             .replace(WHITESPACE_REGEX, " ").trim()
-        return normalized.split(WHITESPACE_REGEX)
-            .filter { it.length >= 2 && it !in STOP_WORDS }
-            .distinct()
+        val tokens = normalized.split(WHITESPACE_REGEX)
+        val result = mutableListOf<String>()
+        for (token in tokens) {
+            if (token.length >= 2 && token !in STOP_WORDS) {
+                result.add(token)
+                // For CJK text, also add individual characters as separate keywords
+                // (word segmentation is not available, so character-level matching is used)
+                if (token.all { it in '\u4E00'..'\u9FFF' }) {
+                    for (ch in token) {
+                        val charStr = ch.toString()
+                        if (charStr.length >= 2 && charStr !in STOP_WORDS) {
+                            result.add(charStr)
+                        }
+                    }
+                }
+            }
+        }
+        return result.distinct()
     }
 
     private fun escapeFtsTerm(term: String): String {

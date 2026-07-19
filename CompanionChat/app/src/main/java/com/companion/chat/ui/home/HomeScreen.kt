@@ -1,11 +1,9 @@
 package com.companion.chat.ui.home
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.EaseOut
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -40,6 +38,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Person
@@ -98,7 +97,7 @@ import com.companion.chat.ui.theme.BrandPrimaryLight
 import com.companion.chat.ui.theme.BrandSurfaceContainer
 import com.companion.chat.ui.theme.BrandOutlineVariant
 import com.companion.chat.ui.theme.BrandPrimaryContainer
-import kotlinx.coroutines.delay
+
 import com.companion.chat.ui.theme.BrandSecondaryContainer
 import com.companion.chat.locale.LocalLanguage
 import com.companion.chat.locale.Strings
@@ -170,23 +169,17 @@ fun HomeScreen(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                itemsIndexed(uiState.items, key = { _, r -> r.role.id }) { index, item ->
-                    var visible by remember { mutableStateOf(false) }
-                    LaunchedEffect(item.role.id) {
-                        delay(80L + index * 50L)
-                        visible = true
+                itemsIndexed(uiState.items, key = { _, r -> r.role.id }) { _, item ->
+                    val alpha = remember { Animatable(0f) }
+                    LaunchedEffect(alpha) {
+                        alpha.animateTo(1f, animationSpec = tween(250, easing = EaseOut))
                     }
-                    AnimatedVisibility(
-                        visible = visible,
-                        enter = fadeIn(tween(350, easing = EaseOut)) +
-                                slideInVertically(tween(350, easing = EaseOut)) { it / 6 }
-                    ) {
-                        DiscoverRoleCard(
-                            item = item,
-                            onOpen = { onOpenRole(item.role.id) },
-                            onFavorite = { viewModel.toggleFavorite(item.role.id) }
-                        )
-                    }
+                    DiscoverRoleCard(
+                        item = item,
+                        onOpen = { onOpenRole(item.role.id) },
+                        onFavorite = { viewModel.toggleFavorite(item.role.id) },
+                        modifier = Modifier.graphicsLayer { this.alpha = alpha.value }
+                    )
                 }
             }
         }
@@ -201,7 +194,8 @@ fun DiscoverRoleDetailScreen(
     viewModel: DiscoverViewModel = viewModel(),
     onBack: () -> Unit = {},
     onStartChat: (Long) -> Unit = {},
-    onEditRole: (Long) -> Unit = {}
+    onEditRole: (Long) -> Unit = {},
+    onNavigateToImageStudio: (Long) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -254,7 +248,16 @@ fun DiscoverRoleDetailScreen(
                     isGeneratingImage = uiState.isGeneratingImage,
                     onFavorite = { viewModel.toggleFavorite(item.role.id) },
                     onUnlock = { viewModel.unlock(item.role.id) },
-                    onGenerateImage = { viewModel.generateRoleImage(item.role.id) },
+                    onGenerateImage = {
+                        val importedId = item.collection.importedRoleCardId
+                        if (importedId != null && importedId > 0L) {
+                            onNavigateToImageStudio(importedId)
+                        } else {
+                            viewModel.copyAndActivate(item.role.id) { newId ->
+                                onNavigateToImageStudio(newId)
+                            }
+                        }
+                    },
                     onStartChat = {
                         viewModel.copyAndActivate(item.role.id, onReady = onStartChat)
                     },
@@ -268,6 +271,13 @@ fun DiscoverRoleDetailScreen(
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface
                 )
+                if (item.role.tags.isNotEmpty()) {
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        item.role.tags.forEach { tag ->
+                            AssistChip(onClick = {}, label = { Text(tag) })
+                        }
+                    }
+                }
                 DetailSection(Strings.txt(StringsKey.detail_persona), item.role.persona)
                 DetailSection(Strings.txt(StringsKey.detail_voice), item.role.voiceSummary)
                 DetailSection(Strings.txt(StringsKey.detail_image_style), item.role.imageStyle.ifBlank { Strings.txt(StringsKey.voice_not_configured) })
@@ -422,7 +432,8 @@ private fun DiscoverControls(
 private fun DiscoverRoleCard(
     item: DiscoverRoleCardItem,
     onOpen: () -> Unit,
-    onFavorite: () -> Unit
+    onFavorite: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
@@ -433,7 +444,7 @@ private fun DiscoverRoleCard(
     )
 
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .graphicsLayer { scaleX = scale; scaleY = scale }
             .clickable(interactionSource = interactionSource, indication = null, onClick = onOpen),
@@ -570,7 +581,10 @@ private fun RoleDetailActions(
                 onClick = onUnlock,
                 modifier = Modifier.weight(1f)
             ) {
-                Icon(Icons.Default.LockOpen, contentDescription = null)
+                Icon(
+                    imageVector = if (item.collection.isUnlocked) Icons.Default.LockOpen else Icons.Default.Lock,
+                    contentDescription = null
+                )
                 Spacer(Modifier.width(8.dp))
                 Text(if (item.collection.isUnlocked) Strings.txt(StringsKey.home_unlocked) else Strings.txt(StringsKey.home_unlock_to_favorite))
             }

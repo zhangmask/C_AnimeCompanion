@@ -1,0 +1,163 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.7/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+Configuration on demand is an incubating feature.
+Build was configured to prefer settings repositories over project repositories but repository 'maven' was added by initialization script 'C:\Users\72952\.gradle\init.d\mirrors.gradle'
+Build was configured to prefer settings repositories over project repositories but repository 'maven2' was added by initialization script 'C:\Users\72952\.gradle\init.d\mirrors.gradle'
+Build was configured to prefer settings repositories over project repositories but repository 'maven3' was added by initialization script 'C:\Users\72952\.gradle\init.d\mirrors.gradle'
+Build was configured to prefer settings repositories over project repositories but repository 'Google' was added by initialization script 'C:\Users\72952\.gradle\init.d\mirrors.gradle'
+Build was configured to prefer settings repositories over project repositories but repository 'MavenRepo' was added by initialization script 'C:\Users\72952\.gradle\init.d\mirrors.gradle'
+Build was configured to prefer settings repositories over project repositories but repository 'maven' was added by initialization script 'C:\Users\72952\.gradle\init.d\mirrors.gradle'
+Build was configured to prefer settings repositories over project repositories but repository 'maven2' was added by initialization script 'C:\Users\72952\.gradle\init.d\mirrors.gradle'
+Build was configured to prefer settings repositories over project repositories but repository 'maven3' was added by initialization script 'C:\Users\72952\.gradle\init.d\mirrors.gradle'
+Build was configured to prefer settings repositories over project repositories but repository 'Google' was added by initialization script 'C:\Users\72952\.gradle\init.d\mirrors.gradle'
+Build was configured to prefer settings repositories over project repositories but repository 'MavenRepo' was added by initialization script 'C:\Users\72952\.gradle\init.d\mirrors.gradle'
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:checkDebugAarMetadata UP-TO-DATE
+> Task :app:generateDebugResValues UP-TO-DATE
+> Task :app:mapDebugSourceSetPaths UP-TO-DATE
+> Task :app:generateDebugResources UP-TO-DATE
+> Task :app:mergeDebugResources UP-TO-DATE
+> Task :app:packageDebugResources UP-TO-DATE
+> Task :app:parseDebugLocalResources UP-TO-DATE
+> Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksDebug UP-TO-DATE
+> Task :app:processDebugMainManifest UP-TO-DATE
+> Task :app:processDebugManifest UP-TO-DATE
+> Task :app:processDebugManifestForPackage UP-TO-DATE
+> Task :app:processDebugResources UP-TO-DATE
+> Task :app:kspDebugKotlin UP-TO-DATE
+> Task :app:compileDebugKotlin UP-TO-DATE
+> Task :app:javaPreCompileDebug UP-TO-DATE
+> Task :app:compileDebugJavaWithJavac NO-SOURCE
+> Task :app:bundleDebugClassesToCompileJar UP-TO-DATE
+> Task :app:kspDebugUnitTestKotlin UP-TO-DATE
+
+> Task :app:compileDebugUnitTestKotlin
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/companion/CompanionRuntimeTest.kt:217:22 Unresolved reference 'FakeInferenceEngine'.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/companion/CompanionRuntimeTest.kt:221:30 Unresolved reference 'FakeContextManager'.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/companion/CompanionRuntimeTest.kt:248:22 Unresolved reference 'FakeInferenceEngine'.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/companion/CompanionRuntimeTest.kt:252:30 Unresolved reference 'FakeContextManager'.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/companion/CompanionRuntimeTest.kt:271:23 Unresolved reference 'FakePostTurnLearning'.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/companion/CompanionRuntimeTest.kt:302:22 Unresolved reference 'FakeInferenceEngine'.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/companion/CompanionRuntimeTest.kt:306:30 Unresolved reference 'FakeContextManager'.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/companion/CompanionRuntimeTest.kt:390:9 No parameter with name 'layer' found.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/companion/CompanionRuntimeTest.kt:392:9 No parameter with name 'referenceCount' found.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/companion/CompanionRuntimeTest.kt:396:9 No parameter with name 'expiresAt' found.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/companion/CompanionRuntimeTest.kt:476:13 Class 'CompanionRuntimeTest.FakePreferenceDao' is not abstract and does not implement abstract members:
+suspend fun getByCategoryForRole(category: String, roleCardId: Long?): List<UserPreference>
+suspend fun findExactMatchForRole(category: String, content: String, roleCardId: Long?): UserPreference?
+suspend fun getConfirmedForRole(minimumConfidence: Int = ..., roleCardId: Long?): List<UserPreference>
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/companion/CompanionRuntimeTest.kt:505:13 Class 'CompanionRuntimeTest.FakeMemoryDao' is not abstract and does not implement abstract members:
+suspend fun getByCategory(category: String): List<Memory>
+suspend fun findExactMatch(category: String, content: String): Memory?
+suspend fun getActiveMemories(minStrength: Double = ...): List<Memory>
+suspend fun applyDecayByAge(id: Long, idleDays: Int, now: Long): Unit
+suspend fun strengthen(id: Long, delta: Double, now: Long): Unit
+suspend fun deleteByStrengthBelow(threshold: Double): Int
+suspend fun searchByFTS(query: SupportSQLiteQuery): List<Memory>
+suspend fun searchByFTSWithRole(query: SupportSQLiteQuery): List<Memory>
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/companion/CompanionRuntimeTest.kt:527:68 Syntax error: Missing '}.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/companion/CompanionRuntimeTest.kt:664:1 Syntax error: Unclosed comment.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/data/context/NoOpSummaryGeneratorTest.kt:13:25 Unresolved reference 'NoOpSummaryGenerator'.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/data/memory/MemoryRetrieverTest.kt:145:9 No parameter with name 'layer' found.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/data/memory/MemoryRetrieverTest.kt:147:9 No parameter with name 'referenceCount' found.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/data/memory/MemoryRetrieverTest.kt:151:9 No parameter with name 'expiresAt' found.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/data/memory/MemoryRetrieverTest.kt:154:13 Class 'MemoryRetrieverTest.SearchableFakeMemoryDao' is not abstract and does not implement abstract members:
+suspend fun getByCategory(category: String): List<Memory>
+suspend fun findExactMatch(category: String, content: String): Memory?
+suspend fun getActiveMemories(minStrength: Double = ...): List<Memory>
+suspend fun applyDecayByAge(id: Long, idleDays: Int, now: Long): Unit
+suspend fun strengthen(id: Long, delta: Double, now: Long): Unit
+suspend fun deleteByStrengthBelow(threshold: Double): Int
+suspend fun searchByFTS(query: SupportSQLiteQuery): List<Memory>
+suspend fun searchByFTSWithRole(query: SupportSQLiteQuery): List<Memory>
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/data/memory/MemoryRetrieverTest.kt:171:82 Syntax error: Missing '}.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/data/memory/MemoryRetrieverTest.kt:199:1 Syntax error: Unclosed comment.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/data/preferences/PreferenceRepositoryTest.kt:77:13 Class 'PreferenceRepositoryTest.FakePreferenceDao' is not abstract and does not implement abstract members:
+suspend fun getByCategoryForRole(category: String, roleCardId: Long?): List<UserPreference>
+suspend fun findExactMatchForRole(category: String, content: String, roleCardId: Long?): UserPreference?
+suspend fun getConfirmedForRole(minimumConfidence: Int = ..., roleCardId: Long?): List<UserPreference>
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/data/voice/VoiceInputConfigRepositoryTest.kt:21:40 Function invocation 'recognitionModeLabel(...)' expected.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/engine/RoleAwareVoiceOutputEngineTest.kt:85:13 Class 'RoleAwareVoiceOutputEngineTest.FakeVoiceOutputEngine' is not abstract and does not implement abstract member:
+suspend fun speak(text: String, config: VoiceOutputConfig = ..., queueMode: TtsQueueMode = ...): Unit
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/engine/RoleAwareVoiceOutputEngineTest.kt:89:9 'speak' overrides nothing. Potential signatures for overriding:
+suspend fun speak(text: String, config: VoiceOutputConfig = ..., queueMode: TtsQueueMode = ...): Unit
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/ui/chat/components/MessageBubbleQuoteTest.kt:5:28 Unresolved reference 'test'.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/ui/chat/components/MessageBubbleQuoteTest.kt:6:28 Unresolved reference 'test'.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/ui/chat/components/MessageBubbleQuoteTest.kt:7:28 Unresolved reference 'test'.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/ui/chat/components/MessageBubbleQuoteTest.kt:8:28 Unresolved reference 'test'.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/ui/chat/components/MessageBubbleQuoteTest.kt:9:28 Unresolved reference 'test'.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/ui/chat/components/MessageBubbleQuoteTest.kt:10:28 Unresolved reference 'test'.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/ui/chat/components/MessageBubbleQuoteTest.kt:11:17 Unresolved reference 'test'.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/ui/chat/components/MessageBubbleQuoteTest.kt:25:12 Unresolved reference 'robolectric'.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/ui/chat/components/MessageBubbleQuoteTest.kt:26:12 Unresolved reference 'robolectric'.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/ui/chat/components/MessageBubbleQuoteTest.kt:34:10 Unresolved reference 'AndroidJUnit4'.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/ui/chat/components/MessageBubbleQuoteTest.kt:34:10 Annotation argument must be a compile-time constant.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/ui/chat/components/MessageBubbleQuoteTest.kt:35:2 Unresolved reference 'GraphicsMode'.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/ui/chat/components/MessageBubbleQuoteTest.kt:35:15 Unresolved reference 'GraphicsMode'.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/ui/chat/components/MessageBubbleQuoteTest.kt:36:2 Unresolved reference 'Config'.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/ui/chat/components/MessageBubbleQuoteTest.kt:40:23 Unresolved reference 'createComposeRule'.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/ui/chat/components/MessageBubbleQuoteTest.kt:55:13 @Composable invocations can only happen from the context of a @Composable function
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/ui/chat/components/MessageBubbleQuoteTest.kt:60:69 Unresolved reference 'longClick'.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/ui/chat/components/MessageBubbleQuoteTest.kt:72:13 @Composable invocations can only happen from the context of a @Composable function
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/ui/chat/components/MessageBubbleQuoteTest.kt:77:68 Unresolved reference 'longClick'.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/ui/chat/components/MessageBubbleQuoteTest.kt:91:13 @Composable invocations can only happen from the context of a @Composable function
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/ui/chat/components/MessageBubbleQuoteTest.kt:94:21 No parameter with name 'onQuoteMessage' found.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/ui/chat/components/MessageBubbleQuoteTest.kt:94:56 Unresolved reference 'it'.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/ui/chat/components/MessageBubbleQuoteTest.kt:99:67 Unresolved reference 'longClick'.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/ui/chat/components/MessageBubbleQuoteTest.kt:115:13 @Composable invocations can only happen from the context of a @Composable function
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/ui/chat/components/MessageBubbleQuoteTest.kt:120:66 Unresolved reference 'longClick'.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/ui/chat/components/MessageBubbleQuoteTest.kt:133:13 @Composable invocations can only happen from the context of a @Composable function
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/ui/chat/components/MessageBubbleQuoteTest.kt:136:21 No parameter with name 'onSpeakMessage' found.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/ui/chat/components/MessageBubbleQuoteTest.kt:136:53 Unresolved reference 'it'.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/ui/chat/components/MessageBubbleQuoteTest.kt:141:68 Unresolved reference 'longClick'.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/ui/chat/components/MessageBubbleQuoteTest.kt:154:13 @Composable invocations can only happen from the context of a @Composable function
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/ui/chat/components/MessageBubbleRenderTest.kt:5:28 Unresolved reference 'test'.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/ui/chat/components/MessageBubbleRenderTest.kt:6:28 Unresolved reference 'test'.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/ui/chat/components/MessageBubbleRenderTest.kt:7:28 Unresolved reference 'test'.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/ui/chat/components/MessageBubbleRenderTest.kt:8:17 Unresolved reference 'test'.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/ui/chat/components/MessageBubbleRenderTest.kt:20:12 Unresolved reference 'robolectric'.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/ui/chat/components/MessageBubbleRenderTest.kt:21:12 Unresolved reference 'robolectric'.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/ui/chat/components/MessageBubbleRenderTest.kt:32:10 Unresolved reference 'AndroidJUnit4'.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/ui/chat/components/MessageBubbleRenderTest.kt:32:10 Annotation argument must be a compile-time constant.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/ui/chat/components/MessageBubbleRenderTest.kt:33:2 Unresolved reference 'GraphicsMode'.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/ui/chat/components/MessageBubbleRenderTest.kt:33:15 Unresolved reference 'GraphicsMode'.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/ui/chat/components/MessageBubbleRenderTest.kt:34:2 Unresolved reference 'Config'.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/ui/chat/components/MessageBubbleRenderTest.kt:38:23 Unresolved reference 'createComposeRule'.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/ui/chat/components/MessageBubbleRenderTest.kt:53:13 @Composable invocations can only happen from the context of a @Composable function
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/ui/chat/components/MessageBubbleRenderTest.kt:66:13 @Composable invocations can only happen from the context of a @Composable function
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/ui/chat/components/MessageBubbleRenderTest.kt:85:13 @Composable invocations can only happen from the context of a @Composable function
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/ui/memory/MemoryViewModelTest.kt:87:9 No parameter with name 'layer' found.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/ui/memory/MemoryViewModelTest.kt:89:9 No parameter with name 'referenceCount' found.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/ui/memory/MemoryViewModelTest.kt:93:9 No parameter with name 'expiresAt' found.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/ui/memory/MemoryViewModelTest.kt:96:13 Class 'MemoryViewModelTest.MemoryViewModelFakeDao' is not abstract and does not implement abstract members:
+suspend fun getByCategory(category: String): List<Memory>
+suspend fun findExactMatch(category: String, content: String): Memory?
+suspend fun getActiveMemories(minStrength: Double = ...): List<Memory>
+suspend fun applyDecayByAge(id: Long, idleDays: Int, now: Long): Unit
+suspend fun strengthen(id: Long, delta: Double, now: Long): Unit
+suspend fun deleteByStrengthBelow(threshold: Double): Int
+suspend fun searchByFTS(query: SupportSQLiteQuery): List<Memory>
+suspend fun searchByFTSWithRole(query: SupportSQLiteQuery): List<Memory>
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/ui/memory/MemoryViewModelTest.kt:126:65 Syntax error: Missing '}.
+e: file:///C:/Users/72952/OneDrive/Desktop/ui/CompanionChat/app/src/test/java/com/companion/chat/ui/memory/MemoryViewModelTest.kt:130:1 Syntax error: Unclosed comment.
+
+> Task :app:compileDebugUnitTestKotlin FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileDebugUnitTestKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.btapi.BuildToolsApiCompilationWork
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 1m
+19 actionable tasks: 1 executed, 18 up-to-date

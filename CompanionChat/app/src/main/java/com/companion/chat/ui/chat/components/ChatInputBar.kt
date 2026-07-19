@@ -2,6 +2,8 @@ package com.companion.chat.ui.chat.components
 
 import android.net.Uri
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,6 +11,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -20,11 +23,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.AddPhotoAlternate
-import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.FilledIconButton
@@ -41,8 +45,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.companion.chat.data.model.MessageQuote
+import com.companion.chat.data.model.MessageRole
 import com.companion.chat.ui.theme.BrandOutlineLight
 import com.companion.chat.locale.LocalLanguage
 import com.companion.chat.locale.Strings
@@ -60,6 +67,9 @@ fun ChatInputBar(
     onVoiceInput: () -> Unit,
     selectedImages: List<Uri>,
     onRemoveImage: (Uri) -> Unit,
+    quote: MessageQuote? = null,
+    onClearQuote: () -> Unit = {},
+    onLocateQuote: () -> Unit = {},
     inputHint: String = Strings.txt(StringsKey.hint_input_msg),
     isVoiceStarting: Boolean = false,
     isVoiceListening: Boolean,
@@ -99,6 +109,10 @@ fun ChatInputBar(
                     )
                 }
 
+                if (quote != null) {
+                    QuotePreviewBar(quote = quote, onClear = onClearQuote, onLocate = onLocateQuote)
+                }
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.Bottom
@@ -109,17 +123,17 @@ fun ChatInputBar(
                         contentDescription = Strings.txt(StringsKey.input_pick_image)
                     )
                     ChatToolIconButton(
-                        onClick = onSuggestReply,
-                        enabled = !isSuggesting && !isGenerating,
-                        icon = Icons.Default.AutoAwesome,
-                        contentDescription = if (isSuggesting) Strings.txt(StringsKey.hint_suggestion_loading) else Strings.txt(StringsKey.input_generate_image),
-                        active = isSuggesting
+                        onClick = onGenerateImage,
+                        enabled = !isImageGenerating && !isGenerating,
+                        icon = Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = Strings.txt(StringsKey.input_generate_image),
+                        active = isImageGenerating
                     )
                     Spacer(Modifier.width(2.dp))
                     BasicTextField(
                         value = inputText,
                         onValueChange = onInputChange,
-                        enabled = !isSuggesting,
+                        enabled = !isSuggesting && !isImageGenerating,
                         modifier = Modifier
                             .weight(1f)
                             .heightIn(min = 44.dp, max = 112.dp)
@@ -300,5 +314,77 @@ private fun VoicePrimaryButton(
                 else -> Strings.txt(StringsKey.input_voice)
             }
         )
+    }
+}
+
+/** 输入框上方引用预览条：来源标签 + 引文摘要 + 取消按钮；点击来源行定位到原消息 */
+@Composable
+private fun QuotePreviewBar(quote: MessageQuote, onClear: () -> Unit, onLocate: () -> Unit = {}) {
+    val sourceLabel = if (quote.sourceRole == MessageRole.USER) {
+        Strings.txt(StringsKey.quote_from_user)
+    } else {
+        Strings.txt(StringsKey.quote_from_assistant)
+    }
+    Surface(
+        shape = RoundedCornerShape(10.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.Top
+        ) {
+            // 左侧竖条
+            Box(
+                modifier = Modifier
+                    .width(3.dp)
+                    .heightIn(min = 28.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
+            )
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 8.dp)
+                    .clip(RoundedCornerShape(6.dp))
+                    .clickable(onClick = onLocate)
+                    .padding(horizontal = 4.dp, vertical = 2.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = sourceLabel,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(Modifier.size(4.dp))
+                    Icon(
+                        imageVector = Icons.Default.LocationOn,
+                        contentDescription = Strings.txt(StringsKey.quote_locate),
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(12.dp)
+                    )
+                }
+                Spacer(Modifier.size(2.dp))
+                Text(
+                    text = quote.text,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            // 取消引用按钮
+            IconButton(
+                onClick = onClear,
+                modifier = Modifier.size(28.dp)
+            ) {
+                Icon(
+                    Icons.Default.Close,
+                    contentDescription = Strings.txt(StringsKey.quote_clear),
+                    modifier = Modifier.size(16.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
     }
 }

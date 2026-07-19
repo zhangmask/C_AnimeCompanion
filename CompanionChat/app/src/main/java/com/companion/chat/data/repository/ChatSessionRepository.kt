@@ -6,6 +6,7 @@ import androidx.room.withTransaction
 import com.companion.chat.data.local.CompanionDatabase
 import com.companion.chat.data.local.entity.ConversationEntity
 import com.companion.chat.data.local.entity.MessageEntity
+import com.companion.chat.data.local.entity.QuoteJsonCodec
 import com.companion.chat.data.local.model.ConversationWithMessages
 import com.companion.chat.data.model.ChatMessage
 import com.companion.chat.data.model.ConversationSession
@@ -97,7 +98,8 @@ private fun ConversationWithMessages.toDomainModel(): ConversationSession {
             .sortedBy { it.position }
             .map { it.toDomainModel() },
         createdAt = conversation.createdAt,
-        updatedAt = conversation.updatedAt
+        updatedAt = conversation.updatedAt,
+        isUserRenamed = conversation.isUserRenamed
     )
 }
 
@@ -129,7 +131,9 @@ private fun MessageEntity.toDomainModel(): ChatMessage {
         role = role,
         content = content,
         images = imageUris.map(Uri::parse),
-        timestamp = timestamp
+        timestamp = timestamp,
+        quote = quoteDomain(),
+        audioUri = audioUri
     )
 }
 
@@ -141,6 +145,8 @@ private fun ChatMessage.toEntity(conversationId: String, position: Int): Message
         content = content,
         imageUris = images.map(Uri::toString),
         timestamp = timestamp,
-        position = position
+        position = position,
+        quote = quote?.let { QuoteJsonCodec.encode(it) },
+        audioUri = audioUri
     )
 }

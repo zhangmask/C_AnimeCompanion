@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.companion.chat.CompanionChatApplication
+import com.companion.chat.data.profile.UserAvatarStore
 import com.companion.chat.ui.theme.BrandPrimary
 import com.companion.chat.ui.theme.BrandOutline
 import com.companion.chat.ui.theme.BrandOutlineVariant
@@ -71,6 +72,7 @@ fun UserProfileScreen(
     var avatarUri by remember { mutableStateOf(profile.avatarUri) }
     var introduction by remember { mutableStateOf(profile.introduction) }
     var importantInfo by remember { mutableStateOf(profile.importantInfo) }
+    var pendingCropUri by remember { mutableStateOf<Uri?>(null) }
 
     var selectedTab by remember { mutableIntStateOf(0) }
     val tabs = listOf(Strings.txt(StringsKey.role_tab_basic), Strings.txt(StringsKey.profile_tab_personality))
@@ -79,18 +81,23 @@ fun UserProfileScreen(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         if (uri != null) {
-            // Take persistable permission
-            try {
-                context.contentResolver.takePersistableUriPermission(
-                    uri,
-                    android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
-                )
-            } catch (_: Exception) {}
-            avatarUri = uri.toString()
+            pendingCropUri = uri
         }
     }
 
-    Box(
+    // Show crop screen overlay if picking avatar, otherwise show profile editor
+    if (pendingCropUri != null) {
+        val userAvatarStore = remember { UserAvatarStore(context) }
+        AvatarCropScreen(
+            imageUri = pendingCropUri!!,
+            onCropComplete = { savedUri ->
+                avatarUri = savedUri
+                pendingCropUri = null
+            },
+            onBack = { pendingCropUri = null },
+            persistImage = { uri -> userAvatarStore.persistUri(uri) }
+        )
+    } else Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFFF7F5FA))

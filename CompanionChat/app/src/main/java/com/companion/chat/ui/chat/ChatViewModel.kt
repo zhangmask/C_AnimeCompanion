@@ -32,10 +32,12 @@ import com.companion.chat.data.model.ChatMessage
 import com.companion.chat.data.model.ConversationSession
 import com.companion.chat.data.model.DEFAULT_SESSION_TITLE
 import com.companion.chat.data.model.DEFAULT_WELCOME_MESSAGE
+import com.companion.chat.data.model.MessageQuote
 import com.companion.chat.data.model.MessageRole
 import com.companion.chat.data.model.createDefaultSession
 import com.companion.chat.data.preferences.SecondEngineManager
 import com.companion.chat.data.util.ImagePersistenceUtil
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -87,7 +89,15 @@ data class ChatUiState(
     val availableRoleCards: List<RoleCard> = emptyList(),
     val assistantAvatarUri: String = "",
     val isCompressingContext: Boolean = false,
-    val compressionMessage: String = ""
+    val compressionMessage: String = "",
+    /** 当前待发送的引用：用户在消息上长按→引用后，此字段非空，发送时注入用户消息 */
+    val quote: MessageQuote? = null,
+    /** 引用定位高亮：点击引用预览条时设为被引用消息的 id，ChatScreen 滚动到该消息并高亮，3 秒后自动清除 */
+    val highlightedMessageId: String? = null,
+    /** 被引用消息的 id（用于引用预览条点击时定位回原消息） */
+    val quotedMessageId: String? = null,
+    /** 当前进入选择模式（长按悬浮工具栏）的消息 id；非空时 ChatScreen 在全屏 Overlay 层绘制悬浮工具栏，确保不被其他气泡盖住 */
+    val selectingMessageId: String? = null
 ) {
     val hasSpeakableAssistantMessage: Boolean
         get() = messages.any { message ->
@@ -153,7 +163,7 @@ class ChatViewModel(
     private val voiceOutputSettingsRepository: VoiceOutputSettingsRepository = container.voiceOutputSettingsRepository
     private val secondEngineManager = SecondEngineManager(
         primaryEngineStateProvider = { inferenceEngine.state.value },
-        engineFactory = { inferenceEngineFactory.create(modelConfigRepository.getConfig().runtime) },
+        engineFactory = { inferenceEngineFactory.create(modelConfigRepository.toEngineConfig(systemPrompt = "").runtime) },
         timeoutMillis = STAGE4_SUMMARY_TIMEOUT_MILLIS
     )
     private val preferenceLearningCoordinator = PreferenceLearningCoordinator(
@@ -193,12 +203,17 @@ class ChatViewModel(
     private var voiceCollectJob: Job? = null
     private var inferenceStateJob: Job? = null
     private var shouldSpeakNextAssistantResponse = false
+    // 记忆检索阶段标志：为 true 时 collectInferenceState 不更新 isGenerating
+    @Volatile private var isRetrievalPhase = false
 
     // ── Streaming auto-TTS state ──
     private var autoTtsActive = false
     private var autoTtsSpokenEnd = 0
     private var autoTtsInitialDelayJob: Job? = null
     private var autoTtsReady = false
+
+    // 引用高亮自动清除的协程，新增引用/定位前先取消上一个，避免竞态
+    private var highlightClearJob: Job? = null
 
     init {
         logToFile("=== ChatViewModel 创建 ===")
@@ -212,6 +227,9 @@ class ChatViewModel(
         loadAvailableRoles()
         voiceInputEngine.warmUp()
         initializeEmbeddingEngine()
+        viewModelScope.launch(Dispatchers.IO) {
+            container.mossTtsMnnVoiceCloneEngine.preloadModels()
+        }
 
         viewModelScope.launch {
             refreshBaseSystemPrompt()
@@ -264,7 +282,9 @@ class ChatViewModel(
     }
 
     private suspend fun refreshBaseSystemPrompt() {
-        baseSystemPrompt = companionRuntime.refreshBasePrompt()
+        val language = languageRepo.getLanguage()
+        baseSystemPrompt = companionRuntime.refreshBasePrompt(language, currentRoleCardId)
+        logToFile("系统提示已刷新: language=$language, roleCardId=$currentRoleCardId, length=${baseSystemPrompt.length}")
     }
 
     fun refreshSystemPromptOnResume() {
@@ -272,6 +292,27 @@ class ChatViewModel(
             refreshBaseSystemPrompt()
             logToFile("系统提示已刷新（页面恢复），准备重建对话上下文")
             rebuildConversationForPromptChange(reason = "页面恢复后刷新用户信息")
+            refreshAvatarUri()
+            // 从数据库重新加载角色卡列表和会话列表，确保编辑后的头像等变更同步
+            loadAvailableRoles()
+            reloadSessionsSilently()
+
+            // 引擎处于 Error 状态时尝试重新初始化（用户可能刚在设置页添加了自定义 API 配置）
+            if (inferenceEngine.state.value is InferenceState.Error) {
+                logToFile("页面恢复: 引擎处于 Error 状态，尝试重新初始化")
+                initializeEngine(systemPrompt = baseSystemPrompt)
+            }
+        }
+    }
+
+    fun refreshAvatarUri() {
+        val state = _uiState.value
+        val roleId = state.sessions.firstOrNull { it.id == state.currentSessionId }?.roleCardId
+        if (roleId != null) {
+            viewModelScope.launch {
+                val avatar = roleCardRepository.getRoleCard(roleId)?.avatarImageUri.orEmpty()
+                _uiState.update { it.copy(assistantAvatarUri = avatar) }
+            }
         }
     }
 
@@ -345,7 +386,10 @@ class ChatViewModel(
             inferenceEngine.state.collectLatest { state ->
                 _uiState.update { it.copy(engineState = state) }
                 if (state is InferenceState.Idle) {
-                    _uiState.update { it.copy(isGenerating = false) }
+                    // 记忆检索阶段引擎会 Idle→Generating→Idle，不更新 isGenerating 避免闪烁
+                    if (!isRetrievalPhase) {
+                        _uiState.update { it.copy(isGenerating = false) }
+                    }
                 }
                 if (state is InferenceState.Ready) {
                     startInferenceForegroundService()
@@ -448,6 +492,47 @@ class ChatViewModel(
         _uiState.update { it.copy(inputText = text) }
     }
 
+    /** 进入消息选择模式：长按消息气泡时调用，由 ChatScreen 在全屏 Overlay 层绘制悬浮工具栏 */
+    fun enterSelectMode(messageId: String) {
+        _uiState.update { it.copy(selectingMessageId = messageId) }
+    }
+
+    /** 退出消息选择模式：关闭悬浮工具栏 / 完成引用 / 删除后调用 */
+    fun exitSelectMode() {
+        _uiState.update { it.copy(selectingMessageId = null) }
+    }
+
+    /** 设置引用：从消息气泡的"引用"按钮调用；同时记录被引用消息 id 用于定位 */
+    fun setMessageQuote(messageId: String, quote: MessageQuote) {
+        _uiState.update {
+            it.copy(quote = quote, quotedMessageId = messageId, highlightedMessageId = messageId)
+        }
+        // 3 秒后自动取消高亮（取消上一个清除协程避免竞态）
+        highlightClearJob?.cancel()
+        highlightClearJob = viewModelScope.launch {
+            delay(3000L)
+            _uiState.update { it.copy(highlightedMessageId = null) }
+        }
+    }
+
+    /** 清除引用：从输入栏的"取消引用"按钮调用 */
+    fun clearQuote() {
+        highlightClearJob?.cancel()
+        highlightClearJob = null
+        _uiState.update { it.copy(quote = null, quotedMessageId = null, highlightedMessageId = null) }
+    }
+
+    /** 点击引用预览条时定位到原消息：触发高亮 */
+    fun locateQuotedMessage() {
+        val id = _uiState.value.quotedMessageId ?: return
+        _uiState.update { it.copy(highlightedMessageId = id) }
+        highlightClearJob?.cancel()
+        highlightClearJob = viewModelScope.launch {
+            delay(3000L)
+            _uiState.update { it.copy(highlightedMessageId = null) }
+        }
+    }
+
     fun addImage(uri: Uri) {
         _uiState.update { it.copy(selectedImages = it.selectedImages + uri) }
     }
@@ -463,13 +548,14 @@ class ChatViewModel(
             } else {
                 buildImagePromptWithLLM()
             }
-            logToFile("图片生成请求: promptLength=${resolvedPrompt.length}, prompt=$resolvedPrompt")
+            val config = imageGenerationConfigRepository.getConfig()
+            logToFile("图片生成请求: provider=${config.provider}, modelPath=${config.localModelPath}, promptLength=${resolvedPrompt.length}, prompt=$resolvedPrompt")
             imageGenerationEngineSelector.generate(
                 request = ImageGenerationRequest(
                     prompt = resolvedPrompt,
                     purpose = ImageGenerationPurpose.CHAT_SCENE
                 ),
-                config = imageGenerationConfigRepository.getConfig()
+                config = config
             ).onSuccess { uri ->
                 logToFile("图片生成成功: $uri")
                 // Ensure a session exists so the image message can be persisted
@@ -599,18 +685,10 @@ $conversationSummary"""
             val lastReply = previousReplies.lastOrNull().orEmpty()
 
             val continuePrompt = buildString {
-                if (userContent.isNotBlank()) {
-                    append("【用户的问题】\n$userContent\n\n")
-                }
                 if (previousReplies.isNotEmpty()) {
-                    append("【你之前已经回复了以下内容】\n")
-                    previousReplies.forEach { reply ->
-                        append("${reply.trim()}\n\n")
-                    }
-                    append("【请你现在紧接着上面最后一段回复继续往下写，不要重复已有的内容，不要重新开始，直接从上次停下的地方继续。\n" +
-                        "最后一段是：${lastReply.takeLast(80)}】")
+                    append("接着上面继续说一两句，不要重复，不要重新回答。")
                 } else {
-                    append("请继续刚才的话题，补充更多内容。")
+                    append("继续聊点别的吧。")
                 }
             }
 
@@ -629,7 +707,7 @@ $conversationSummary"""
             generateJob?.cancel()
             shouldSpeakNextAssistantResponse = false
             generateJob = viewModelScope.launch {
-                generateResponse(continuePrompt)
+                generateResponse(continuePrompt, skipKnowledgeCheck = true, skipMemoryRetrieval = true)
             }
         }
     }
@@ -672,7 +750,24 @@ $conversationSummary"""
             _uiState.update { it.copy(isVoiceAutoSending = false) }
             return
         }
-        if (state.isGenerating) {
+        // Interrupt TTS and ongoing generation if setting is enabled
+        val voiceSettings = voiceOutputSettingsRepository.getSettings()
+        if (voiceSettings.interruptTtsOnNewMessage) {
+            // Stop any ongoing TTS playback
+            if (_uiState.value.isVoiceSpeaking) {
+                voiceOutputEngine.stop()
+            }
+            // Cancel ongoing generation so the new message gets answered
+            if (state.isGenerating) {
+                generateJob?.cancel()
+                inferenceEngine.cancel()
+                companionRuntime.cancelPostTurnLearning()
+                shouldSpeakNextAssistantResponse = false
+                stopAutoTts()
+                _uiState.update { it.copy(isGenerating = false, isVoiceAutoSending = false) }
+                state = _uiState.value
+            }
+        } else if (state.isGenerating) {
             _uiState.update { it.copy(isVoiceAutoSending = false) }
             return
         }
@@ -710,7 +805,8 @@ $conversationSummary"""
         val userMessage = ChatMessage(
             role = MessageRole.USER,
             content = state.inputText.trim(),
-            images = persistedImages
+            images = persistedImages,
+            quote = state.quote  // 携带引用上下文（UI 展示用，不注入 content）
         )
 
         val assistantPlaceholder = ChatMessage(
@@ -725,7 +821,8 @@ $conversationSummary"""
                 inputText = "",
                 selectedImages = emptyList(),
                 isGenerating = true,
-                isVoiceAutoSending = autoSpeakResponse
+                isVoiceAutoSending = autoSpeakResponse,
+                quote = null  // 发送后清除引用
             )
         }
         saveCurrentSession()
@@ -733,24 +830,33 @@ $conversationSummary"""
         generateJob?.cancel()
         shouldSpeakNextAssistantResponse = autoSpeakResponse
         generateJob = viewModelScope.launch {
-            // 改造后：移除规则即时提取，交由阶段四 LLM 统一提取
-            generateResponse(userMessage.content.trim())
+            // 引用前缀只在传给 LLM 时注入，不存入 content（前端不显示）
+            val quotePrefix = userMessage.quote?.let { q ->
+                val roleLabel = if (q.sourceRole == MessageRole.USER) "用户" else "助手"
+                "【引用${roleLabel}的消息】：${q.text}\n"
+            }.orEmpty()
+            generateResponse(quotePrefix + userMessage.content.trim())
         }
     }
 
-    private suspend fun generateResponse(userInput: String) {
-        val engineState = inferenceEngine.state.value
-        if (engineState !is InferenceState.Ready) {
-            updateAssistantMessage(tr(StringsKey.err_model_not_loaded))
-            return
-        }
+    private suspend fun generateResponse(userInput: String, skipKnowledgeCheck: Boolean = false, skipMemoryRetrieval: Boolean = false) {
+        // 强制刷新系统提示，确保当前会话的角色卡已正确注入
+        refreshBaseSystemPrompt()
 
-        // Start auto-TTS (will be delayed 0.5s before first sentence is spoken)
+        // Start auto-TTS (will speak the full message after streaming completes)
         startAutoTts()
 
         try {
+            val engineState = inferenceEngine.state.value
+            logToFile("generateResponse: engineState=$engineState, userInput=$userInput")
+            if (engineState !is InferenceState.Ready) {
+                logToFile("generateResponse: 引擎未就绪，显示错误并返回")
+                updateAssistantMessage(tr(StringsKey.err_model_not_loaded))
+                return
+            }
+
             // 内在分支：知识问答用独立知识agent单轮回答，再让陪伴agent做情感承接
-            if (looksLikeKnowledgeQuery(userInput)) {
+            if (!skipKnowledgeCheck && looksLikeKnowledgeQuery(userInput)) {
                 logToFile("内在分支: 检测到知识查询, 启动两阶段推理")
                 // 阶段一：知识agent单轮回答（纯知识prompt，不注入记忆和偏好）
                 val knowledgePrompt = "你是一个简洁准确的知识助手。请用简洁的中文回答以下问题，只回答事实，不要加任何情感或闲聊：\n$userInput"
@@ -766,7 +872,9 @@ $conversationSummary"""
 
                 // 重建Conversation恢复陪伴上下文（清除知识agent的上下文污染）
                 val messages = _uiState.value.messages
+                isRetrievalPhase = true
                 val memoryContext = buildMemoryContext(userInput)
+                isRetrievalPhase = false
                 contextSettings = contextConfigRepository.getSettings()
                 val rebuildResult = companionRuntime.rebuildConversationWithContext(
                     stableMessages = messages.filterNot { it.isStreaming },
@@ -793,9 +901,32 @@ $conversationSummary"""
                 logToFile("内在分支: 情感承接完成: ${emotionResult.toString().take(80)}")
             } else {
                 // 正常陪伴对话
-                val messages = _uiState.value.messages
-                val memoryContext = buildMemoryContext(userInput)
+                // 如果 userInput 含引用前缀（【引用...的消息】：...），需要注入到传给 LLM 的最后一条用户消息中
+                // 但不改 UI 存储的 content（前端不显示引用前缀）
+                val rawMessages = _uiState.value.messages
+                val messages = if (userInput != rawMessages.lastOrNull { it.role == MessageRole.USER }?.content) {
+                    // userInput 含引用前缀，替换最后一条用户消息的 content
+                    val lastUserIdx = rawMessages.indexOfLast { it.role == MessageRole.USER }
+                    if (lastUserIdx >= 0) {
+                        rawMessages.toMutableList().also { list ->
+                            list[lastUserIdx] = list[lastUserIdx].copy(content = userInput)
+                        }
+                    } else rawMessages
+                } else rawMessages
+                isRetrievalPhase = true
+                val memoryContext = if (skipMemoryRetrieval) {
+                    logToFile("generateResponse: 跳过记忆检索（续写模式）")
+                    MemoryContext(
+                        confirmedPreferencePrompt = buildConfirmedPreferencePrompt(currentRoleCardId),
+                        persistentPrompt = "",
+                        retrievedPrompt = ""
+                    )
+                } else {
+                    buildMemoryContext(userInput)
+                }
+                isRetrievalPhase = false
                 contextSettings = contextConfigRepository.getSettings()
+                logToFile("generateResponse: 开始runTurn, messages=${messages.size}, basePrompt=${baseSystemPrompt.length}")
                 companionRuntime.runTurn(
                     messages = messages,
                     baseSystemPrompt = baseSystemPrompt,
@@ -808,8 +939,10 @@ $conversationSummary"""
                         is CompanionTurnEvent.AssistantToken -> appendAssistantToken(event.token)
                     }
                 }
+                logToFile("generateResponse: runTurn完成")
             }
         } catch (e: Exception) {
+            logToFile("generateResponse异常: ${e.javaClass.simpleName}: ${e.message}")
             updateAssistantMessage(tr(StringsKey.err_inference, e.message ?: ""))
         } finally {
             finishStreaming()
@@ -819,7 +952,7 @@ $conversationSummary"""
     private suspend fun buildMemoryContext(userInput: String): MemoryContext {
         return try {
             val confirmedPreferencePrompt = buildConfirmedPreferencePrompt(currentRoleCardId)
-            val companionMemoryContext = companionRuntime.buildMemoryContext(userInput, currentRoleCardId)
+            val companionMemoryContext = companionRuntime.buildMemoryContext(userInput, currentRoleCardId, baseSystemPrompt)
             val persistentPrompt = companionMemoryContext.persistentPrompt
             val memoryPrompt = companionMemoryContext.retrievedPrompt
             if (confirmedPreferencePrompt.isNotBlank()) {
@@ -892,52 +1025,70 @@ $conversationSummary"""
         return lastEnd
     }
 
+    /** 根据当前会话（或当前激活）角色卡解析 TTS 配置，避免 TTS 始终使用 activeRoleCard。 */
+    private suspend fun resolveCurrentRoleVoiceConfig(): com.companion.chat.data.engine.VoiceOutputConfig {
+        val roleId = currentRoleCardId ?: roleCardRepository.getActiveRoleCard()?.id
+        val roleCard = roleId?.let { roleCardRepository.getRoleCard(it) }
+        return if (roleCard != null) {
+            com.companion.chat.data.engine.VoiceOutputConfig(
+                mode = runCatching { com.companion.chat.data.engine.VoiceOutputMode.valueOf(roleCard.voiceMode) }
+                    .getOrDefault(com.companion.chat.data.engine.VoiceOutputMode.CLONE),
+                referenceAudioUri = roleCard.voiceProfileUri,
+                displayName = roleCard.voiceDisplayName
+            )
+        } else {
+            com.companion.chat.data.engine.VoiceOutputConfig(
+                mode = com.companion.chat.data.engine.VoiceOutputMode.CLONE
+            )
+        }
+    }
+
     /** Start auto-TTS for the current streaming response. */
     private fun startAutoTts() {
         val autoPlay = voiceOutputSettingsRepository.getSettings().autoPlayTts
+        logToFile("startAutoTts: autoPlayTts=$autoPlay")
         if (!autoPlay) return
 
         autoTtsActive = true
         autoTtsSpokenEnd = 0
         autoTtsReady = false
-
-        // After 0.5s delay, start speaking completed sentences
-        autoTtsInitialDelayJob?.cancel()
-        autoTtsInitialDelayJob = viewModelScope.launch {
-            delay(500L)
-            autoTtsReady = true
-            val content = _uiState.value.messages.lastOrNull()?.content ?: return@launch
-            val lastEnd = findLastSentenceEnd(content)
-            if (lastEnd > 0) {
-                val sentence = content.substring(0, lastEnd).trim()
-                if (sentence.isNotEmpty()) {
-                    voiceOutputEngine.speak(sentence, queueMode = TtsQueueMode.FLUSH)
-                }
-                autoTtsSpokenEnd = lastEnd
-            }
-        }
     }
 
-    /** Finish auto-TTS: speak any remaining unsaid text. */
+    /** Finish auto-TTS: speak the full message with cache. */
     private fun finishAutoTts() {
+        logToFile("finishAutoTts: autoTtsActive=$autoTtsActive")
         if (!autoTtsActive) return
-        autoTtsInitialDelayJob?.cancel()
-        autoTtsInitialDelayJob = null
-
-        val content = _uiState.value.messages.lastOrNull()?.content ?: ""
-        val remaining = content.substring(autoTtsSpokenEnd).trim()
-        if (remaining.isNotEmpty()) {
-            viewModelScope.launch {
-                voiceOutputEngine.speak(
-                    remaining,
-                    queueMode = if (autoTtsReady) TtsQueueMode.ADD else TtsQueueMode.FLUSH
-                )
-            }
-        }
-
         autoTtsActive = false
         autoTtsReady = false
         autoTtsSpokenEnd = 0
+
+        val lastMessage = _uiState.value.messages.lastOrNull()
+        if (lastMessage?.role != MessageRole.ASSISTANT || lastMessage.content.isBlank()) {
+            logToFile("finishAutoTts: 没有可朗读的助手消息")
+            return
+        }
+
+        val messageId = lastMessage.id
+        val content = lastMessage.content
+        logToFile("finishAutoTts: 播放完整消息 messageId=$messageId contentLen=${content.length} preview='${content.take(60)}'")
+        viewModelScope.launch {
+            try {
+                val roleConfig = resolveCurrentRoleVoiceConfig()
+                logToFile("finishAutoTts: 使用角色配置 roleCardId=$currentRoleCardId mode=${roleConfig.mode} refAudio=${roleConfig.referenceAudioUri.isNotBlank()}")
+                voiceOutputEngine.speakWithCache(
+                    messageId = messageId,
+                    text = content,
+                    config = roleConfig,
+                    queueMode = TtsQueueMode.FLUSH
+                )
+                logToFile("finishAutoTts: speakWithCache 完成 messageId=$messageId")
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                logToFile("finishAutoTts: speakWithCache 异常: ${e.javaClass.simpleName} ${e.message}")
+                android.util.Log.e("ChatVM", "finishAutoTts TTS 异常", e)
+            }
+        }
     }
 
     /** Stop auto-TTS immediately (user cancelled or new message sent). */
@@ -1050,12 +1201,15 @@ $conversationSummary"""
         if (autoTtsActive) {
             // Auto-TTS was streaming — speak the remaining unsaid portion
             finishAutoTts()
-        } else if (shouldSpeakNextAssistantResponse) {
-            // Voice-input auto-speak fallback (when auto-play setting is off)
+        } else if (shouldSpeakNextAssistantResponse && voiceOutputSettingsRepository.getSettings().autoPlayTts) {
+            // Voice-input auto-speak fallback：同样受自动播放开关控制
             val lastMessage = _uiState.value.messages.lastOrNull()
             if (lastMessage?.role == MessageRole.ASSISTANT && lastMessage.content.isNotBlank()) {
-                speakMessage(lastMessage.content)
+                logToFile("语音输入自动朗读: autoPlayTts=true")
+                speakMessage(lastMessage.id, lastMessage.content)
             }
+        } else if (shouldSpeakNextAssistantResponse) {
+            logToFile("语音输入自动朗读被跳过: autoPlayTts=false")
         }
         shouldSpeakNextAssistantResponse = false
 
@@ -1103,20 +1257,41 @@ $conversationSummary"""
         _uiState.update { it.copy(voiceInputError = "") }
     }
 
-    fun speakMessage(text: String) {
+    fun speakMessage(messageId: String, text: String) {
+        android.util.Log.d("ChatVM", "speakMessage called: messageId=$messageId text='${text.take(30)}'")
         viewModelScope.launch {
-            voiceOutputEngine.speak(text)
+            try {
+                android.util.Log.d("ChatVM", "speakMessage launching speakWithCache()")
+                val roleConfig = resolveCurrentRoleVoiceConfig()
+                android.util.Log.d("ChatVM", "speakMessage roleConfig: roleCardId=$currentRoleCardId mode=${roleConfig.mode} refAudio=${roleConfig.referenceAudioUri.isNotBlank()}")
+                voiceOutputEngine.speakWithCache(
+                    messageId = messageId,
+                    text = text,
+                    config = roleConfig
+                )
+                android.util.Log.d("ChatVM", "speakMessage speakWithCache() completed")
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                android.util.Log.e("ChatVM", "speakMessage TTS 异常", e)
+            }
         }
     }
 
     fun speakLatestAssistantMessage() {
-        val latestAssistantMessage = _uiState.value.messages.lastOrNull { message ->
+        val msgs = _uiState.value.messages
+        android.util.Log.d("ChatVM", "speakLatestAssistantMessage: ${msgs.size} messages, roles=${msgs.map { it.role }}")
+        val latestAssistantMessage = msgs.lastOrNull { message ->
             message.role == MessageRole.ASSISTANT &&
                 !message.isStreaming &&
                 message.content.isNotBlank()
-        } ?: return
-
-        speakMessage(latestAssistantMessage.content)
+        }
+        if (latestAssistantMessage == null) {
+            android.util.Log.w("ChatVM", "speakLatestAssistantMessage: NO speakable assistant message! sizes=${msgs.map { it.content.length }}")
+            return
+        }
+        android.util.Log.d("ChatVM", "speakLatestAssistantMessage: found msg id=${latestAssistantMessage.id} contentLen=${latestAssistantMessage.content.length}")
+        speakMessage(latestAssistantMessage.id, latestAssistantMessage.content)
     }
 
     fun stopSpeaking() {
@@ -1145,6 +1320,28 @@ $conversationSummary"""
 
                 val app = getApplication<Application>()
                 val modelConfig = modelConfigRepository.getConfig()
+
+                if (modelConfig.useCustomApi) {
+                    logToFile("使用自定义 API 推理后端")
+                    val resolvedSystemPrompt = systemPrompt.ifBlank {
+                        baseSystemPrompt.ifBlank { DEFAULT_BASE_SYSTEM_PROMPT }
+                    }
+                    baseSystemPrompt = resolvedSystemPrompt
+                    val config = modelConfigRepository.toEngineConfig(
+                        systemPrompt = resolvedSystemPrompt
+                    )
+                    if (config.runtime != inferenceEngine.getCurrentConfig()?.runtime) {
+                        logToFile("切换模型运行时: ${inferenceEngine.getCurrentConfig()?.runtime} -> ${config.runtime}")
+                        inferenceEngine.release()
+                        inferenceEngine = inferenceEngineFactory.create(config.runtime)
+                        collectInferenceState()
+                    }
+                    logToFile("开始调用 engine.initialize (CustomAPI)...")
+                    inferenceEngine.initialize(config)
+                    logToFile("engine.initialize 返回, state = ${inferenceEngine.state.value}")
+                    return@launch
+                }
+
                 val actualPath = modelPath.ifBlank { modelConfigRepository.resolveModelPath(modelConfig) }
                 val file = java.io.File(actualPath)
 
@@ -1320,7 +1517,8 @@ $conversationSummary"""
         imageStylePrompt: String,
         voiceProfileUri: String,
         voiceMode: String,
-        voiceDisplayName: String
+        voiceDisplayName: String,
+        tags: List<String> = emptyList()
     ) {
         viewModelScope.launch {
             try {
@@ -1340,7 +1538,8 @@ $conversationSummary"""
                     imageStylePrompt = imageStylePrompt,
                     voiceProfileUri = voiceProfileUri,
                     voiceMode = voiceMode,
-                    voiceDisplayName = voiceDisplayName
+                    voiceDisplayName = voiceDisplayName,
+                    tags = tags
                 )
                 logToFile("角色卡创建成功: id=$roleId, name=$name")
                 loadAvailableRoles()
@@ -1409,16 +1608,30 @@ $conversationSummary"""
             }
             "" // Will be updated asynchronously
         } else ""
+        // 清理残留 streaming 标记，避免切换后误触 finishStreaming → auto-TTS 播放历史回复
+        val sanitizedMessages = session.messages.map { msg ->
+            if (msg.isStreaming) msg.copy(isStreaming = false) else msg
+        }
         _uiState.update {
             it.copy(
                 currentSessionId = sessionId,
-                messages = session.messages,
+                messages = sanitizedMessages,
                 assistantAvatarUri = avatarUri,
                 showSessionDrawer = false,
                 sessionSearchQuery = "",
                 inputText = "",
                 selectedImages = emptyList()
             )
+        }
+        stopAutoTts()
+        shouldSpeakNextAssistantResponse = false
+
+        // 刷新系统提示以使用新会话的角色卡，并重建引擎上下文
+        viewModelScope.launch {
+            refreshBaseSystemPrompt()
+            rebuildConversationForPromptChange(reason = "切换会话后刷新角色卡")
+            refreshAvatarUri()
+            logToFile("切换会话后已刷新角色卡: sessionId=$sessionId, roleCardId=$currentRoleCardId")
         }
     }
 
@@ -1448,6 +1661,16 @@ $conversationSummary"""
                 sessionRepository.deleteSession(sessionId)
             } catch (e: Exception) {
                 logToFile("删除会话失败: ${e.message}")
+            }
+        }
+
+        // 删除当前会话后，若自动切换到下一个会话，需要刷新系统提示
+        if (state.currentSessionId == sessionId && nextSession != null) {
+            viewModelScope.launch {
+                refreshBaseSystemPrompt()
+                rebuildConversationForPromptChange(reason = "删除会话后刷新角色卡")
+                refreshAvatarUri()
+                logToFile("删除会话后已刷新角色卡: nextSessionId=${nextSession.id}, roleCardId=$currentRoleCardId")
             }
         }
     }
@@ -1490,17 +1713,62 @@ $conversationSummary"""
             try {
                 sessionRepository.ensureInitialized()
                 val sessions = sessionRepository.getAllSessions()
-                val existing = sessions.firstOrNull()
-                if (existing != null) {
-                    val avatarUri = if (existing.roleCardId != null) {
-                        roleCardRepository.getRoleCard(existing.roleCardId)?.avatarImageUri.orEmpty()
-                    } else ""
+                if (sessions.isNotEmpty()) {
+                    // 不自动选中会话，直接打开对话列表让用户选择
                     _uiState.update {
                         it.copy(
                             sessions = sessions,
-                            messages = existing.messages,
-                            currentSessionId = existing.id,
-                            assistantAvatarUri = avatarUri
+                            currentSessionId = "",
+                            messages = emptyList(),
+                            assistantAvatarUri = "",
+                            showSessionDrawer = true
+                        )
+                    }
+                } else {
+                    _uiState.update {
+                        it.copy(
+                            sessions = emptyList(),
+                            currentSessionId = "",
+                            messages = emptyList(),
+                            assistantAvatarUri = "",
+                            showSessionDrawer = true
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                logToFile("加载会话列表失败: ${e.message}")
+                _uiState.update {
+                    it.copy(
+                        sessions = emptyList(),
+                        currentSessionId = "",
+                        messages = emptyList(),
+                        assistantAvatarUri = "",
+                        showSessionDrawer = true
+                    )
+                }
+            }
+        }
+    }
+
+    /** 静默刷新会话列表，不改变当前会话、不打开抽屉（用于从设置页返回等场景） */
+    private fun reloadSessionsSilently() {
+        viewModelScope.launch {
+            try {
+                sessionRepository.ensureInitialized()
+                val sessions = sessionRepository.getAllSessions()
+                val state = _uiState.value
+                val currentStillExists = sessions.any { it.id == state.currentSessionId }
+                if (currentStillExists) {
+                    // 当前会话仍存在，只刷新列表
+                    _uiState.update { it.copy(sessions = sessions) }
+                } else if (sessions.isNotEmpty()) {
+                    // 当前会话被删了，清空消息但不自动选新会话
+                    _uiState.update {
+                        it.copy(
+                            sessions = sessions,
+                            currentSessionId = "",
+                            messages = emptyList(),
+                            assistantAvatarUri = ""
                         )
                     }
                 } else {
@@ -1514,15 +1782,7 @@ $conversationSummary"""
                     }
                 }
             } catch (e: Exception) {
-                logToFile("加载会话列表失败: ${e.message}")
-                _uiState.update {
-                    it.copy(
-                        sessions = emptyList(),
-                        currentSessionId = "",
-                        messages = emptyList(),
-                        assistantAvatarUri = ""
-                    )
-                }
+                logToFile("静默刷新会话列表失败: ${e.message}")
             }
         }
     }
@@ -1548,7 +1808,50 @@ $conversationSummary"""
         }
     }
 
+    /**
+     * 删除指定消息：先更新 UI 状态，再同步当前会话到数据库。
+     * 若删除的是正在生成的 streaming 消息，同时取消生成避免内容被错误追加到其他消息。
+     */
+    fun deleteMessage(messageId: String) {
+        val state = _uiState.value
+        val currentId = state.currentSessionId
+        if (currentId.isBlank()) return
+
+        // 删除任何消息时，若当前正在播放该消息（或任何消息）的语音，先停止
+        stopSpeaking()
+        stopAutoTts()
+
+        // 若删除的是正在流式生成的占位消息，先取消生成
+        val isStreamingMessage = state.messages.any { it.id == messageId && it.isStreaming }
+        if (isStreamingMessage) {
+            generateJob?.cancel()
+            inferenceEngine.cancel()
+            companionRuntime.cancelPostTurnLearning()
+            shouldSpeakNextAssistantResponse = false
+            highlightClearJob?.cancel()
+            highlightClearJob = null
+            _uiState.update { it.copy(isGenerating = false, isVoiceAutoSending = false) }
+        }
+
+        val updatedMessages = state.messages.filterNot { it.id == messageId }
+        _uiState.update { it.copy(messages = updatedMessages) }
+
+        // 同步到 sessions 列表中的当前会话，再持久化到数据库
+        val updatedSessions = state.sessions.map { session ->
+            if (session.id == currentId) {
+                session.copy(messages = updatedMessages)
+            } else session
+        }
+        _uiState.update { it.copy(sessions = updatedSessions) }
+        updatedSessions.firstOrNull { it.id == currentId }?.let(::persistSession)
+
+        val lastAssistantIdx = updatedMessages.indexOfLast { it.role == MessageRole.ASSISTANT && !it.isStreaming }
+        val lastUserIdx = updatedMessages.indexOfLast { it.role == MessageRole.USER && !it.isStreaming }
+        logToFile("已删除消息: id=$messageId, wasStreaming=$isStreamingMessage, lastAssistantIndex=$lastAssistantIdx, lastUserIndex=$lastUserIdx, msgCount=${updatedMessages.size}")
+    }
+
     fun onAppBackgrounded() {
+        logToFile("应用进入后台，尝试触发偏好/记忆总结")
         triggerPreferenceSummaryNow(reason = "应用进入后台")
     }
 
@@ -1810,7 +2113,7 @@ $conversationHistory
     companion object {
         private val DEFAULT_BASE_SYSTEM_PROMPT =
             CompanionRuntime.DEFAULT_BASE_PROMPT
-        private const val STAGE4_SUMMARY_TIMEOUT_MILLIS = 90_000L
+        private const val STAGE4_SUMMARY_TIMEOUT_MILLIS = 180_000L
 
         /** Characters that mark the end of a speakable sentence. */
         private val SENTENCE_DELIMITERS = setOf(

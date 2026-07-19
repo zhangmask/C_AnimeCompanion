@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Memory
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -25,6 +26,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.RadioButton
@@ -63,6 +65,7 @@ fun ModelConfigScreen(
     scrollTarget: ModelConfigScrollTarget = ModelConfigScrollTarget.DEFAULT,
     onBack: () -> Unit = {},
     onModelConfigChanged: () -> Unit = {},
+    onNavigateToCustomApiList: () -> Unit = {},
     viewModel: ModelConfigViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -177,9 +180,18 @@ fun ModelConfigScreen(
                 }
                 Spacer(modifier = Modifier.height(12.dp))
                 ModelRuntimeOptionItem(
+                    title = "自定义 API",
+                    description = "使用远程 API 推理（OpenAI 兼容），无需本地模型",
+                    selected = modelConfig.useCustomApi,
+                    onClick = {
+                        viewModel.setUseCustomApi(true)
+                        onModelConfigChanged()
+                    }
+                )
+                ModelRuntimeOptionItem(
                     title = "llama.cpp GGUF",
                     description = Strings.txt(StringsKey.model_backend_llama_desc),
-                    selected = modelConfig.runtime == ModelRuntime.LLAMA_CPP_GGUF,
+                    selected = !modelConfig.useCustomApi && modelConfig.runtime == ModelRuntime.LLAMA_CPP_GGUF,
                     onClick = {
                         viewModel.setRuntime(ModelRuntime.LLAMA_CPP_GGUF)
                         onModelConfigChanged()
@@ -188,15 +200,40 @@ fun ModelConfigScreen(
                 ModelRuntimeOptionItem(
                     title = "LiteRT-LM",
                     description = Strings.txt(StringsKey.model_backend_litert_desc),
-                    selected = modelConfig.runtime == ModelRuntime.LITERT_LM,
+                    selected = !modelConfig.useCustomApi && modelConfig.runtime == ModelRuntime.LITERT_LM,
                     onClick = {
                         viewModel.setRuntime(ModelRuntime.LITERT_LM)
                         onModelConfigChanged()
                     }
                 )
+                ModelRuntimeOptionItem(
+                    title = "MNN LLM",
+                    description = Strings.txt(StringsKey.model_backend_mnn_desc),
+                    selected = !modelConfig.useCustomApi && modelConfig.runtime == ModelRuntime.MNN_LLM,
+                    onClick = {
+                        viewModel.setRuntime(ModelRuntime.MNN_LLM)
+                        onModelConfigChanged()
+                    }
+                )
 
-                // GPU 加速开关（仅 LiteRT 后端有效）
-                if (modelConfig.runtime == ModelRuntime.LITERT_LM) {
+                if (modelConfig.useCustomApi) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    OutlinedButton(
+                        onClick = onNavigateToCustomApiList,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.size(8.dp))
+                        Text("API 详细设置")
+                    }
+                }
+
+                // GPU 加速开关（仅 LiteRT 后端有效，自定义 API 模式下隐藏）
+                if (!modelConfig.useCustomApi && modelConfig.runtime == ModelRuntime.LITERT_LM) {
                     Spacer(modifier = Modifier.height(12.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -234,16 +271,18 @@ fun ModelConfigScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 4.dp)
                 )
-                Text(
-                    text = Strings.txt(StringsKey.image_mmproj_status, if (mmprojReady) Strings.txt(StringsKey.model_status_ready) else Strings.txt(StringsKey.model_status_missing)) + "\n$resolvedMmprojPath",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (mmprojReady) {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    } else {
-                        MaterialTheme.colorScheme.error
-                    },
-                    modifier = Modifier.padding(top = 8.dp)
-                )
+                if (!modelConfig.useCustomApi && modelConfig.runtime == ModelRuntime.LLAMA_CPP_GGUF) {
+                    Text(
+                        text = Strings.txt(StringsKey.image_mmproj_status, if (mmprojReady) Strings.txt(StringsKey.model_status_ready) else Strings.txt(StringsKey.model_status_missing)) + "\n$resolvedMmprojPath",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (mmprojReady) {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        } else {
+                            MaterialTheme.colorScheme.error
+                        },
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(12.dp))
                 ModelConfigField("Context Size", modelConfig.contextSize.toString()) {

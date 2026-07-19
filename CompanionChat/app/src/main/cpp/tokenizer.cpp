@@ -121,7 +121,31 @@ bool BpeTokenizer::load(const std::string& vocab_path, const std::string& merges
             merge_ranks_[line] = rank++;
         }
     }
+    // Load special tokens from added_tokens.json (same directory as vocab.json)
+    load_special_tokens(vocab_path);
     return true;
+}
+
+void BpeTokenizer::load_special_tokens(const std::string& vocab_path) {
+    // Derive added_tokens.json path from vocab.json path
+    auto slash = vocab_path.find_last_of("/\\");
+    std::string dir = (slash != std::string::npos) ? vocab_path.substr(0, slash) : ".";
+    std::string added_path = dir + "/added_tokens.json";
+
+    std::ifstream f(added_path);
+    if (!f.is_open()) {
+        // Fallback: hardcode essential special tokens for Qwen2/3
+        special_tokens_["<|im_start|>"] = 151644;
+        special_tokens_["<|im_end|>"]   = 151645;
+        special_tokens_["<|endoftext|>"] = 151643;
+        return;
+    }
+
+    json j;
+    f >> j;
+    for (auto& [key, val] : j.items()) {
+        special_tokens_[key] = val.get<int64_t>();
+    }
 }
 
 // GPT-2 pre-tokenizer pattern (simplified)
@@ -156,60 +180,106 @@ static std::vector<std::string> pretokenize(const std::string& text) {
 std::vector<int64_t> BpeTokenizer::encode(const std::string& text) const {
     std::vector<int64_t> tokens;
 
-    // Split text into pieces by whitespace
-    // For GPT-2 BPE, each "word" (space-separated) is encoded independently
-    // Leading spaces are part of the word encoding
+    // ── Step 1: Split text by special tokens ──
+    // Special tokens (e.g. <|im_start|>, <|im_end|>) must be emitted as single
+    // token IDs, NOT broken down by BPE.  We scan the text left-to-right, finding
+    // the earliest matching special token at each position.
+    std::vector<std::pair<bool, std::string>> segments; // (is_special, text)
 
-    std::vector<std::string> words;
-    std::string current_word;
-    bool in_word = false;
-    std::string pending_spaces;
-
-    for (size_t i = 0; i < text.size(); i++) {
-        char c = text[i];
-        bool is_ws = (c == ' ' || c == '\t' || c == '\n' || c == '\r');
-
-        if (is_ws) {
-            if (in_word) {
-                words.push_back(current_word);
-                current_word.clear();
-                in_word = false;
-            }
-            pending_spaces += c;
-        } else {
-            if (!in_word) {
-                // Start new word, prepend spaces
-                if (!pending_spaces.empty()) {
-                    // GPT-2 represents leading space as \u0120
-                    // The space bytes get encoded along with the word
-                    current_word = pending_spaces;
-                    pending_spaces.clear();
-                } else {
-                    current_word.clear();
+    if (special_tokens_.empty()) {
+        segments.push_back({false, text});
+    } else {
+        size_t pos = 0;
+        while (pos < text.size()) {
+            // Find the earliest special token match starting at or after `pos`
+            size_t best_pos = std::string::npos;
+            std::string best_tok;
+            for (const auto& [tok, _] : special_tokens_) {
+                size_t found = text.find(tok, pos);
+                if (found != std::string::npos && (best_pos == std::string::npos || found < best_pos)) {
+                    best_pos = found;
+                    best_tok = tok;
                 }
-                in_word = true;
             }
-            current_word += c;
+            if (best_pos == std::string::npos) {
+                // No more special tokens — rest is regular text
+                if (pos < text.size()) {
+                    segments.push_back({false, text.substr(pos)});
+                }
+                break;
+            }
+            // Regular text before the special token
+            if (best_pos > pos) {
+                segments.push_back({false, text.substr(pos, best_pos - pos)});
+            }
+            // The special token itself
+            segments.push_back({true, best_tok});
+            pos = best_pos + best_tok.size();
         }
     }
-    if (in_word) {
-        words.push_back(current_word);
-    }
 
-    for (const auto& word : words) {
-        // Convert word bytes to unicode string
-        std::string unicode_word = encode_bytes_to_unicode(word, byte_to_unicode_);
+    // ── Step 2: Process each segment ──
+    static const int64_t pad_id = 151643;
 
-        // Apply BPE
-        auto bpe_tokens = bpe(unicode_word);
-
-        // Look up token IDs
-        for (const auto& tok : bpe_tokens) {
-            auto it = vocab_.find(tok);
-            if (it != vocab_.end()) {
+    for (const auto& [is_special, seg] : segments) {
+        if (is_special) {
+            // Emit special token ID directly
+            auto it = special_tokens_.find(seg);
+            if (it != special_tokens_.end()) {
                 tokens.push_back(it->second);
+            }
+            continue;
+        }
+
+        // Regular text: split into words by whitespace, prepend leading spaces
+        std::vector<std::string> words;
+        std::string current_word;
+        bool in_word = false;
+        std::string pending_spaces;
+
+        for (size_t i = 0; i < seg.size(); i++) {
+            char c = seg[i];
+            bool is_ws = (c == ' ' || c == '\t' || c == '\n' || c == '\r');
+
+            if (is_ws) {
+                if (in_word) {
+                    words.push_back(current_word);
+                    current_word.clear();
+                    in_word = false;
+                }
+                pending_spaces += c;
             } else {
-                tokens.push_back(pad_token_id); // unknown
+                if (!in_word) {
+                    if (!pending_spaces.empty()) {
+                        current_word = pending_spaces;
+                        pending_spaces.clear();
+                    } else {
+                        current_word.clear();
+                    }
+                    in_word = true;
+                }
+                current_word += c;
+            }
+        }
+        if (in_word) {
+            words.push_back(current_word);
+        } else if (!pending_spaces.empty()) {
+            // Preserve trailing whitespace (e.g., "\n" between <|im_end|> and <|im_start|>).
+            // Without this, newlines after special tokens are silently dropped,
+            // causing token misalignment with HuggingFace tokenizer.
+            words.push_back(pending_spaces);
+        }
+
+        for (const auto& word : words) {
+            std::string unicode_word = encode_bytes_to_unicode(word, byte_to_unicode_);
+            auto bpe_tokens = bpe(unicode_word);
+            for (const auto& tok : bpe_tokens) {
+                auto it = vocab_.find(tok);
+                if (it != vocab_.end()) {
+                    tokens.push_back(it->second);
+                } else {
+                    tokens.push_back(pad_id);
+                }
             }
         }
     }

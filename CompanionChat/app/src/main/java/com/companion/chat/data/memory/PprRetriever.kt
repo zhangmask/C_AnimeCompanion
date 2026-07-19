@@ -102,9 +102,10 @@ class PprRetriever(
             )
         }.sortedByDescending { it.score }.take(topK)
 
-        // 强度强化：被检索到的记忆增加 strength
+        // 强度强化：被检索到的记忆增加 strength（每日上限 0.4）
+        val today = now / (1000 * 60 * 60 * 24)
         scored.forEach { (scoredMemory) ->
-            memoryDao.strengthen(scoredMemory.id, STRENGTHEN_DELTA, now)
+            memoryDao.strengthen(scoredMemory.id, STRENGTHEN_DELTA, today, now)
         }
 
         return scored

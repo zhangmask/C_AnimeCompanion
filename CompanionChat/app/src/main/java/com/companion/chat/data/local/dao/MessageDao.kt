@@ -20,4 +20,10 @@ interface MessageDao {
 
     @Query("DELETE FROM messages")
     suspend fun deleteAllMessages(): Int
+
+    @Query("SELECT audioUri FROM messages WHERE id = :id")
+    suspend fun getAudioUri(id: String): String?
+
+    @Query("UPDATE messages SET audioUri = :uri WHERE id = :id")
+    suspend fun updateAudioUri(id: String, uri: String)
 }

@@ -43,7 +43,12 @@ void png_write_callback(void *context, void *data, int size) {
 
 std::vector<uint8_t> encode_png(const ImageOutput &image) {
     if (image.pixels.empty() || image.width == 0 || image.height == 0) {
-        throw std::runtime_error("DreamLite pipeline returned an empty image");
+        // If pipeline set a friendly error_message (e.g. generation limit reached,
+        // memory too low), propagate it; otherwise fall back to a generic message.
+        throw std::runtime_error(
+            image.error_message.empty()
+                ? "DreamLite pipeline returned an empty image"
+                : image.error_message);
     }
     std::vector<uint8_t> png;
     const int stride = image.width * 3;
@@ -73,7 +78,10 @@ Java_com_companion_chat_data_image_DreamLiteNative_generateImagePng(
     jint width,
     jint height,
     jint steps,
-    jlong seed) {
+    jlong seed,
+    jstring reference_latents_path,
+    jfloat strength,
+    jstring output_latents_path) {
     try {
         const std::string model_path = to_string(env, model_dir);
         if (model_path.empty()) {
@@ -103,7 +111,10 @@ Java_com_companion_chat_data_image_DreamLiteNative_generateImagePng(
         config.width = std::clamp((int)width, 128, 2048);
         config.height = std::clamp((int)height, 128, 2048);
         config.num_steps = std::clamp((int)steps, 1, 50);
-        config.seed = static_cast<int>(seed);
+        config.seed = seed;  // jlong (64-bit) → int64_t, no truncation
+        config.reference_latents_path = to_string(env, reference_latents_path);
+        config.strength = strength;
+        config.output_latents_path = to_string(env, output_latents_path);
 
         // Generate
         ImageOutput output = pipeline.generate(config);

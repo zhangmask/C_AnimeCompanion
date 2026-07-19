@@ -24,6 +24,7 @@ data class RoleCard(
     val voiceDisplayName: String = "",
     val isBuiltIn: Boolean = false,
     val isActive: Boolean = false,
+    val tags: List<String> = emptyList(),
     val createdAt: Long,
     val updatedAt: Long
 )

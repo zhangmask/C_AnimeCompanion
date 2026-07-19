@@ -9,21 +9,19 @@ class BpeTokenizer {
 public:
     bool load(const std::string& vocab_path, const std::string& merges_path);
 
-    // Encode text to token IDs
+    // Encode text to token IDs (handles special tokens like <|im_start|>)
     std::vector<int64_t> encode(const std::string& text) const;
 
     // Get vocab size
     size_t vocab_size() const { return vocab_.size(); }
 
-    // Special token IDs
-    int64_t pad_token_id = 151643;   // <|endoftext|>
-    int64_t im_start_id  = 151644;   // <|im_start|>
-    int64_t im_end_id    = 151645;   // <|im_end|>
-
 private:
     std::unordered_map<std::string, int64_t> vocab_;
     std::vector<std::pair<std::string, std::string>> merges_;
     std::unordered_map<std::string, int> merge_ranks_;
+
+    // Special tokens (from added_tokens.json) — these are NOT BPE-processed
+    std::unordered_map<std::string, int64_t> special_tokens_;
 
     // Byte-to-unicode mapping (GPT-2 style)
     static std::unordered_map<uint8_t, char32_t> byte_to_unicode_;
@@ -31,4 +29,7 @@ private:
 
     std::string bytes_to_unicode(const std::string& bytes) const;
     std::vector<std::string> bpe(const std::string& token) const;
+
+    // Load added_tokens.json from the same directory as vocab.json
+    void load_special_tokens(const std::string& vocab_path);
 };

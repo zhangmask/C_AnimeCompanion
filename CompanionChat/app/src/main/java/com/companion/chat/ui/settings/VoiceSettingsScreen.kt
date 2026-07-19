@@ -101,7 +101,7 @@ fun VoiceSettingsScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )
-            VoiceInfoRow(Strings.txt(StringsKey.voice_recognition_mode), voiceInputConfig.recognitionModeLabel)
+            VoiceInfoRow(Strings.txt(StringsKey.voice_recognition_mode), voiceInputConfig.recognitionModeLabel(LocalLanguage.current))
             VoiceInfoRow(Strings.txt(StringsKey.voice_recognition_backend), voiceInputConfig.backend.displayName(LocalLanguage.current))
             VoiceInfoRow(Strings.txt(StringsKey.voice_model_directory), voiceInputConfig.localSenseVoiceModelDirectory.ifBlank { Strings.txt(StringsKey.voice_not_configured) })
             VoiceInfoRow(Strings.txt(StringsKey.voice_model_status), localModelStatus.displayName(LocalLanguage.current))
@@ -141,6 +141,27 @@ fun VoiceSettingsScreen(
                     onCheckedChange = { viewModel.toggleAutoPlayTts(it) }
                 )
             }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = Strings.txt(StringsKey.voice_interrupt_on_new),
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Text(
+                        text = Strings.txt(StringsKey.voice_interrupt_on_new_desc),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Switch(
+                    checked = uiState.voiceOutputSettings.interruptTtsOnNewMessage,
+                    onCheckedChange = { viewModel.toggleInterruptTtsOnNewMessage(it) }
+                )
+            }
         }
     }
 }
@@ -148,6 +169,7 @@ fun VoiceSettingsScreen(
 private fun VoiceInputBackend.displayName(lang: AppLanguage): String {
     return when (this) {
         VoiceInputBackend.LOCAL_SENSEVOICE -> Strings.get(lang, StringsKey.voice_local_sensevoice)
+        VoiceInputBackend.LOCAL_MNN_SENSEVOICE -> Strings.get(lang, StringsKey.voice_local_sensevoice) + " (MNN)"
         VoiceInputBackend.CLOUD_HTTP_ASR -> Strings.get(lang, StringsKey.voice_cloud_http_asr)
     }
 }

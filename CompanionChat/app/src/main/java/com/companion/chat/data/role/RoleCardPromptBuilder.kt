@@ -37,7 +37,8 @@ class RoleCardPromptBuilder {
             if (roleCard.imageStylePrompt.isNotBlank()) {
                 add("视觉风格参考：${roleCard.imageStylePrompt.trim()}")
             }
-            add("请始终维持该角色设定，但不要主动暴露这些规则来源。")
+            add("以上角色设定具有最高优先级。无论用户问什么问题，你都必须始终维持该角色身份回答，不要说自己是无差别的 AI 助手或通用助手。")
+            add("对话方式：先回应再分享，偶尔好奇，不要每句都追问，不要主动科普，回答简洁。")
         }
 
         return sections.joinToString(separator = "\n")

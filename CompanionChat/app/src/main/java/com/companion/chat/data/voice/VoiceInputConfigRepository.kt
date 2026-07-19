@@ -6,7 +6,8 @@ import java.io.File
 
 class VoiceInputConfigRepository(
     private val sharedPreferences: SharedPreferences,
-    private val defaultModelDirectoryProvider: () -> String = { "" }
+    private val defaultModelDirectoryProvider: () -> String = { "" },
+    private val defaultMnnModelDirectoryProvider: () -> String = { "" }
 ) {
     constructor(context: Context) : this(
         sharedPreferences = context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE),
@@ -14,16 +15,25 @@ class VoiceInputConfigRepository(
             context.applicationContext.getExternalFilesDir(DEFAULT_MODEL_RELATIVE_DIRECTORY)
                 ?.absolutePath
                 .orEmpty()
+        },
+        defaultMnnModelDirectoryProvider = {
+            context.applicationContext.getExternalFilesDir(DEFAULT_MNN_MODEL_RELATIVE_DIRECTORY)
+                ?.absolutePath
+                .orEmpty()
         }
     )
 
     fun getConfig(): VoiceInputConfig {
+        val backend = parseBackend(sharedPreferences.getString(KEY_BACKEND, VoiceInputBackend.LOCAL_SENSEVOICE.name))
+        val savedDir = sharedPreferences.getString(KEY_LOCAL_SENSEVOICE_MODEL_DIRECTORY, null)?.trim().orEmpty()
+        val defaultDir = if (backend == VoiceInputBackend.LOCAL_MNN_SENSEVOICE) {
+            defaultMnnModelDirectoryProvider().trim()
+        } else {
+            defaultModelDirectoryProvider().trim()
+        }
         return VoiceInputConfig(
-            backend = parseBackend(sharedPreferences.getString(KEY_BACKEND, VoiceInputBackend.LOCAL_SENSEVOICE.name)),
-            localSenseVoiceModelDirectory = sharedPreferences.getString(
-                KEY_LOCAL_SENSEVOICE_MODEL_DIRECTORY,
-                null
-            )?.trim().orEmpty().ifBlank { defaultModelDirectoryProvider().trim() }
+            backend = backend,
+            localSenseVoiceModelDirectory = savedDir.ifBlank { defaultDir }
         )
     }
 
@@ -48,7 +58,11 @@ class VoiceInputConfigRepository(
         val directory = config.localSenseVoiceModelDirectory.trim()
         if (directory.isBlank()) return LocalSenseVoiceModelStatus.DirectoryNotConfigured
 
-        val missingFiles = REQUIRED_LOCAL_SENSEVOICE_FILES
+        val requiredFiles = when (config.backend) {
+            VoiceInputBackend.LOCAL_MNN_SENSEVOICE -> REQUIRED_MNN_SENSEVOICE_FILES
+            else -> REQUIRED_LOCAL_SENSEVOICE_FILES
+        }
+        val missingFiles = requiredFiles
             .filterNot { File(directory, it).isFile }
         return if (missingFiles.isEmpty()) {
             LocalSenseVoiceModelStatus.Ready
@@ -60,6 +74,7 @@ class VoiceInputConfigRepository(
     private fun parseBackend(rawBackend: String?): VoiceInputBackend {
         return when (rawBackend) {
             VoiceInputBackend.CLOUD_HTTP_ASR.name -> VoiceInputBackend.CLOUD_HTTP_ASR
+            VoiceInputBackend.LOCAL_MNN_SENSEVOICE.name -> VoiceInputBackend.LOCAL_MNN_SENSEVOICE
             VoiceInputBackend.LOCAL_SENSEVOICE.name,
             "LOCAL_MULTILINGUAL_ASR",
             "SYSTEM_SPEECH_RECOGNIZER",
@@ -72,11 +87,17 @@ class VoiceInputConfigRepository(
     companion object {
         const val PREFS_NAME = "voice_input_config"
         const val DEFAULT_MODEL_RELATIVE_DIRECTORY = "models/asr/sensevoice"
+        const val DEFAULT_MNN_MODEL_RELATIVE_DIRECTORY = "models/asr/sensevoice-mnn"
 
         val REQUIRED_LOCAL_SENSEVOICE_FILES = listOf(
             "model.int8.onnx",
             "tokens.txt",
             "silero_vad.onnx"
+        )
+
+        val REQUIRED_MNN_SENSEVOICE_FILES = listOf(
+            "sensevoice_wq8.mnn",
+            "tokens.txt"
         )
 
         private const val KEY_BACKEND = "backend"

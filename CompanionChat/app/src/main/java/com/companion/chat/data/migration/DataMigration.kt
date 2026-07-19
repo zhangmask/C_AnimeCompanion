@@ -124,9 +124,11 @@ class DataMigration(
                     ConversationSession(
                         id = sessionObject.getString("id"),
                         title = sessionObject.optString("title", DEFAULT_SESSION_TITLE),
+                        roleCardId = if (sessionObject.has("roleCardId")) sessionObject.optLong("roleCardId", -1).takeIf { it > 0 } else null,
                         messages = messages,
                         createdAt = createdAt,
-                        updatedAt = updatedAt
+                        updatedAt = updatedAt,
+                        isUserRenamed = sessionObject.optBoolean("isUserRenamed", false)
                     )
                 )
             }
@@ -149,6 +151,7 @@ private fun ConversationSession.toEntity(): ConversationEntity {
     return ConversationEntity(
         id = id,
         title = title,
+        roleCardId = roleCardId,
         createdAt = createdAt,
         updatedAt = updatedAt,
         isUserRenamed = isUserRenamed
@@ -163,6 +166,7 @@ private fun ChatMessage.toEntity(conversationId: String, position: Int): Message
         content = content,
         imageUris = images.map(Uri::toString),
         timestamp = timestamp,
-        position = position
+        position = position,
+        quote = null  // 旧版迁移数据不携带引用
     )
 }

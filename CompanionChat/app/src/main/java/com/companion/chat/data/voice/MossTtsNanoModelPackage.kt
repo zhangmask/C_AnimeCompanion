@@ -3,6 +3,9 @@ package com.companion.chat.data.voice
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
+import com.companion.chat.locale.AppLanguage
+import com.companion.chat.locale.Strings
+import com.companion.chat.locale.StringsKey
 
 object MossTtsNanoModelPackage {
     const val DEFAULT_MODEL_RELATIVE_DIRECTORY = "models/tts/moss-tts-nano"
@@ -106,16 +109,16 @@ data class MossTtsNanoConfig(
             // Parse generation defaults
             val genJson = manifest.optJSONObject("generation_defaults") ?: JSONObject()
             val generationDefaults = GenerationDefaults(
-                maxNewFrames = genJson.optInt("max_new_frames", 500),
+                maxNewFrames = genJson.optInt("max_new_frames", 75),
                 doSample = genJson.optBoolean("do_sample", true),
                 sampleMode = genJson.optString("sample_mode", "fixed"),
-                audioRepetitionPenalty = genJson.optDouble("audio_repetition_penalty", 1.1).toFloat(),
-                audioTemperature = genJson.optDouble("audio_temperature", 1.0).toFloat(),
-                audioTopK = genJson.optInt("audio_top_k", 50),
+                audioRepetitionPenalty = genJson.optDouble("audio_repetition_penalty", 1.2).toFloat(),
+                audioTemperature = genJson.optDouble("audio_temperature", 0.8).toFloat(),
+                audioTopK = genJson.optInt("audio_top_k", 25),
                 audioTopP = genJson.optDouble("audio_top_p", 0.95).toFloat(),
                 textTemperature = genJson.optDouble("text_temperature", 1.0).toFloat(),
-                textTopK = genJson.optInt("text_top_k", 5),
-                textTopP = genJson.optDouble("text_top_p", 0.95).toFloat()
+                textTopK = genJson.optInt("text_top_k", 50),
+                textTopP = genJson.optDouble("text_top_p", 1.0).toFloat()
             )
 
             // Parse prompt templates
@@ -225,16 +228,16 @@ data class TtsConfig(
 
 /** 生成参数默认值。 */
 data class GenerationDefaults(
-    val maxNewFrames: Int = 500,
+    val maxNewFrames: Int = 75,
     val doSample: Boolean = true,
     val sampleMode: String = "fixed",
-    val audioRepetitionPenalty: Float = 1.1f,
-    val audioTemperature: Float = 1.0f,
-    val audioTopK: Int = 50,
+    val audioRepetitionPenalty: Float = 1.2f,
+    val audioTemperature: Float = 0.8f,
+    val audioTopK: Int = 25,
     val audioTopP: Float = 0.95f,
     val textTemperature: Float = 1.0f,
-    val textTopK: Int = 5,
-    val textTopP: Float = 0.95f
+    val textTopK: Int = 50,
+    val textTopP: Float = 1.0f
 )
 
 /** Prompt 模板 token ID 序列。 */
@@ -287,4 +290,11 @@ sealed class MossTtsNanoModelStatus {
     data object DirectoryNotConfigured : MossTtsNanoModelStatus()
     data class MissingFiles(val fileNames: List<String>) : MossTtsNanoModelStatus()
     data class InvalidConfig(val message: String) : MossTtsNanoModelStatus()
+
+    fun displayName(lang: AppLanguage): String = when (this) {
+        is Ready -> Strings.get(lang, StringsKey.voice_ready)
+        is DirectoryNotConfigured -> Strings.get(lang, StringsKey.voice_moss_not_configured)
+        is MissingFiles -> Strings.get(lang, StringsKey.voice_missing_files, fileNames.joinToString(", "))
+        is InvalidConfig -> Strings.get(lang, StringsKey.voice_invalid_config, message)
+    }
 }

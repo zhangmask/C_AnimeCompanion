@@ -3,7 +3,9 @@ package com.companion.chat.engine
 import ai.onnxruntime.OnnxTensor
 import ai.onnxruntime.OrtEnvironment
 import ai.onnxruntime.OrtSession
+import ai.onnxruntime.providers.NNAPIFlags
 import android.util.Log
+import java.util.EnumSet
 import com.companion.chat.data.voice.*
 import java.io.File
 import java.nio.FloatBuffer
@@ -36,6 +38,8 @@ class MossTtsNanoRuntime(
     private val env: OrtEnvironment = OrtEnvironment.getEnvironment()
     private val sessionOptions = OrtSession.SessionOptions().apply {
         setIntraOpNumThreads(4)
+        addNnapi(EnumSet.of(NNAPIFlags.USE_FP16))
+        addXnnpack(emptyMap())
     }
 
     // ── Lazy-loaded ONNX sessions ──
@@ -47,6 +51,16 @@ class MossTtsNanoRuntime(
     // private val localFixedSampledFrameSession: OrtSession by lazy { createSession(config.ttsLocalFixedSampledFrameModelPath) }
     private val codecEncodeSession: OrtSession by lazy { createSession(config.audioTokenizerEncodeModelPath) }
     private val codecDecodeFullSession: OrtSession by lazy { createSession(config.audioTokenizerDecodeFullModelPath) }
+
+    // ── 预分配的 scalar 缓存（避免 per-call 分配 intArrayOf/longArrayOf） ──
+    private val scalarInt = intArrayOf(0)
+    private val scalarShape = longArrayOf(1)
+    private val globalHiddenShape = longArrayOf(1, 0)
+
+    private fun createScalarTensor(value: Int): OnnxTensor {
+        scalarInt[0] = value
+        return OnnxTensor.createTensor(env, IntBuffer.wrap(scalarInt), scalarShape)
+    }
 
     // ── KV cache name mapping ──
     private val decodePastInputNames: List<String> = config.ttsMetaOnnx.decodeInputNames.drop(2)
@@ -68,10 +82,6 @@ class MossTtsNanoRuntime(
         } else {
             emptyList()
         }
-
-    // ── Mutable decode step feed state ──
-    private var decodePastFeeds: MutableMap<String, OnnxTensor> = mutableMapOf()
-    private var localCachedPastFeeds: MutableMap<String, OnnxTensor> = mutableMapOf()
 
     private fun createSession(relativePath: String): OrtSession {
         val file = File(modelDirectory, relativePath)
@@ -103,6 +113,7 @@ class MossTtsNanoRuntime(
      * @return [numFrames, numQuantizers] 的 audio code 数组
      */
     fun encodeReferenceAudio(waveform: FloatArray, waveformLength: Int): Array<IntArray> {
+        val t0 = System.currentTimeMillis()
         Log.i(TAG, "编码参考音频: waveformLength=$waveformLength, channels=${config.channels}")
 
         val feeds = mutableMapOf<String, OnnxTensor>()
@@ -136,7 +147,8 @@ class MossTtsNanoRuntime(
         feeds.values.forEach { it.close() }
         result.close()
 
-        Log.i(TAG, "参考音频编码完成: $codeLength frames × ${config.numQuantizers} quantizers")
+        val t1 = System.currentTimeMillis()
+        Log.i(TAG, "参考音频编码完成: $codeLength frames × ${config.numQuantizers} quantizers, 耗时=${t1-t0}ms")
         return codes
     }
 
@@ -221,6 +233,7 @@ class MossTtsNanoRuntime(
     )
 
     private fun runPrefill(requestRows: RequestRows): PrefillResult {
+        val t0 = System.currentTimeMillis()
         Log.i(TAG, "Prefill: seqLen=${requestRows.seqLen}, rowWidth=${requestRows.rowWidth}")
 
         val inputIdsTensor = OnnxTensor.createTensor(
@@ -251,13 +264,13 @@ class MossTtsNanoRuntime(
 
         val pastValidLength = requestRows.attentionMask.sum()
 
-        // Update decode past feeds from prefill outputs
-        updateDecodePastFeeds(outputs)
-
         inputIdsTensor.close()
         maskTensor.close()
         // Note: globalHiddenTensor is kept alive via outputs; don't close outputs yet
+        // Prefill 的输出会作为第一个 decode_step 的 KV cache 输入
 
+        val t1 = System.currentTimeMillis()
+        Log.i(TAG, "Prefill 完成: hiddenSize=$hiddenSize, 耗时=${t1-t0}ms")
         return PrefillResult(lastHidden, hiddenSize, pastValidLength, outputs)
     }
 
@@ -265,10 +278,16 @@ class MossTtsNanoRuntime(
     //  4. Decode Step (全局解码器步进)
     // ═══════════════════════════════════════════════════════
 
+    private data class DecodeStepResult(
+        val globalHidden: FloatArray,
+        val hiddenSize: Int,
+        val outputs: OrtSession.Result
+    )
+
     private fun runDecodeStep(
         frameTokens: IntArray,
         pastValidLength: Int,
-        previousOutputs: OrtSession.Result
+        previousOutputs: OrtSession.Result?
     ): DecodeStepResult {
         val rowWidth = config.ttsConfig.nVq + 1
         val rowData = IntArray(rowWidth) { config.ttsConfig.audioPadTokenId }
@@ -282,13 +301,21 @@ class MossTtsNanoRuntime(
             env, IntBuffer.wrap(rowData),
             longArrayOf(1, 1, rowWidth.toLong())
         )
-        feeds["past_valid_lengths"] = OnnxTensor.createTensor(
-            env, IntBuffer.wrap(intArrayOf(pastValidLength)), longArrayOf(1)
-        )
-        // Add past KV feeds from previous step
-        feeds.putAll(decodePastFeeds)
+        feeds["past_valid_lengths"] = createScalarTensor(pastValidLength)
+        // 直接引用上一帧输出的 KV cache 张量（非深拷贝）
+        if (previousOutputs != null) {
+            for (i in decodePastInputNames.indices) {
+                val presentName = decodePresentOutputNames[i]
+                val pastName = decodePastInputNames[i]
+                val tensor = previousOutputs.get(presentName).get() as OnnxTensor
+                feeds[pastName] = tensor
+            }
+        }
 
         val outputs = decodeStepSession.run(feeds)
+
+        // session.run() 完成后，上一帧的输出已不再需要
+        previousOutputs?.close()
 
         val globalHiddenTensor = outputs.get("global_hidden").get() as OnnxTensor
         val dims = globalHiddenTensor.info.shape
@@ -299,50 +326,30 @@ class MossTtsNanoRuntime(
         allData.position((seqLen - 1) * hiddenSize)
         allData.get(lastHidden)
 
-        // 保存旧的 KV cache 引用，以便正确关闭
-        val oldDecodePastFeeds = decodePastFeeds
-        updateDecodePastFeeds(outputs)
-
-        // Cleanup old feeds (关闭旧的 KV cache，而不是新更新的)
-        oldDecodePastFeeds.values.forEach { it.close() }
         feeds.values.forEach { it.close() }
-        previousOutputs.close()
 
         return DecodeStepResult(lastHidden, hiddenSize, outputs)
-    }
-
-    private data class DecodeStepResult(
-        val globalHidden: FloatArray,
-        val hiddenSize: Int,
-        val outputs: OrtSession.Result
-    )
-
-    private fun updateDecodePastFeeds(outputs: OrtSession.Result) {
-        val newFeeds = mutableMapOf<String, OnnxTensor>()
-        for (i in decodePastInputNames.indices) {
-            val presentName = decodePresentOutputNames[i]
-            val pastName = decodePastInputNames[i]
-            val tensor = outputs.get(presentName).get() as OnnxTensor
-            newFeeds[pastName] = deepCopyTensor(tensor)
-        }
-        decodePastFeeds = newFeeds
     }
 
     // ═══════════════════════════════════════════════════════
     //  5. Local Cached Step (本地自回归解码器 - KV cache 版)
     // ═══════════════════════════════════════════════════════
 
-    private fun resetLocalCachedState() {
-        localCachedPastFeeds.values.forEach { it.close() }
-        localCachedPastFeeds = mutableMapOf()
+    // ── Local Cached Step ──
+
+    /**
+     * 创建空的本地 KV cache 张量（每帧开始时用）。
+     */
+    private fun createEmptyLocalKVTensors(): Map<String, OnnxTensor> {
+        val map = mutableMapOf<String, OnnxTensor>()
         for (name in localCachedPastInputNames) {
-            val tensor = OnnxTensor.createTensor(
+            map[name] = OnnxTensor.createTensor(
                 env,
                 FloatBuffer.wrap(FloatArray(0)),
                 longArrayOf(1, 0, config.ttsMetaOnnx.localHeads.toLong(), config.ttsMetaOnnx.localHeadDim.toLong())
             )
-            localCachedPastFeeds[name] = tensor
         }
+        return map
     }
 
     private data class LocalCachedStepResult(
@@ -354,33 +361,33 @@ class MossTtsNanoRuntime(
     private fun runLocalCachedStep(
         globalHidden: FloatArray,
         hiddenSize: Int,
+        globalHiddenTensor: OnnxTensor,  // 帧级缓存的 hidden tensor
         textTokenId: Int,
         audioTokenId: Int,
         channelIndex: Int,
         stepType: Int,
-        pastValidLength: Int
+        pastValidLength: Int,
+        previousOutput: OrtSession.Result?
     ): LocalCachedStepResult {
         val feeds = mutableMapOf<String, OnnxTensor>()
-        feeds["global_hidden"] = OnnxTensor.createTensor(
-            env, FloatBuffer.wrap(globalHidden),
-            longArrayOf(1, hiddenSize.toLong())
-        )
-        feeds["text_token_id"] = OnnxTensor.createTensor(
-            env, IntBuffer.wrap(intArrayOf(textTokenId)), longArrayOf(1)
-        )
-        feeds["audio_token_id"] = OnnxTensor.createTensor(
-            env, IntBuffer.wrap(intArrayOf(audioTokenId)), longArrayOf(1)
-        )
-        feeds["channel_index"] = OnnxTensor.createTensor(
-            env, IntBuffer.wrap(intArrayOf(channelIndex)), longArrayOf(1)
-        )
-        feeds["step_type"] = OnnxTensor.createTensor(
-            env, IntBuffer.wrap(intArrayOf(stepType)), longArrayOf(1)
-        )
-        feeds["past_valid_lengths"] = OnnxTensor.createTensor(
-            env, IntBuffer.wrap(intArrayOf(pastValidLength)), longArrayOf(1)
-        )
-        feeds.putAll(localCachedPastFeeds)
+        feeds["global_hidden"] = globalHiddenTensor
+        feeds["text_token_id"] = createScalarTensor(textTokenId)
+        feeds["audio_token_id"] = createScalarTensor(audioTokenId)
+        feeds["channel_index"] = createScalarTensor(channelIndex)
+        feeds["step_type"] = createScalarTensor(stepType)
+        feeds["past_valid_lengths"] = createScalarTensor(pastValidLength)
+        // 直接引用上一子步的 KV cache 张量
+        if (previousOutput != null) {
+            for (i in localCachedPastInputNames.indices) {
+                val presentName = localCachedPresentOutputNames[i]
+                val pastName = localCachedPastInputNames[i]
+                val tensor = previousOutput.get(presentName).get() as OnnxTensor
+                feeds[pastName] = tensor
+            }
+        } else {
+            // 第一个子步，用空的 KV cache
+            feeds.putAll(createEmptyLocalKVTensors())
+        }
 
         val outputs = localCachedStepSession.run(feeds)
 
@@ -390,18 +397,19 @@ class MossTtsNanoRuntime(
 
         val audioLogitsTensor = outputs.get("audio_logits").get() as OnnxTensor
 
-        // Update local cached past feeds (deep copy to survive result.close())
-        val newFeeds = mutableMapOf<String, OnnxTensor>()
-        for (i in localCachedPastInputNames.indices) {
-            val presentName = localCachedPresentOutputNames[i]
-            val pastName = localCachedPastInputNames[i]
-            val tensor = outputs.get(presentName).get() as OnnxTensor
-            newFeeds[pastName] = deepCopyTensor(tensor)
+        // 关闭上一子步的输出（当前 run 已完成，数据已读取）
+        previousOutput?.close()
+        // 只关闭临时创建的 scalar tensor；globalHiddenTensor 由调用方管理
+        feeds["text_token_id"]?.close()
+        feeds["audio_token_id"]?.close()
+        feeds["channel_index"]?.close()
+        feeds["step_type"]?.close()
+        feeds["past_valid_lengths"]?.close()
+        // KV cache 张量来自 previousOutput 或 createEmptyLocalKVTensors，前者由 close() 处理
+        // 后者是空 tensor 无需频繁创建/关闭（但先兼容关闭）
+        if (previousOutput == null) {
+            createEmptyLocalKVTensors().values.forEach { it.close() }
         }
-        // Cleanup old feeds
-        localCachedPastFeeds.values.forEach { it.close() }
-        feeds.values.forEach { it.close() }
-        localCachedPastFeeds = newFeeds
 
         return LocalCachedStepResult(textLogits, audioLogitsTensor, outputs)
     }
@@ -434,11 +442,13 @@ class MossTtsNanoRuntime(
         isCancelled: () -> Boolean = { false },
         onFrameProgress: ((Int) -> Unit)? = null
     ): List<IntArray> {
+        val tGen0 = System.currentTimeMillis()
         val gen = config.generationDefaults
         val nVq = config.ttsConfig.nVq
         val assistantSlotId = config.ttsConfig.audioAssistantSlotTokenId
 
         // Phase 1: Prefill
+        val tPrefill0 = System.currentTimeMillis()
         val prefillResult = runPrefill(requestRows)
         var globalHidden = prefillResult.globalHidden
         var hiddenSize = prefillResult.hiddenSize
@@ -452,6 +462,9 @@ class MossTtsNanoRuntime(
         Log.i(TAG, "开始帧生成: maxNewFrames=${gen.maxNewFrames}, nVq=$nVq")
 
         // Phase 2: Autoregressive frame generation
+        var totalLocalCachedMs = 0L
+        var totalDecodeStepMs = 0L
+        var frameCount = 0
         for (stepIndex in 0 until gen.maxNewFrames) {
             if (isCancelled()) {
                 Log.i(TAG, "帧生成被取消: step=$stepIndex")
@@ -462,17 +475,26 @@ class MossTtsNanoRuntime(
 
             if (localCachedPastInputNames.isNotEmpty()) {
                 // ── Cached step decoding ──
-                resetLocalCachedState()
                 var localPastValidLength = 0
+                var prevLocalOutput: OrtSession.Result? = null  // 上一子步的输出（KV cache 来源）
+
+                // 帧级缓存：global_hidden tensor 在整个帧内复用
+                globalHiddenShape[1] = hiddenSize.toLong()
+                val frameGlobalHiddenTensor = OnnxTensor.createTensor(
+                    env, FloatBuffer.wrap(globalHidden), globalHiddenShape
+                )
 
                 // Step 0: sample assistant text token
+                val tLc0 = System.currentTimeMillis()
                 val textResult = runLocalCachedStep(
-                    globalHidden, hiddenSize,
+                    globalHidden, hiddenSize, frameGlobalHiddenTensor,
                     textTokenId = 0, audioTokenId = 0,
                     channelIndex = 0, stepType = 0,
-                    pastValidLength = localPastValidLength
+                    pastValidLength = localPastValidLength,
+                    previousOutput = null  // 帧开头，无前驱 KV cache
                 )
                 localPastValidLength++
+                prevLocalOutput = textResult.outputs  // 保留输出供下一步引用
 
                 val nextTextToken = MossTtsSampling.sampleAssistantTextToken(
                     textLogits = textResult.textLogits,
@@ -483,21 +505,25 @@ class MossTtsNanoRuntime(
                     textTopK = gen.textTopK,
                     textTopP = gen.textTopP
                 )
-                textResult.outputs.close()
 
                 if (nextTextToken != assistantSlotId) {
+                    // 清理当前帧的局部 KV cache 输出
+                    prevLocalOutput?.close()
+                    frameGlobalHiddenTensor.close()
                     Log.i(TAG, "生成结束: step=$stepIndex, token=$nextTextToken")
                     break
                 }
 
                 // Step 1: first audio channel
                 var stepResult = runLocalCachedStep(
-                    globalHidden, hiddenSize,
+                    globalHidden, hiddenSize, frameGlobalHiddenTensor,
                     textTokenId = nextTextToken, audioTokenId = 0,
                     channelIndex = 0, stepType = 1,
-                    pastValidLength = localPastValidLength
+                    pastValidLength = localPastValidLength,
+                    previousOutput = prevLocalOutput
                 )
                 localPastValidLength++
+                prevLocalOutput = stepResult.outputs
 
                 var audioLogits = sliceAudioChannelLogits(stepResult.audioLogits, 0)
                 var sampledToken = MossTtsSampling.sampleAudioToken(
@@ -514,18 +540,20 @@ class MossTtsNanoRuntime(
                 previousTokensByChannel[0].add(sampledToken)
                 previousTokenSetsByChannel[0].add(sampledToken)
                 var previousToken = sampledToken
-                stepResult.outputs.close()
+                totalLocalCachedMs += System.currentTimeMillis() - tLc0
 
                 // Step 2..n_vq-1: remaining audio channels
                 for (ch in 1 until nVq) {
                     if (isCancelled()) break
                     stepResult = runLocalCachedStep(
-                        globalHidden, hiddenSize,
+                        globalHidden, hiddenSize, frameGlobalHiddenTensor,
                         textTokenId = 0, audioTokenId = previousToken,
                         channelIndex = ch - 1, stepType = 2,
-                        pastValidLength = localPastValidLength
+                        pastValidLength = localPastValidLength,
+                        previousOutput = prevLocalOutput
                     )
                     localPastValidLength++
+                    prevLocalOutput = stepResult.outputs
 
                     audioLogits = sliceAudioChannelLogits(stepResult.audioLogits, ch)
                     sampledToken = MossTtsSampling.sampleAudioToken(
@@ -542,8 +570,10 @@ class MossTtsNanoRuntime(
                     previousTokensByChannel[ch].add(sampledToken)
                     previousTokenSetsByChannel[ch].add(sampledToken)
                     previousToken = sampledToken
-                    stepResult.outputs.close()
                 }
+                // 清理当前帧的 tensor 和 KV cache 输出
+                frameGlobalHiddenTensor.close()
+                prevLocalOutput?.close()
             } else {
                 Log.e(TAG, "localCachedStep 不可用，无法生成帧")
                 break
@@ -553,7 +583,9 @@ class MossTtsNanoRuntime(
             onFrameProgress?.invoke(generatedFrames.size)
 
             // Phase 3: Decode step (update global hidden state)
+            val tDs0 = System.currentTimeMillis()
             val decodeResult = runDecodeStep(frame, pastValidLength, currentOutputs)
+            totalDecodeStepMs += System.currentTimeMillis() - tDs0
             globalHidden = decodeResult.globalHidden
             hiddenSize = decodeResult.hiddenSize
             pastValidLength++
@@ -564,14 +596,14 @@ class MossTtsNanoRuntime(
             }
         }
 
-        // Cleanup
+        // Cleanup - currentOutputs 是最后一帧的 decode_step 输出或 prefill 输出
         currentOutputs.close()
-        decodePastFeeds.values.forEach { it.close() }
-        decodePastFeeds.clear()
-        localCachedPastFeeds.values.forEach { it.close() }
-        localCachedPastFeeds.clear()
 
-        Log.i(TAG, "帧生成完成: ${generatedFrames.size} frames")
+        val tGen1 = System.currentTimeMillis()
+        Log.i(TAG, "帧生成完成: ${generatedFrames.size} frames, " +
+            "总耗时=${tGen1-tGen0}ms, Prefill=${tGen1-tPrefill0}ms, " +
+            "LocalCached=${totalLocalCachedMs}ms, DecodeStep=${totalDecodeStepMs}ms, " +
+            "平均每帧=${if (generatedFrames.isNotEmpty()) (tGen1-tGen0)/generatedFrames.size else 0}ms")
         return generatedFrames
     }
 
@@ -585,6 +617,7 @@ class MossTtsNanoRuntime(
      * @return 解码后的 Float32 PCM 数据 (channel-major 布局) + 有效长度
      */
     fun decodeAudio(frames: List<IntArray>): DecodedAudio {
+        val t0 = System.currentTimeMillis()
         if (frames.isEmpty()) return DecodedAudio(FloatArray(0), 0)
 
         Log.i(TAG, "解码音频: ${frames.size} frames")
@@ -620,7 +653,8 @@ class MossTtsNanoRuntime(
         feeds.values.forEach { it.close() }
         result.close()
 
-        Log.i(TAG, "音频解码完成: ${audioData.size} samples, validLength=$audioLength")
+        val t1 = System.currentTimeMillis()
+        Log.i(TAG, "音频解码完成: ${audioData.size} samples, validLength=$audioLength, 耗时=${t1-t0}ms")
         return DecodedAudio(audioData, audioLength)
     }
 
@@ -650,6 +684,7 @@ class MossTtsNanoRuntime(
         isCancelled: () -> Boolean = { false },
         onProgress: ((String) -> Unit)? = null
     ): SynthesisResult {
+        val tTotal0 = System.currentTimeMillis()
         onProgress?.invoke("文本规范化")
         val normalizedText = MossTtsTextNormalizer.normalize(text)
         if (normalizedText.isBlank()) {
@@ -714,8 +749,9 @@ class MossTtsNanoRuntime(
         // Convert channel-major to interleaved for WAV output
         val pcm = channelMajorToInterleaved(decoded.data, decoded.lengthPerChannel, config.channels)
 
+        val tTotal1 = System.currentTimeMillis()
         onProgress?.invoke("合成完成")
-        Log.i(TAG, "合成完成: ${pcm.size} samples, ${config.sampleRate}Hz, ${config.channels}ch")
+        Log.i(TAG, "合成完成: ${pcm.size} samples, ${config.sampleRate}Hz, ${config.channels}ch, 总耗时=${tTotal1-tTotal0}ms")
         return SynthesisResult.Success(
             waveform = pcm,
             sampleRate = config.sampleRate,
@@ -759,16 +795,27 @@ class MossTtsNanoRuntime(
 
     fun release() {
         Log.i(TAG, "释放 MossTtsNanoRuntime")
-        decodePastFeeds.values.forEach { it.close() }
-        decodePastFeeds.clear()
-        localCachedPastFeeds.values.forEach { it.close() }
-        localCachedPastFeeds.clear()
         runCatching<Unit> { prefillSession.close() }
         runCatching<Unit> { decodeStepSession.close() }
         runCatching<Unit> { localCachedStepSession.close() }
         // localFixedSampledFrameSession 未加载，无需关闭
         runCatching<Unit> { codecEncodeSession.close() }
         runCatching<Unit> { codecDecodeFullSession.close() }
+    }
+
+    /**
+     * 预热：提前加载所有 ONNX session，减少首次合成时延。
+     * 应在后台线程调用（会加载 ~700MB 模型）。
+     */
+    fun warmUpSessions() {
+        val t0 = System.currentTimeMillis()
+        Log.i(TAG, "预热 ONNX sessions...")
+        prefillSession
+        decodeStepSession
+        localCachedStepSession
+        codecEncodeSession
+        codecDecodeFullSession
+        Log.i(TAG, "ONNX sessions 预热完成: 耗时=${System.currentTimeMillis()-t0}ms")
     }
 }
 

@@ -30,7 +30,8 @@ class RoleCardRepository(
         imageStylePrompt: String = "",
         voiceProfileUri: String = "",
         voiceMode: String = "CLONE",
-        voiceDisplayName: String = ""
+        voiceDisplayName: String = "",
+        tags: List<String> = emptyList()
     ): Long {
         val normalizedName = name.trim()
         val normalizedPersona = persona.trim()
@@ -56,6 +57,7 @@ class RoleCardRepository(
                 voiceProfileUri = voiceProfileUri.trim(),
                 voiceMode = voiceMode.trim().ifBlank { "CLONE" },
                 voiceDisplayName = voiceDisplayName.trim(),
+                tags = tags,
                 createdAt = now,
                 updatedAt = now
             )
@@ -79,7 +81,8 @@ class RoleCardRepository(
         imageStylePrompt: String? = null,
         voiceProfileUri: String? = null,
         voiceMode: String? = null,
-        voiceDisplayName: String? = null
+        voiceDisplayName: String? = null,
+        tags: List<String>? = null
     ) {
         val existing = roleCardDao.getById(id) ?: error("未找到角色卡: $id")
         val normalizedName = name.trim()
@@ -108,6 +111,7 @@ class RoleCardRepository(
                 voiceProfileUri = voiceProfileUri?.trim() ?: existing.voiceProfileUri,
                 voiceMode = voiceMode?.trim()?.ifBlank { "CLONE" } ?: existing.voiceMode,
                 voiceDisplayName = voiceDisplayName?.trim() ?: existing.voiceDisplayName,
+                tags = tags ?: existing.tags,
                 updatedAt = nowProvider()
             )
         )
@@ -143,6 +147,20 @@ class RoleCardRepository(
             )
         )
         return true
+    }
+
+    suspend fun removeGalleryImage(id: Long, imageUri: String): Boolean {
+        val target = imageUri.trim()
+        if (target.isBlank()) return false
+        val existing = roleCardDao.getById(id) ?: return false
+        val nextGallery = existing.galleryImageUris.filter { it != target }
+        if (nextGallery.size == existing.galleryImageUris.size) return false
+        roleCardDao.updateGalleryImageUris(id, nextGallery, nowProvider())
+        return true
+    }
+
+    suspend fun addGalleryImage(id: Long, imageUri: String): Boolean {
+        return appendGalleryImage(id, imageUri, useAsAvatarWhenEmpty = false)
     }
 
 }

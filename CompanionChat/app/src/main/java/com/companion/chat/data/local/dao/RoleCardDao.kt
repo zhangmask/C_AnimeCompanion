@@ -34,4 +34,10 @@ interface RoleCardDao {
 
     @Query("UPDATE role_cards SET isActive = 1, updatedAt = :now WHERE id = :id")
     suspend fun activate(id: Long, now: Long = System.currentTimeMillis()): Int
+
+    @Query("UPDATE role_cards SET voiceProfileUri = :uri WHERE id = :id")
+    suspend fun updateVoiceProfileUri(id: Long, uri: String)
+
+    @Query("UPDATE role_cards SET galleryImageUris = :uris, updatedAt = :now WHERE id = :id")
+    suspend fun updateGalleryImageUris(id: Long, uris: List<String>, now: Long = System.currentTimeMillis())
 }

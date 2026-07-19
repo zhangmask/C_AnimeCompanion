@@ -7,6 +7,8 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.companion.chat.data.local.dao.ConversationDao
+import com.companion.chat.data.local.dao.CustomApiConfigDao
+import com.companion.chat.data.local.dao.ImageStudioMessageDao
 import com.companion.chat.data.local.dao.MemoryDao
 import com.companion.chat.data.local.dao.MemoryEntityDao
 import com.companion.chat.data.local.dao.MemoryLinkDao
@@ -14,8 +16,11 @@ import com.companion.chat.data.local.dao.MessageDao
 import com.companion.chat.data.local.dao.PreferenceDao
 import com.companion.chat.data.local.dao.RoleCardDao
 import com.companion.chat.data.local.dao.SkillDao
+import com.companion.chat.data.local.dao.TtsAudioCacheDao
 import com.companion.chat.data.local.entity.AgentExperience
 import com.companion.chat.data.local.entity.ConversationEntity
+import com.companion.chat.data.local.entity.CustomApiConfig
+import com.companion.chat.data.local.entity.ImageStudioMessageEntity
 import com.companion.chat.data.local.entity.Memory
 import com.companion.chat.data.local.entity.MemoryEntity
 import com.companion.chat.data.local.entity.MemoryEntityMap
@@ -24,6 +29,7 @@ import com.companion.chat.data.local.entity.MetaMemory
 import com.companion.chat.data.local.entity.MessageEntity
 import com.companion.chat.data.local.entity.RoleCard
 import com.companion.chat.data.local.entity.Skill
+import com.companion.chat.data.local.entity.TtsAudioCacheEntity
 import com.companion.chat.data.local.entity.UserPreference
 import androidx.sqlite.db.SupportSQLiteDatabase
 
@@ -39,9 +45,12 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         MemoryEntity::class,
         MemoryEntityMap::class,
         AgentExperience::class,
-        MetaMemory::class
+        MetaMemory::class,
+        CustomApiConfig::class,
+        TtsAudioCacheEntity::class,
+        ImageStudioMessageEntity::class
     ],
-    version = 7,
+    version = 14,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -55,6 +64,9 @@ abstract class CompanionDatabase : RoomDatabase() {
     abstract fun preferenceDao(): PreferenceDao
     abstract fun skillDao(): SkillDao
     abstract fun roleCardDao(): RoleCardDao
+    abstract fun customApiConfigDao(): CustomApiConfigDao
+    abstract fun ttsAudioCacheDao(): TtsAudioCacheDao
+    abstract fun imageStudioMessageDao(): ImageStudioMessageDao
 
     companion object {
         private const val DATABASE_NAME = "companion_chat.db"
@@ -69,7 +81,7 @@ abstract class CompanionDatabase : RoomDatabase() {
                     CompanionDatabase::class.java,
                     DATABASE_NAME
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14)
                     .fallbackToDestructiveMigration()
                     .addCallback(DatabaseInitializationCallback())
                     .build()
@@ -272,12 +284,194 @@ abstract class CompanionDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE role_cards ADD COLUMN tags TEXT NOT NULL DEFAULT '[]'")
+            }
+        }
+
+        private val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // 消息表新增引用列（可空 JSON 字符串）
+                db.execSQL("ALTER TABLE messages ADD COLUMN quote TEXT")
+            }
+        }
+
+        private val MIGRATION_9_10 = object : Migration(9, 10) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // 消息表新增 TTS 音频缓存列（可空文件 URI）
+                db.execSQL("ALTER TABLE messages ADD COLUMN audioUri TEXT")
+            }
+        }
+
+        private val MIGRATION_10_11 = object : Migration(10, 11) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS custom_api_configs (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        name TEXT NOT NULL,
+                        apiKey TEXT NOT NULL,
+                        baseUrl TEXT NOT NULL,
+                        model TEXT NOT NULL,
+                        apiFormat TEXT NOT NULL DEFAULT 'OPENAI',
+                        customParams TEXT NOT NULL DEFAULT '{}',
+                        isActive INTEGER NOT NULL DEFAULT 0,
+                        createdAt INTEGER NOT NULL,
+                        updatedAt INTEGER NOT NULL
+                    )
+                """.trimIndent())
+            }
+        }
+
+        private val MIGRATION_11_12 = object : Migration(11, 12) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS tts_audio_cache (
+                        cacheKey TEXT PRIMARY KEY NOT NULL,
+                        role TEXT NOT NULL,
+                        contentHash TEXT NOT NULL,
+                        audioUri TEXT NOT NULL,
+                        textPreview TEXT NOT NULL DEFAULT '',
+                        createdAt INTEGER NOT NULL,
+                        updatedAt INTEGER NOT NULL
+                    )
+                """.trimIndent())
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_tts_audio_cache_cacheKey ON tts_audio_cache(cacheKey)")
+            }
+        }
+
+        private val MIGRATION_12_13 = object : Migration(12, 13) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // 双值遗忘曲线：baseline（最低值）+ 每日强化上限
+                db.execSQL("ALTER TABLE memories ADD COLUMN baseline REAL NOT NULL DEFAULT 0.0")
+                db.execSQL("ALTER TABLE memories ADD COLUMN dailyStrengthenDelta REAL NOT NULL DEFAULT 0.0")
+                db.execSQL("ALTER TABLE memories ADD COLUMN lastStrengthenDate INTEGER NOT NULL DEFAULT 0")
+                // 旧记忆 strength 降到 0.3（新标准：不再一开始就是"长期"）
+                db.execSQL("UPDATE memories SET strength = 0.3 WHERE strength >= 0.5 AND source != 'manual'")
+                db.execSQL("UPDATE memories SET baseline = strength * 0.3 WHERE baseline = 0.0 AND strength > 0.2")
+            }
+        }
+
+        private val MIGRATION_13_14 = object : Migration(13, 14) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS image_studio_messages (
+                        id TEXT PRIMARY KEY NOT NULL,
+                        roleCardId INTEGER NOT NULL,
+                        prompt TEXT NOT NULL,
+                        fullPrompt TEXT NOT NULL,
+                        imageUri TEXT,
+                        isError INTEGER NOT NULL,
+                        errorMessage TEXT,
+                        referenceMessageId TEXT,
+                        timestamp INTEGER NOT NULL,
+                        position INTEGER NOT NULL,
+                        FOREIGN KEY (roleCardId) REFERENCES role_cards(id) ON DELETE CASCADE
+                    )
+                """.trimIndent())
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_image_studio_messages_roleCardId ON image_studio_messages(roleCardId)")
+            }
+        }
+
         private class DatabaseInitializationCallback : RoomDatabase.Callback() {
 
             override fun onCreate(db: SupportSQLiteDatabase) {
                 super.onCreate(db)
                 createMemoryFtsTables(db)
                 seedBuiltInSkills(db)
+                seedDefaultRoleCard(db)
+            }
+
+            override fun onOpen(db: SupportSQLiteDatabase) {
+                super.onOpen(db)
+                // 数据库损坏/清空后自动重建默认角色卡，避免角色卡缺失导致 TTS 配置异常
+                if (!tableExists(db, "role_cards") || countRows(db, "role_cards") == 0L) {
+                    android.util.Log.w("CompanionDB", "role_cards 表缺失或为空，重新注入默认角色卡")
+                    if (!tableExists(db, "role_cards")) {
+                        db.execSQL(
+                            """
+                            CREATE TABLE IF NOT EXISTS role_cards (
+                                id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                                name TEXT NOT NULL,
+                                description TEXT NOT NULL,
+                                avatar TEXT NOT NULL,
+                                persona TEXT NOT NULL,
+                                speakingStyle TEXT NOT NULL,
+                                background TEXT NOT NULL,
+                                rules TEXT NOT NULL,
+                                taboos TEXT NOT NULL,
+                                openingMessage TEXT NOT NULL,
+                                exampleDialogue TEXT NOT NULL,
+                                avatarImageUri TEXT NOT NULL DEFAULT '',
+                                galleryImageUris TEXT NOT NULL DEFAULT '[]',
+                                imageStylePrompt TEXT NOT NULL DEFAULT '',
+                                voiceProfileUri TEXT NOT NULL DEFAULT '',
+                                voiceMode TEXT NOT NULL DEFAULT 'CLONE',
+                                voiceDisplayName TEXT NOT NULL DEFAULT '',
+                                isBuiltIn INTEGER NOT NULL DEFAULT 0,
+                                isActive INTEGER NOT NULL DEFAULT 0,
+                                tags TEXT NOT NULL DEFAULT '[]',
+                                createdAt INTEGER NOT NULL,
+                                updatedAt INTEGER NOT NULL
+                            )
+                            """.trimIndent()
+                        )
+                    }
+                    seedDefaultRoleCard(db)
+                }
+            }
+
+            private fun tableExists(db: SupportSQLiteDatabase, table: String): Boolean {
+                val cursor = db.query(
+                    "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?",
+                    arrayOf(table)
+                )
+                return cursor.use { it.moveToFirst() }
+            }
+
+            private fun countRows(db: SupportSQLiteDatabase, table: String): Long {
+                val cursor = db.query("SELECT count(*) FROM $table")
+                return cursor.use {
+                    if (it.moveToFirst()) it.getLong(0) else 0L
+                }
+            }
+
+            private fun seedDefaultRoleCard(db: SupportSQLiteDatabase) {
+                val now = System.currentTimeMillis()
+                val voiceProfileUri = "file:///storage/emulated/0/Android/data/com.companion.chat/files/voice_clips/moss_voice_clone_ref.wav"
+                db.execSQL(
+                    """
+                    INSERT OR IGNORE INTO role_cards (
+                        id, name, description, avatar, persona, speakingStyle, background, rules, taboos,
+                        openingMessage, exampleDialogue, avatarImageUri, galleryImageUris, imageStylePrompt,
+                        voiceProfileUri, voiceMode, voiceDisplayName, isBuiltIn, isActive, tags, createdAt, updatedAt
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """.trimIndent(),
+                    arrayOf<Any>(
+                        1L,
+                        "小夏",
+                        "你的 AI 伙伴，会用你提供的参考音频进行语音克隆",
+                        "person",
+                        "一个温柔体贴、乐于助人的 AI 助手",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "你好，我是小夏，很高兴认识你。",
+                        "",
+                        "",
+                        "[]",
+                        "",
+                        voiceProfileUri,
+                        "CLONE",
+                        "小夏",
+                        1,
+                        1,
+                        "[]",
+                        now,
+                        now
+                    )
+                )
             }
 
             private fun createMemoryFtsTables(db: SupportSQLiteDatabase) {

@@ -116,12 +116,21 @@ class MemoryPromptBuilder {
         if (memories.isEmpty()) return ""
 
         val items = memories.joinToString("\n") { memory ->
-            "- [${formatCategory(memory.category, lang)}] ${
+            val strengthLabel = formatStrength(memory.strength, lang)
+            "- [${formatCategory(memory.category, lang)}][$strengthLabel] ${
                 memory.l1Overview ?: memory.content
             }"
         }
 
         return "$title\n$note\n$items"
+    }
+
+    private fun formatStrength(strength: Double, lang: AppLanguage): String {
+        return when {
+            strength >= 0.6 -> Strings.get(lang, StringsKey.memory_strength_long_term)
+            strength >= 0.3 -> Strings.get(lang, StringsKey.memory_strength_short_term)
+            else -> Strings.get(lang, StringsKey.memory_strength_temporary)
+        }
     }
 
     private fun formatCategory(category: String, lang: AppLanguage): String {

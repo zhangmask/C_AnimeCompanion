@@ -69,7 +69,8 @@ class RoleManagementViewModel(
         imageStylePrompt: String = "",
         voiceProfileUri: String = "",
         voiceMode: String = "CLONE",
-        voiceDisplayName: String = ""
+        voiceDisplayName: String = "",
+        tags: List<String> = emptyList()
     ) {
         workerScope.launch {
             roleCardRepository.createRoleCard(
@@ -88,7 +89,8 @@ class RoleManagementViewModel(
                 imageStylePrompt = imageStylePrompt,
                 voiceProfileUri = voiceProfileUri,
                 voiceMode = voiceMode,
-                voiceDisplayName = voiceDisplayName
+                voiceDisplayName = voiceDisplayName,
+                tags = tags
             )
             refresh()
         }
@@ -111,7 +113,8 @@ class RoleManagementViewModel(
         imageStylePrompt: String? = null,
         voiceProfileUri: String? = null,
         voiceMode: String? = null,
-        voiceDisplayName: String? = null
+        voiceDisplayName: String? = null,
+        tags: List<String>? = null
     ) {
         workerScope.launch {
             roleCardRepository.updateRoleCard(
@@ -131,7 +134,8 @@ class RoleManagementViewModel(
                 imageStylePrompt = imageStylePrompt,
                 voiceProfileUri = voiceProfileUri,
                 voiceMode = voiceMode,
-                voiceDisplayName = voiceDisplayName
+                voiceDisplayName = voiceDisplayName,
+                tags = tags
             )
             refresh()
         }

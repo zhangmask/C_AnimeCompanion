@@ -415,7 +415,7 @@ fun ConversationDrawerSheet(
                                 roleCardAvatarUri = roleAvatarUri,
                                 onRoleCardClick = {
                                     session.roleCardId?.let { roleId ->
-                                        onDismiss()
+                                        onSessionClick(session.id)
                                         onRoleCardClick(roleId)
                                     }
                                 },

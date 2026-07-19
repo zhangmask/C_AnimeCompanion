@@ -32,8 +32,9 @@ class VoiceClipScanner(private val context: Context) {
         return dir
     }
 
-    fun scanClips(): List<VoiceClipInfo> {
-        val dir = getVoiceClipsDirectory()
+    fun scanClips(roleCardId: Long? = null): List<VoiceClipInfo> {
+        val baseDir = getVoiceClipsDirectory()
+        val dir = if (roleCardId != null) File(baseDir, roleCardId.toString()) else baseDir
         if (!dir.exists() || !dir.isDirectory) return emptyList()
 
         val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
@@ -68,7 +69,7 @@ class VoiceClipScanner(private val context: Context) {
      * Copy an audio file from a content URI (picked by user) into the voice clips directory.
      * Returns the VoiceClipInfo for the copied file, or null on failure.
      */
-    fun importClipFromUri(sourceUri: Uri, displayName: String? = null): VoiceClipInfo? {
+    fun importClipFromUri(sourceUri: Uri, displayName: String? = null, roleCardId: Long? = null): VoiceClipInfo? {
         return try {
             val inputStream = context.contentResolver.openInputStream(sourceUri)
                 ?: return null
@@ -85,7 +86,9 @@ class VoiceClipScanner(private val context: Context) {
                 .replace(Regex("[^a-zA-Z0-9\\u4e00-\\u9fff\\-_ ]"), "")
                 .trim()
                 .ifBlank { "clip_${System.currentTimeMillis()}" }
-            val destFile = File(getVoiceClipsDirectory(), "$fileName.$ext")
+            val baseDir = getVoiceClipsDirectory()
+            val targetDir = if (roleCardId != null) File(baseDir, roleCardId.toString()).also { it.mkdirs() } else baseDir
+            val destFile = File(targetDir, "$fileName.$ext")
             // Avoid overwriting
             val finalFile = if (destFile.exists()) {
                 File(getVoiceClipsDirectory(), "${fileName}_${System.currentTimeMillis()}.$ext")

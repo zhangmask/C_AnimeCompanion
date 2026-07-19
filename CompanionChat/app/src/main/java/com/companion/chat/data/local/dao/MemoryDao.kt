@@ -39,32 +39,46 @@ interface MemoryDao {
     @Query("SELECT * FROM memories WHERE category = :category AND content = :content LIMIT 1")
     suspend fun findExactMatch(category: String, content: String): Memory?
 
-    @Query("SELECT * FROM memories WHERE strength > :minStrength ORDER BY strength DESC, lastAccessedAt DESC")
+    @Query("SELECT * FROM memories WHERE category = :category AND content LIKE :pattern LIMIT :limit")
+    suspend fun searchByContentLike(category: String, pattern: String, limit: Int = 5): List<Memory>
+
+    @Query("SELECT * FROM memories WHERE content LIKE :pattern AND (roleCardId IS NULL OR roleCardId = :roleCardId) ORDER BY strength DESC, lastAccessedAt DESC LIMIT :limit")
+    suspend fun searchByContentLikeWithRole(pattern: String, roleCardId: Long, limit: Int = 5): List<Memory>
+
+    @Query("SELECT * FROM memories WHERE strength > :minStrength OR baseline > :minStrength ORDER BY strength DESC, lastAccessedAt DESC")
     suspend fun getActiveMemories(minStrength: Double = 0.05): List<Memory>
 
-    // ── 强度衰减（按 idle 天数分段） ──
+    // ── 强度衰减（双值模型：strength 衰减但不低于 baseline，baseline 缓慢衰减） ──
     @Query("""
-        UPDATE memories SET strength = CASE
-            WHEN :idleDays >= 4 THEN ROUND(strength * 0.90, 4)
-            WHEN :idleDays = 3  THEN ROUND(strength * 0.90, 4)
-            WHEN :idleDays = 2  THEN ROUND(strength * 0.80, 4)
-            WHEN :idleDays = 1  THEN ROUND(strength * 0.70, 4)
-            ELSE strength
-        END, updatedAt = :now, lastAccessedAt = :now
-        WHERE id = :id AND strength > 0.05
+        UPDATE memories SET
+            baseline = baseline * 0.95,
+            strength = MAX(strength * CASE
+                WHEN :idleDays >= 4 THEN 0.90
+                WHEN :idleDays = 3  THEN 0.90
+                WHEN :idleDays = 2  THEN 0.80
+                WHEN :idleDays = 1  THEN 0.70
+                ELSE 1.0
+            END, baseline),
+            updatedAt = :now, lastAccessedAt = :now
+        WHERE id = :id AND (strength > 0.05 OR baseline > 0.05)
     """)
     suspend fun applyDecayByAge(id: Long, idleDays: Int, now: Long)
 
-    // ── 强化（只更新 strength 和 lastAccessedAt，不误改 updatedAt） ──
+    // ── 强化（每日上限 0.4，baseline 同步上升但仅 30%） ──
     @Query("""
-        UPDATE memories
-        SET strength = MIN(1.0, strength + :delta), lastAccessedAt = :now
+        UPDATE memories SET
+            dailyStrengthenDelta = CASE WHEN lastStrengthenDate != :today THEN 0 ELSE dailyStrengthenDelta END,
+            strength = MIN(1.0, strength + MIN(:delta, MAX(0, 0.4 - CASE WHEN lastStrengthenDate != :today THEN 0 ELSE dailyStrengthenDelta END))),
+            baseline = MIN(0.8, baseline + MIN(:delta * 0.3, MAX(0, 0.4 - CASE WHEN lastStrengthenDate != :today THEN 0 ELSE dailyStrengthenDelta END) * 0.3)),
+            dailyStrengthenDelta = CASE WHEN lastStrengthenDate != :today THEN 0 ELSE dailyStrengthenDelta END + MIN(:delta, MAX(0, 0.4 - CASE WHEN lastStrengthenDate != :today THEN 0 ELSE dailyStrengthenDelta END)),
+            lastStrengthenDate = :today,
+            lastAccessedAt = :now
         WHERE id = :id
     """)
-    suspend fun strengthen(id: Long, delta: Double, now: Long)
+    suspend fun strengthen(id: Long, delta: Double, today: Long, now: Long)
 
-    // ── 清理弱记忆 ──
-    @Query("DELETE FROM memories WHERE strength < :threshold")
+    // ── 清理弱记忆（strength 和 baseline 都低于阈值才清理） ──
+    @Query("DELETE FROM memories WHERE strength < :threshold AND baseline < :threshold")
     suspend fun deleteByStrengthBelow(threshold: Double): Int
 
     // ── FTS 检索（加 LIMIT） ──

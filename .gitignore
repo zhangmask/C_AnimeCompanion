@@ -1,6 +1,29 @@
 # Models (large files, distributed separately)
 models/
 hf-cache/
+checkpoints/
+
+# Test files moved out for release
+tmpceshi/
+
+# Third-party source trees (large, not part of the project source)
+armnn-branches-armnn_20_05/
+onnxruntime-main/
+vcpkg-master/
+gator-main/
+gator-9.6.0/
+_deps/
+CMakeFiles/
+build.ninja
+.ninja_deps
+cmake_install.cmake
+CMakeCache.txt
+cmvn_data.txt
+express/
+tools/
+temp/
+OFF/
+MNN/
 
 # SDK / NDK / Runtime
 sdk/

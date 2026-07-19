@@ -1,1 +1,0 @@
-[Environment]::GetEnvironmentVariable('Path','User')

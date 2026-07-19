@@ -109,6 +109,7 @@ class MossTtsNanoVoiceCloneEngine(
                     val config = MossTtsNanoConfig.fromDirectory(directory)
                     getOrCreateTokenizer(directory, config)
                     getOrCreateRuntime(directory, config, cachedTokenizer!!)
+                    cachedRuntime?.warmUpSessions()  // 提前加载 ONNX模型
                     Log.i(TAG, "MOSS TTS 模型预热完成")
                 }
                 else -> {
@@ -121,6 +122,7 @@ class MossTtsNanoVoiceCloneEngine(
     }
 
     override suspend fun synthesize(request: VoiceCloneRequest): Result<VoiceCloneResult> = withContext(Dispatchers.IO) {
+        val tTotal0 = System.currentTimeMillis()
         runCatching {
             // 过滤表情符号
             val filteredText = filterEmojis(request.text)
@@ -175,6 +177,8 @@ class MossTtsNanoVoiceCloneEngine(
                         result.channels
                     )
                     Log.i(TAG, "MOSS TTS 合成成功: ${outputFile.absolutePath}")
+                    val elapsed = System.currentTimeMillis() - tTotal0
+                    Log.i(TAG, "MOSS TTS 合成总耗时: ${elapsed}ms")
                     VoiceCloneResult(
                         provider = VoiceCloneProvider.MOSS_TTS_NANO,
                         audioUri = Uri.fromFile(outputFile).toString(),
@@ -482,7 +486,10 @@ class SentencePieceTokenizer(modelPath: String) : MossTtsTokenizer {
     private var nativeHandle: Long = 0
 
     init {
-        nativeHandle = nativeCreate(modelPath)
+        // Read model bytes in Kotlin and pass to JNI to bypass sentencepiece's
+        // PosixReadableFile, which SIGABRTs on Android scoped storage paths.
+        val bytes = java.io.File(modelPath).readBytes()
+        nativeHandle = nativeCreateFromBytes(bytes)
         if (nativeHandle == 0L) {
             throw RuntimeException("无法加载 SentencePiece 模型: $modelPath")
         }
@@ -500,7 +507,7 @@ class SentencePieceTokenizer(modelPath: String) : MossTtsTokenizer {
         }
     }
 
-    private external fun nativeCreate(modelPath: String): Long
+    private external fun nativeCreateFromBytes(modelBytes: ByteArray): Long
     private external fun nativeEncode(handle: Long, text: String): IntArray
     private external fun nativeDestroy(handle: Long)
 }

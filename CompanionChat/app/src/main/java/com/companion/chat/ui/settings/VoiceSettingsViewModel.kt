@@ -40,8 +40,18 @@ class VoiceSettingsViewModel(
     }
 
     fun toggleAutoPlayTts(enabled: Boolean) {
+        android.util.Log.i("VoiceSettings", "切换自动朗读: enabled=$enabled")
         val current = _uiState.value.voiceOutputSettings
         val updated = current.copy(autoPlayTts = enabled)
+        voiceOutputSettingsRepository.updateSettings(updated)
+        _uiState.update { it.copy(voiceOutputSettings = updated) }
+        val saved = voiceOutputSettingsRepository.getSettings().autoPlayTts
+        android.util.Log.i("VoiceSettings", "保存后读取: autoPlayTts=$saved")
+    }
+
+    fun toggleInterruptTtsOnNewMessage(enabled: Boolean) {
+        val current = _uiState.value.voiceOutputSettings
+        val updated = current.copy(interruptTtsOnNewMessage = enabled)
         voiceOutputSettingsRepository.updateSettings(updated)
         _uiState.update { it.copy(voiceOutputSettings = updated) }
     }

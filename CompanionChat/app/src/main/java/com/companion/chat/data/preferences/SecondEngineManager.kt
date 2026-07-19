@@ -63,14 +63,13 @@ class SecondEngineManager(
                 withTimeout(timeoutMillis) {
                     engine.initialize(config)
                     val response = StringBuilder()
-                    engine.sendMessageStream(
-                        messages = listOf(
-                            ChatMessage(
-                                role = MessageRole.USER,
-                                content = prompt
-                            )
-                        )
-                    ).collect { token ->
+                    val messages = buildList {
+                        if (config.systemPrompt.isNotBlank()) {
+                            add(ChatMessage(role = MessageRole.SYSTEM, content = config.systemPrompt))
+                        }
+                        add(ChatMessage(role = MessageRole.USER, content = prompt))
+                    }
+                    engine.sendMessageStream(messages).collect { token ->
                         response.append(token)
                     }
                     SummaryRunResult.Completed(response.toString())

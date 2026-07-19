@@ -1,7 +1,11 @@
 package com.companion.chat.ui.chat.components
 
+import androidx.compose.material3.InputChip
+import android.net.Uri
+
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
+import com.companion.chat.ui.settings.AvatarCropScreen
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -39,7 +43,9 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -80,7 +86,8 @@ fun RoleCardEditorSheet(
              speakingStyle: String, background: String, rules: String, taboos: String,
              openingMessage: String, exampleDialogue: String, avatarImageUri: String,
              galleryImageUris: List<String>, imageStylePrompt: String,
-             voiceProfileUri: String, voiceMode: String, voiceDisplayName: String) -> Unit,
+             voiceProfileUri: String, voiceMode: String, voiceDisplayName: String,
+             tags: List<String>) -> Unit,
     existingName: String = "",
     existingDescription: String = "",
     existingAvatar: String = "",
@@ -90,6 +97,7 @@ fun RoleCardEditorSheet(
     existingRules: String = "",
     existingTaboos: String = "",
     existingOpeningMessage: String = "",
+    existingTags: String = "",
     existingExampleDialogue: String = "",
     existingAvatarImageUri: String = "",
     existingGalleryImageUris: List<String> = emptyList(),
@@ -107,6 +115,7 @@ fun RoleCardEditorSheet(
     var description by remember { mutableStateOf(existingDescription) }
     var avatar by remember { mutableStateOf(existingAvatar) }
     var openingMessage by remember { mutableStateOf(existingOpeningMessage) }
+    var tags by remember { mutableStateOf(existingTags) }
 
     // Tab 1 - 人设
     var persona by remember { mutableStateOf(existingPersona) }
@@ -118,6 +127,7 @@ fun RoleCardEditorSheet(
 
     // Tab 2 - 图片
     var avatarImageUri by remember { mutableStateOf(existingAvatarImageUri) }
+    var pendingCropUri by remember { mutableStateOf<Uri?>(null) }
     var galleryImageUris by remember { mutableStateOf(existingGalleryImageUris.joinToString(", ")) }
     var imageStylePrompt by remember { mutableStateOf(existingImageStylePrompt) }
 
@@ -129,6 +139,17 @@ fun RoleCardEditorSheet(
     var voiceDisplayName by remember { mutableStateOf(existingVoiceDisplayName) }
     var voiceProfileUri by remember { mutableStateOf(existingVoiceProfileUri) }
     var voicePlayingIndex by remember { mutableIntStateOf(-1) }
+    var voiceMediaPlayer by remember { mutableStateOf<android.media.MediaPlayer?>(null) }
+    val context = androidx.compose.ui.platform.LocalContext.current
+
+    // Cleanup MediaPlayer when leaving composition
+    DisposableEffect(Unit) {
+        onDispose {
+            voiceMediaPlayer?.stop()
+            voiceMediaPlayer?.release()
+            voiceMediaPlayer = null
+        }
+    }
     var voiceSelectedIndex by remember(existingVoiceProfileUri) {
         mutableIntStateOf(
             voiceClips.indexOfFirst { existingVoiceProfileUri == it.uri }.coerceAtLeast(
@@ -141,10 +162,7 @@ fun RoleCardEditorSheet(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
         if (uri != null) {
-            val persisted = avatarStore.persistUri(uri)
-            if (persisted != null) {
-                avatarImageUri = persisted
-            }
+            pendingCropUri = uri
         }
     }
 
@@ -169,7 +187,17 @@ fun RoleCardEditorSheet(
 
     val canSave = name.isNotBlank() && persona.isNotBlank()
 
-    Dialog(
+    // Show crop screen overlay if picking avatar, otherwise show editor
+    if (pendingCropUri != null) {
+        AvatarCropScreen(
+            imageUri = pendingCropUri!!,
+            onCropComplete = { savedUri ->
+                avatarImageUri = savedUri
+                pendingCropUri = null
+            },
+            onBack = { pendingCropUri = null }
+        )
+    } else Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
@@ -289,63 +317,7 @@ fun RoleCardEditorSheet(
                                     placeholder = Strings.txt(StringsKey.role_desc_placeholder),
                                     maxLines = 2
                                 )
-                                FormField(
-                                    label = Strings.txt(StringsKey.role_avatar_icon),
-                                    value = avatar,
-                                    onValueChange = { avatar = it },
-                                    placeholder = Strings.txt(StringsKey.role_avatar_icon_hint)
-                                )
 
-                                // Avatar preview
-                                Text(
-                                    text = Strings.txt(StringsKey.role_avatar_preview),
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = Color(0xFF49454F)
-                                )
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(56.dp)
-                                            .clip(RoundedCornerShape(16.dp))
-                                            .background(AvatarGradients[0]),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        if (avatarImageUri.isNotBlank()) {
-                                            AsyncImage(
-                                                model = avatarImageUri,
-                                                contentDescription = Strings.txt(StringsKey.role_field_avatar),
-                                                modifier = Modifier
-                                                    .fillMaxSize()
-                                                    .clip(RoundedCornerShape(16.dp)),
-                                                contentScale = androidx.compose.ui.layout.ContentScale.Crop
-                                            )
-                                        } else if (name.isNotBlank()) {
-                                            Text(
-                                                text = name.first().toString(),
-                                                fontSize = 22.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = Color.White
-                                            )
-                                        } else {
-                                            Icon(
-                                                Icons.Default.Person,
-                                                null,
-                                                tint = Color.White,
-                                                modifier = Modifier.size(28.dp)
-                                            )
-                                        }
-                                    }
-                                    Text(
-                                        text = if (name.isNotBlank()) name else Strings.txt(StringsKey.role_unnamed),
-                                        fontSize = 15.sp,
-                                        fontWeight = FontWeight.Medium,
-                                        color = Color(0xFF1C1B1F)
-                                    )
-                                }
 
                                 FormField(
                                     label = Strings.txt(StringsKey.role_field_opening),
@@ -354,6 +326,57 @@ fun RoleCardEditorSheet(
                                     placeholder = Strings.txt(StringsKey.role_opening_placeholder),
                                     maxLines = 3
                                 )
+
+                                // ── 标签 ──
+                                Text(
+                                    text = Strings.txt(StringsKey.role_field_tags),
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Color(0xFF49454F)
+                                )
+                                val tagList = remember(tags) { tags.split(",").map { it.trim() }.filter { it.isNotBlank() } }
+                                if (tagList.isNotEmpty()) {
+                                    FlowRow(
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        tagList.forEach { tag ->
+                                            InputChip(
+                                                selected = true,
+                                                onClick = {
+                                                    tags = tagList.filter { it != tag }.joinToString(", ")
+                                                },
+                                                label = { Text(tag, fontSize = 12.sp) },
+                                                trailingIcon = {
+                                                    Icon(Icons.Default.Close, null, modifier = Modifier.size(14.dp))
+                                                }
+                                            )
+                                        }
+                                    }
+                                }
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    var newTag by remember { mutableStateOf("") }
+                                    OutlinedTextField(
+                                        value = newTag,
+                                        onValueChange = { newTag = it },
+                                        modifier = Modifier.weight(1f),
+                                        singleLine = true,
+                                        placeholder = { Text(Strings.txt(StringsKey.role_tags_add_hint), fontSize = 13.sp) },
+                                        shape = RoundedCornerShape(8.dp),
+                                        textStyle = androidx.compose.material3.MaterialTheme.typography.bodyMedium
+                                    )
+                                    androidx.compose.material3.IconButton(onClick = {
+                                        if (newTag.isNotBlank()) {
+                                            tags = if (tags.isBlank()) newTag.trim() else "$tags, ${newTag.trim()}"
+                                            newTag = ""
+                                        }
+                                    }) {
+                                        Icon(Icons.Default.Add, null, tint = BrandPrimary, modifier = Modifier.size(18.dp))
+                                    }
+                                }
                             }
 
                             1 -> {
@@ -404,6 +427,7 @@ fun RoleCardEditorSheet(
 
                             2 -> {
                                 // ── 图片 Tab ──
+                                // ── 圆形头像上传区域 ──
                                 Text(
                                     text = Strings.txt(StringsKey.role_avatar_image),
                                     fontSize = 12.sp,
@@ -412,74 +436,89 @@ fun RoleCardEditorSheet(
                                     modifier = Modifier.padding(start = 2.dp)
                                 )
 
-                                if (avatarImageUri.isNotBlank()) {
-                                    // Show selected avatar with remove option
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .height(160.dp)
-                                            .clip(RoundedCornerShape(12.dp))
-                                            .background(Color(0xFFF7F5FA)),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        AsyncImage(
-                                            model = avatarImageUri,
-                                            contentDescription = Strings.txt(StringsKey.role_avatar_preview),
-                                            modifier = Modifier
-                                                .fillMaxSize()
-                                                .clip(RoundedCornerShape(12.dp)),
-                                            contentScale = androidx.compose.ui.layout.ContentScale.Crop
-                                        )
-                                        // Remove button
+                                Column(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    if (avatarImageUri.isNotBlank()) {
+                                        // Show circular avatar with remove option
+                                        key(avatarImageUri) {
+                                        Box(contentAlignment = Alignment.TopEnd) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(120.dp)
+                                                    .clip(CircleShape)
+                                                    .background(Color(0xFFF7F5FA)),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                AsyncImage(
+                                                    model = avatarImageUri,
+                                                    contentDescription = Strings.txt(StringsKey.role_avatar_preview),
+                                                    modifier = Modifier
+                                                        .size(120.dp)
+                                                        .clip(CircleShape),
+                                                    contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                                                )
+                                            }
+                                            // Remove button
+                                            Box(
+                                                modifier = Modifier
+                                                    .padding(4.dp)
+                                                    .size(28.dp)
+                                                    .clip(CircleShape)
+                                                    .background(Color(0x88000000))
+                                                    .clickable { avatarImageUri = "" },
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Icon(
+                                                    Icons.Default.Close,
+                                                    Strings.txt(StringsKey.role_remove_avatar),
+                                                    tint = Color.White,
+                                                    modifier = Modifier.size(16.dp)
+                                                )
+                                            }
+                                        }
+                                        }
+                                    } else {
+                                        // Placeholder: circular area with + icon
                                         Box(
                                             modifier = Modifier
-                                                .align(Alignment.TopEnd)
-                                                .padding(8.dp)
-                                                .size(28.dp)
+                                                .size(120.dp)
                                                 .clip(CircleShape)
-                                                .background(Color(0x88000000))
-                                                .clickable { avatarImageUri = "" },
+                                                .border(
+                                                    width = 1.5.dp,
+                                                    color = BrandOutlineVariant,
+                                                    shape = CircleShape
+                                                )
+                                                .background(Color(0xFFF7F5FA))
+                                                .clickable { avatarPickerLauncher.launch("image/*") },
                                             contentAlignment = Alignment.Center
                                         ) {
-                                            Icon(
-                                                Icons.Default.Close,
-                                                Strings.txt(StringsKey.role_remove_avatar),
-                                                tint = Color.White,
-                                                modifier = Modifier.size(16.dp)
-                                            )
+                                            Column(
+                                                horizontalAlignment = Alignment.CenterHorizontally,
+                                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                                            ) {
+                                                Icon(
+                                                    Icons.Default.Add,
+                                                    null,
+                                                    tint = BrandPrimary,
+                                                    modifier = Modifier.size(28.dp)
+                                                )
+                                                Text(
+                                                    text = Strings.txt(StringsKey.role_pick_avatar_image),
+                                                    fontSize = 11.sp,
+                                                    color = BrandPrimary
+                                                )
+                                            }
                                         }
                                     }
-                                } else {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .height(100.dp)
-                                            .clip(RoundedCornerShape(12.dp))
-                                            .border(
-                                                width = 1.5.dp,
-                                                color = BrandOutlineVariant,
-                                                shape = RoundedCornerShape(12.dp)
-                                            )
-                                            .clickable { avatarPickerLauncher.launch("image/*") },
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Column(
-                                            horizontalAlignment = Alignment.CenterHorizontally,
-                                            verticalArrangement = Arrangement.spacedBy(6.dp)
-                                        ) {
-                                            Icon(
-                                                Icons.Default.Add,
-                                                null,
-                                                tint = BrandPrimary,
-                                                modifier = Modifier.size(28.dp)
-                                            )
-                                            Text(
-                                                text = Strings.txt(StringsKey.role_pick_avatar_image),
-                                                fontSize = 13.sp,
-                                                color = BrandPrimary
-                                            )
-                                        }
-                                    }
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = if (name.isNotBlank()) name else Strings.txt(StringsKey.role_unnamed),
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = Color(0xFF1C1B1F)
+                                    )
                                 }
 
                                 FormField(
@@ -586,7 +625,30 @@ fun RoleCardEditorSheet(
                                                     if (isPlaying) Color(0xFFD4688C) else BrandPrimary
                                                 )
                                                 .clickable {
-                                                    voicePlayingIndex = if (isPlaying) -1 else index
+                                                    if (isPlaying) {
+                                                        voiceMediaPlayer?.stop()
+                                                        voiceMediaPlayer?.release()
+                                                        voiceMediaPlayer = null
+                                                        voicePlayingIndex = -1
+                                                    } else {
+                                                        voiceMediaPlayer?.stop()
+                                                        voiceMediaPlayer?.release()
+                                                        try {
+                                                            val mp = android.media.MediaPlayer().apply {
+                                                                setDataSource(context, android.net.Uri.parse(clip.uri))
+                                                                setOnCompletionListener {
+                                                                    voicePlayingIndex = -1
+                                                                    voiceMediaPlayer = null
+                                                                }
+                                                                prepareAsync()
+                                                                setOnPreparedListener { it.start() }
+                                                            }
+                                                            voiceMediaPlayer = mp
+                                                            voicePlayingIndex = index
+                                                        } catch (e: Exception) {
+                                                            voicePlayingIndex = -1
+                                                        }
+                                                    }
                                                 },
                                             contentAlignment = Alignment.Center
                                         ) {
@@ -721,6 +783,7 @@ fun RoleCardEditorSheet(
                                             .split(",")
                                             .map { it.trim() }
                                             .filter { it.isNotBlank() }
+                                        val parsedTags = tags.split(",").map { it.trim() }.filter { it.isNotBlank() }
                                         onSave(
                                             name.trim(),
                                             description.trim(),
@@ -737,7 +800,8 @@ fun RoleCardEditorSheet(
                                             imageStylePrompt.trim(),
                                             voiceProfileUri.trim(),
                                             voiceMode,
-                                            voiceDisplayName.trim()
+                                            voiceDisplayName.trim(),
+                                            parsedTags
                                         )
                                     }
                                 },

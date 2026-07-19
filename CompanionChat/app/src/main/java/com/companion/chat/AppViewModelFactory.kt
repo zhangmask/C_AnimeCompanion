@@ -5,7 +5,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.companion.chat.ui.chat.ChatViewModel
 import com.companion.chat.ui.home.DiscoverViewModel
+import com.companion.chat.ui.imagestudio.ImageStudioViewModel
 import com.companion.chat.ui.memory.MemoryViewModel
+import com.companion.chat.ui.settings.CustomApiConfigViewModel
 import com.companion.chat.ui.settings.ModelConfigViewModel
 import com.companion.chat.ui.settings.RoleManagementViewModel
 import com.companion.chat.ui.settings.SkillsManagementViewModel
@@ -25,6 +27,7 @@ class AppViewModelFactory(
         val ioScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
         return when {
             modelClass.isAssignableFrom(ChatViewModel::class.java) -> ChatViewModel(application, container) as T
+            modelClass.isAssignableFrom(ImageStudioViewModel::class.java) -> ImageStudioViewModel(application, container) as T
             modelClass.isAssignableFrom(DiscoverViewModel::class.java) -> DiscoverViewModel(
                 application = application,
                 repository = container.discoverRoleRepository,
@@ -57,6 +60,9 @@ class AppViewModelFactory(
                 cloudAsrConfigRepository = container.cloudAsrConfigRepository,
                 voiceCloneConfigRepository = container.voiceCloneConfigRepository,
                 voiceOutputSettingsRepository = container.voiceOutputSettingsRepository
+            ) as T
+            modelClass.isAssignableFrom(CustomApiConfigViewModel::class.java) -> CustomApiConfigViewModel(
+                repository = container.customApiConfigRepository
             ) as T
             else -> throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
         }

@@ -27,6 +27,41 @@ class MemoryRepository(
         memoryDao.findExactMatch(category, content)
 
     /**
+     * 关键词相似搜索：从 content 中提取关键词，在同 category 的已有记忆中搜索。
+     * 返回包含任一关键词的已有记忆列表。
+     */
+    suspend fun findSimilarByKeywords(category: String, content: String, limit: Int = 3): List<Memory> {
+        val keywords = extractKeywordsFromContent(content)
+        if (keywords.isEmpty()) return emptyList()
+        val results = mutableListOf<Memory>()
+        val seen = mutableSetOf<Long>()
+        for (keyword in keywords) {
+            val pattern = "%$keyword%"
+            val matches = memoryDao.searchByContentLike(category, pattern, limit)
+            for (match in matches) {
+                if (match.id !in seen) {
+                    seen.add(match.id)
+                    results.add(match)
+                    if (results.size >= limit) return results
+                }
+            }
+        }
+        return results
+    }
+
+    /**
+     * 从记忆内容中提取关键词（去除常见语气词、短词）。
+     */
+    private fun extractKeywordsFromContent(content: String): List<String> {
+        val noise = setOf("的", "了", "是", "在", "我", "你", "他", "她", "它", "们", "吧", "呢", "啊", "呀", "嘛", "哦", "也", "都", "就", "还", "又", "才", "会", "能", "要", "想", "说", "看", "做", "去", "来", "到", "和", "与", "但", "不", "没", "有", "这", "那", "一", "很", "太", "真", "好", "多", "少", "大", "小")
+        return content.split(Regex("[\\s,，。、；;！!？?\\.\\n]+"))
+            .map { it.trim() }
+            .filter { it.length >= 2 && it !in noise }
+            .distinct()
+            .take(5)
+    }
+
+    /**
      * 存储单条记忆（统一入口）。
      */
     suspend fun storeMemory(
@@ -66,7 +101,9 @@ class MemoryRepository(
     // applyDailyDecay 移至 MemoryDecayManager，避免重复
 
     suspend fun strengthenMemory(memoryId: Long, delta: Double = 0.15) {
-        memoryDao.strengthen(memoryId, delta, nowProvider())
+        val now = nowProvider()
+        val today = now / (1000 * 60 * 60 * 24) // epoch day
+        memoryDao.strengthen(memoryId, delta, today, now)
     }
 
     suspend fun cleanupWeakMemories(threshold: Double = 0.05): Int {
@@ -76,11 +113,43 @@ class MemoryRepository(
     // ── FTS 检索 ──
 
     suspend fun searchByFTS(expression: String, limit: Int = 5): List<Memory> {
-        return memoryDao.searchByFTS(FtsQueryHelper.buildFtsQuery(expression, limit))
+        val results = memoryDao.searchByFTS(FtsQueryHelper.buildFtsQuery(expression, limit))
+        // 检索命中 = 用户提到了相关话题，强化这些记忆（"提到了才回升"）
+        results.forEach { strengthenMemory(it.id, MemoryConfig.STRENGTHEN_FTS_HIT) }
+        return results
     }
 
     suspend fun searchByFTSWithRole(expression: String, roleCardId: Long, limit: Int = 5): List<Memory> {
-        return memoryDao.searchByFTSWithRole(FtsQueryHelper.buildFtsQueryWithRole(expression, roleCardId, limit))
+        val results = memoryDao.searchByFTSWithRole(FtsQueryHelper.buildFtsQueryWithRole(expression, roleCardId, limit))
+        results.forEach { strengthenMemory(it.id, MemoryConfig.STRENGTHEN_FTS_HIT) }
+        return results
+    }
+
+    /**
+     * LIKE 关键词检索（替代 FTS，因为 FTS4 默认 tokenizer 不支持中文分词）。
+     * 对每个关键词执行 content LIKE '%keyword%'，合并去重，按 strength 排序。
+     */
+    suspend fun searchByKeywordsWithRole(keywords: List<String>, roleCardId: Long, limit: Int = 5): List<Memory> {
+        if (keywords.isEmpty()) return emptyList()
+        val results = mutableListOf<Memory>()
+        val seen = mutableSetOf<Long>()
+        for (keyword in keywords) {
+            if (keyword.length < 2) continue
+            val pattern = "%$keyword%"
+            val matches = memoryDao.searchByContentLikeWithRole(pattern, roleCardId, limit)
+            for (match in matches) {
+                if (match.id !in seen) {
+                    seen.add(match.id)
+                    results.add(match)
+                    if (results.size >= limit) {
+                        results.forEach { strengthenMemory(it.id, MemoryConfig.STRENGTHEN_FTS_HIT) }
+                        return results
+                    }
+                }
+            }
+        }
+        results.forEach { strengthenMemory(it.id, MemoryConfig.STRENGTHEN_FTS_HIT) }
+        return results
     }
 
     // ── 语义去重 ──

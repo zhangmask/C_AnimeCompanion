@@ -104,6 +104,36 @@ Java_com_companion_chat_engine_SentencePieceTokenizer_nativeCreate(
     return reinterpret_cast<jlong>(handle);
 }
 
+// Load model from serialized proto bytes (bypasses native file I/O on Android
+// scoped storage where fopen may fail on app-specific external dirs).
+JNIEXPORT jlong JNICALL
+Java_com_companion_chat_engine_SentencePieceTokenizer_nativeCreateFromBytes(
+    JNIEnv* env, jobject thiz, jbyteArray model_bytes) {
+    jsize len = env->GetArrayLength(model_bytes);
+    jbyte* data = env->GetByteArrayElements(model_bytes, nullptr);
+    LOGI("Loading SentencePiece model from bytes: %d bytes", (int)len);
+
+    auto* handle = new TokenizerHandle();
+    handle->model_path = "<from-bytes>";
+
+    auto* processor = new sentencepiece::SentencePieceProcessor();
+    absl::string_view serialized(reinterpret_cast<const char*>(data), len);
+    auto status = processor->LoadFromSerializedProto(serialized);
+    env->ReleaseByteArrayElements(model_bytes, data, JNI_ABORT);
+
+    if (!status.ok()) {
+        LOGE("Failed to load SentencePiece model from bytes: %s", status.ToString().c_str());
+        delete processor;
+        delete handle;
+        return 0;
+    }
+    handle->processor = processor;
+    handle->initialized = true;
+    LOGI("SentencePiece model loaded successfully from bytes");
+
+    return reinterpret_cast<jlong>(handle);
+}
+
 JNIEXPORT jintArray JNICALL
 Java_com_companion_chat_engine_SentencePieceTokenizer_nativeEncode(
     JNIEnv* env, jobject thiz, jlong handle_ptr, jstring text) {
@@ -151,6 +181,13 @@ Java_com_companion_chat_engine_SentencePieceTokenizer_nativeCreate(
     LOGE("SentencePiece not compiled in; falling back to char-level tokenizer (model_path=%s)", path);
     env->ReleaseStringUTFChars(model_path, path);
     // Return non-zero sentinel so Kotlin side doesn't throw RuntimeException
+    return 1;
+}
+
+JNIEXPORT jlong JNICALL
+Java_com_companion_chat_engine_SentencePieceTokenizer_nativeCreateFromBytes(
+    JNIEnv* env, jobject thiz, jbyteArray model_bytes) {
+    LOGE("SentencePiece not compiled in; falling back to char-level tokenizer (from-bytes)");
     return 1;
 }
 

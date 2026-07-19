@@ -11,6 +11,8 @@ class InferenceEngineFactory(
         return when (runtime) {
             ModelRuntime.LLAMA_CPP_GGUF -> LlamaCppInferenceEngine(context)
             ModelRuntime.LITERT_LM -> LiteRTLMInferenceEngine(context)
+            ModelRuntime.MNN_LLM -> MnnLlmInferenceEngine(context)
+            ModelRuntime.CUSTOM_API -> CustomApiInferenceEngine()
         }
     }
 }

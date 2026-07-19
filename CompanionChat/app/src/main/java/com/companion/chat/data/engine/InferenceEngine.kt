@@ -1,5 +1,6 @@
 package com.companion.chat.data.engine
 
+import com.companion.chat.data.local.entity.CustomApiConfig
 import com.companion.chat.data.model.ChatMessage
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -11,7 +12,9 @@ enum class BackendType {
 
 enum class ModelRuntime {
     LITERT_LM,
-    LLAMA_CPP_GGUF
+    LLAMA_CPP_GGUF,
+    MNN_LLM,
+    CUSTOM_API
 }
 
 data class EngineConfig(
@@ -25,7 +28,12 @@ data class EngineConfig(
     val topK: Int = 40,
     val topP: Float = 0.95f,
     val systemPrompt: String = "",
-    val useGpu: Boolean = false
+    val useGpu: Boolean = false,
+    val customApiConfig: CustomApiConfig? = null,
+    /** 仅对 CUSTOM_API 生效：当 content 为空时是否读取 reasoning_content（用于后台总结等场景） */
+    val fallbackToReasoningContent: Boolean = false,
+    /** 仅对 CUSTOM_API 生效：为 true 时在请求体中加入 response_format: {"type":"json_object"} */
+    val jsonMode: Boolean = false
 )
 
 sealed class InferenceState {

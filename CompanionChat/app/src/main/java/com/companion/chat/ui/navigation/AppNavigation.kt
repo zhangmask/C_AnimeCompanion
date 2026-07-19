@@ -64,4 +64,16 @@ object SettingsRoutes {
 
     fun editCharacter(roleId: Long): String = "settings/character/$roleId"
     fun modelWithTarget(scrollTarget: String): String = "settings/model?scrollTarget=$scrollTarget"
+
+    const val EDIT_ROLE_CARD = "settings/role-card/{roleId}"
+    fun editRoleCard(roleId: Long): String = "settings/role-card/$roleId"
+
+    const val CUSTOM_API_LIST = "settings/custom-api"
+    const val CUSTOM_API_EDIT = "settings/custom-api/edit/{configId}"
+    fun customApiEdit(configId: Long): String = "settings/custom-api/edit/$configId"
+}
+
+object ImageStudioRoutes {
+    const val IMAGE_STUDIO = "image_studio/{roleId}"
+    fun imageStudio(roleId: Long): String = "image_studio/$roleId"
 }

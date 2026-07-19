@@ -36,9 +36,12 @@ class MemoryDecayManager(
 
     /**
      * 强化记忆：被 LLM 确认有价值或 FTS 检索命中时调用。
+     * 每日上限 0.4，baseline 同步上升 30%。
      */
     suspend fun strengthenMemory(memoryId: Long, delta: Double = 0.15) {
-        memoryDao.strengthen(memoryId, delta, nowProvider())
+        val now = nowProvider()
+        val today = now / (1000 * 60 * 60 * 24)
+        memoryDao.strengthen(memoryId, delta, today, now)
     }
 
     /**

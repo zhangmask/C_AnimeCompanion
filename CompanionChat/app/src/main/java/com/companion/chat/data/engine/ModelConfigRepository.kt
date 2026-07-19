@@ -1,6 +1,8 @@
 package com.companion.chat.data.engine
 
 import android.content.Context
+import com.companion.chat.data.local.entity.CustomApiConfig
+import kotlinx.coroutines.runBlocking
 import java.io.File
 
 data class ModelConfig(
@@ -12,11 +14,14 @@ data class ModelConfig(
     val temperature: Float = DefaultModelConfig.DefaultTemperature,
     val topK: Int = DefaultModelConfig.DefaultTopK,
     val topP: Float = DefaultModelConfig.DefaultTopP,
-    val useGpu: Boolean = false
+    val useGpu: Boolean = false,
+    val useCustomApi: Boolean = false,
+    val activeCustomApiConfigId: Long = -1L
 )
 
 class ModelConfigRepository(
-    context: Context
+    context: Context,
+    private val customApiConfigRepository: CustomApiConfigRepository? = null
 ) {
     private val appContext = context.applicationContext
     private val sharedPreferences = appContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -32,6 +37,12 @@ class ModelConfigRepository(
             ?.trim()
             .orEmpty()
 
+        // 迁移：旧值重置为新默认值（2B 模型需要更多空间自然结束，不截断）
+        val storedMaxTokens = sharedPreferences.getInt(KEY_MAX_TOKENS, DefaultModelConfig.DefaultMaxTokens)
+        if (storedMaxTokens != DefaultModelConfig.DefaultMaxTokens) {
+            sharedPreferences.edit().putInt(KEY_MAX_TOKENS, DefaultModelConfig.DefaultMaxTokens).apply()
+        }
+
         return ModelConfig(
             runtime = runtime,
             modelPath = modelPath,
@@ -41,7 +52,9 @@ class ModelConfigRepository(
             temperature = sharedPreferences.getFloat(KEY_TEMPERATURE, DefaultModelConfig.DefaultTemperature),
             topK = sharedPreferences.getInt(KEY_TOP_K, DefaultModelConfig.DefaultTopK),
             topP = sharedPreferences.getFloat(KEY_TOP_P, DefaultModelConfig.DefaultTopP),
-            useGpu = sharedPreferences.getBoolean(KEY_USE_GPU, false)
+            useGpu = sharedPreferences.getBoolean(KEY_USE_GPU, false),
+            useCustomApi = sharedPreferences.getBoolean(KEY_USE_CUSTOM_API, false),
+            activeCustomApiConfigId = sharedPreferences.getLong(KEY_ACTIVE_CUSTOM_API_CONFIG_ID, -1L)
         ).normalized()
     }
 
@@ -57,16 +70,40 @@ class ModelConfigRepository(
             .putInt(KEY_TOP_K, normalized.topK)
             .putFloat(KEY_TOP_P, normalized.topP)
             .putBoolean(KEY_USE_GPU, normalized.useGpu)
+            .putBoolean(KEY_USE_CUSTOM_API, normalized.useCustomApi)
+            .putLong(KEY_ACTIVE_CUSTOM_API_CONFIG_ID, normalized.activeCustomApiConfigId)
             .apply()
     }
 
+    fun setUseCustomApi(enabled: Boolean) {
+        sharedPreferences.edit().putBoolean(KEY_USE_CUSTOM_API, enabled).apply()
+    }
+
+    fun setActiveCustomApiConfigId(id: Long) {
+        sharedPreferences.edit().putLong(KEY_ACTIVE_CUSTOM_API_CONFIG_ID, id).apply()
+    }
+
     fun resolveModelPath(config: ModelConfig = getConfig()): String {
+        if (config.useCustomApi) return ""
         val explicitPath = config.modelPath.trim()
         if (explicitPath.isNotBlank()) return explicitPath
 
         val fileName = when (config.runtime) {
             ModelRuntime.LLAMA_CPP_GGUF -> DefaultModelConfig.GgufModelFileName
             ModelRuntime.LITERT_LM -> DefaultModelConfig.LiteRtModelFileName
+            ModelRuntime.MNN_LLM -> ""
+            ModelRuntime.CUSTOM_API -> ""
+        }
+        if (fileName.isEmpty()) {
+            if (config.runtime == ModelRuntime.MNN_LLM) {
+                val externalDir = appContext.getExternalFilesDir(DefaultModelConfig.ExternalModelsDir)
+                return if (externalDir != null) {
+                    File(externalDir, "${DefaultModelConfig.MnnModelDir}/${DefaultModelConfig.MnnModel2B}").absolutePath
+                } else {
+                    File(File(appContext.filesDir, DefaultModelConfig.ExternalModelsDir), "${DefaultModelConfig.MnnModelDir}/${DefaultModelConfig.MnnModel2B}").absolutePath
+                }
+            }
+            return ""
         }
         val externalDir = appContext.getExternalFilesDir(DefaultModelConfig.ExternalModelsDir)
         return if (externalDir != null) {
@@ -90,10 +127,14 @@ class ModelConfigRepository(
         config: ModelConfig = getConfig()
     ): EngineConfig {
         val normalized = config.normalized()
+        val customApiConfig: CustomApiConfig? = if (normalized.useCustomApi && customApiConfigRepository != null) {
+            runBlocking { customApiConfigRepository.getActive() }
+        } else null
+        val effectiveRuntime = if (normalized.useCustomApi) ModelRuntime.CUSTOM_API else normalized.runtime
         return EngineConfig(
             modelPath = resolveModelPath(normalized),
-            mmprojPath = if (normalized.runtime == ModelRuntime.LLAMA_CPP_GGUF) resolveMmprojPath() else "",
-            runtime = normalized.runtime,
+            mmprojPath = if (effectiveRuntime == ModelRuntime.LLAMA_CPP_GGUF) resolveMmprojPath() else "",
+            runtime = effectiveRuntime,
             backend = normalized.backend,
             contextSize = normalized.contextSize,
             maxTokens = normalized.maxTokens,
@@ -101,7 +142,8 @@ class ModelConfigRepository(
             topK = normalized.topK,
             topP = normalized.topP,
             systemPrompt = systemPrompt,
-            useGpu = normalized.useGpu
+            useGpu = normalized.useGpu,
+            customApiConfig = customApiConfig
         )
     }
 
@@ -127,5 +169,7 @@ class ModelConfigRepository(
         private const val KEY_TOP_K = "top_k"
         private const val KEY_TOP_P = "top_p"
         private const val KEY_USE_GPU = "use_gpu"
+        private const val KEY_USE_CUSTOM_API = "use_custom_api"
+        private const val KEY_ACTIVE_CUSTOM_API_CONFIG_ID = "active_custom_api_config_id"
     }
 }

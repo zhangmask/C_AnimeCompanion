@@ -25,6 +25,9 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import kotlin.math.max
 
 class AndroidVoiceInputEngine(
@@ -42,6 +45,10 @@ class AndroidVoiceInputEngine(
     private var isListening = false
     @Volatile
     private var stopRequested = false
+    @Volatile
+    private var cachedMnnRecognizer: MnnSenseVoiceRecognizer? = null
+    @Volatile
+    private var cachedMnnModelDir: String? = null
 
     override fun warmUp() {
         val config = configRepository.getConfig()
@@ -78,7 +85,11 @@ class AndroidVoiceInputEngine(
         }
 
         val config = configRepository.getConfig()
-        if (config.backend == VoiceInputBackend.LOCAL_SENSEVOICE && !emitLocalModelStatus(config)) {
+        Log.i(TAG, "startListening: backend=${config.backend}, modelDir=${config.localSenseVoiceModelDirectory}")
+        fileLog("startListening: backend=${config.backend}, modelDir=${config.localSenseVoiceModelDirectory}")
+        if (config.backend != VoiceInputBackend.CLOUD_HTTP_ASR && !emitLocalModelStatus(config)) {
+            Log.e(TAG, "startListening: model status check failed, aborting")
+            fileLog("startListening: model status check failed, aborting")
             return
         }
 
@@ -87,14 +98,22 @@ class AndroidVoiceInputEngine(
         _events.tryEmit(VoiceInputEvent.Listening)
         scope.launch {
             runCatching {
+                Log.i(TAG, "开始录音...")
+                fileLog("开始录音...")
                 val audio = recordUntilSilence(config)
                 if (stopRequested) {
+                    Log.i(TAG, "录音被用户停止")
+                    fileLog("录音被用户停止")
                     return@launch
                 }
                 if (audio.isEmpty) {
+                    Log.e(TAG, "录音为空（未检测到语音）")
+                    fileLog("录音为空（未检测到语音）")
                     _events.tryEmit(VoiceInputEvent.Error("未检测到语音"))
                     return@launch
                 }
+                Log.i(TAG, "录音完成: ${audio.pcm16.size} samples, sr=${audio.sampleRate}")
+                fileLog("录音完成: ${audio.pcm16.size} samples, sr=${audio.sampleRate}")
                 val text = withContext(Dispatchers.IO) {
                     when (config.backend) {
                         VoiceInputBackend.LOCAL_SENSEVOICE -> {
@@ -103,9 +122,26 @@ class AndroidVoiceInputEngine(
                                 resolveSenseVoiceModelFiles(config.localSenseVoiceModelDirectory)
                             ).transcribe(audio)
                         }
+                        VoiceInputBackend.LOCAL_MNN_SENSEVOICE -> {
+                            Log.i(TAG, "开始 MNN ASR 识别...")
+                            fileLog("开始 MNN ASR 识别...")
+                            val modelDir = config.localSenseVoiceModelDirectory
+                            val recognizer = cachedMnnRecognizer?.takeIf { modelDir == cachedMnnModelDir }
+                                ?: MnnSenseVoiceRecognizer(
+                                    resolveMnnAsrModelFiles(modelDir)
+                                ).also {
+                                    cachedMnnRecognizer = it
+                                    cachedMnnModelDir = modelDir
+                                }
+                            val result = recognizer.transcribe(audio)
+                            fileLog("MNN ASR 识别结果: '$result'")
+                            result
+                        }
                         VoiceInputBackend.CLOUD_HTTP_ASR -> cloudAsrEngine.transcribe(audio)
                     }
                 }
+                Log.i(TAG, "识别结果: '$text'")
+                fileLog("最终识别结果: '$text'")
                 if (text.isBlank()) {
                     _events.tryEmit(VoiceInputEvent.Error("未识别到文本"))
                 } else {
@@ -116,6 +152,7 @@ class AndroidVoiceInputEngine(
                     return@launch
                 }
                 Log.e(TAG, "语音输入失败", throwable)
+                fileLog("语音输入失败: ${throwable.javaClass.simpleName}: ${throwable.message}")
                 _events.tryEmit(VoiceInputEvent.Error(throwable.message ?: "语音输入失败"))
             }
             isListening = false
@@ -136,6 +173,8 @@ class AndroidVoiceInputEngine(
     override fun release() {
         stopListening()
         scope.cancel()
+        cachedMnnRecognizer?.release()
+        cachedMnnRecognizer = null
     }
 
     private fun recordUntilSilence(config: VoiceInputConfig): RecordedAudio {
@@ -160,29 +199,55 @@ class AndroidVoiceInputEngine(
 
         val buffer = ShortArray(FRAME_SAMPLES)
         var totalFrames = 0
-        val vad = SherpaOnnxSileroVad(
-            assetManager = null,
-            configValues = SileroVadConfigValues(
-                model = resolveSenseVoiceModelFiles(config.localSenseVoiceModelDirectory).vad
+        // MNN 后端不依赖 sherpa-onnx，使用能量 VAD
+        val useEnergyVad = config.backend == VoiceInputBackend.LOCAL_MNN_SENSEVOICE
+        val vad: Any = if (useEnergyVad) {
+            EnergyVad(sampleRate = SAMPLE_RATE, threshold = 0.02f, minSpeechDuration = 0.3f, maxSpeechDuration = 15.0f)
+        } else {
+            SherpaOnnxSileroVad(
+                assetManager = null,
+                configValues = SileroVadConfigValues(
+                    model = resolveSenseVoiceModelFiles(config.localSenseVoiceModelDirectory).vad
+                )
             )
-        )
+        }
 
         try {
             audioRecord.startRecording()
+            fileLog("AudioRecord started, useEnergyVad=$useEnergyVad, frameSamples=$FRAME_SAMPLES, maxFrames=$MAX_FRAMES")
             while (!stopRequested && isListening && totalFrames < MAX_FRAMES && scope.isActive) {
                 val read = audioRecord.read(buffer, 0, buffer.size)
                 if (read <= 0) continue
 
                 totalFrames += 1
-                vad.acceptWaveform(AudioPcmConverter.pcm16ToFloatArray(buffer, read))
-                val segment = vad.drainSegments().firstOrNull { audio -> !audio.isEmpty }
-                if (segment != null) {
-                    return segment
+                val samples = AudioPcmConverter.pcm16ToFloatArray(buffer, read)
+                if (useEnergyVad) {
+                    (vad as EnergyVad).acceptWaveform(samples)
+                    val segment = (vad as EnergyVad).drainSegments().firstOrNull { audio -> !audio.isEmpty }
+                    if (segment != null) {
+                        fileLog("EnergyVad detected speech: ${segment.pcm16.size} samples after $totalFrames frames")
+                        return segment
+                    }
+                } else {
+                    (vad as SherpaOnnxSileroVad).acceptWaveform(samples)
+                    val segment = (vad as SherpaOnnxSileroVad).drainSegments().firstOrNull { audio -> !audio.isEmpty }
+                    if (segment != null) {
+                        fileLog("SileroVad detected speech: ${segment.pcm16.size} samples after $totalFrames frames")
+                        return segment
+                    }
                 }
             }
-            vad.flush()
-            return vad.drainSegments().firstOrNull { audio -> !audio.isEmpty }
-                ?: RecordedAudio(ShortArray(0), SAMPLE_RATE)
+            fileLog("Recording loop ended: totalFrames=$totalFrames, stopRequested=$stopRequested, isListening=$isListening")
+            if (useEnergyVad) {
+                (vad as EnergyVad).flush()
+                val flushed = (vad as EnergyVad).drainSegments().firstOrNull { audio -> !audio.isEmpty }
+                fileLog("EnergyVad flush: ${flushed?.pcm16?.size ?: 0} samples")
+                return flushed ?: RecordedAudio(ShortArray(0), SAMPLE_RATE)
+            } else {
+                (vad as SherpaOnnxSileroVad).flush()
+                return (vad as SherpaOnnxSileroVad).drainSegments().firstOrNull { audio -> !audio.isEmpty }
+                    ?: RecordedAudio(ShortArray(0), SAMPLE_RATE)
+            }
         } catch (e: IllegalStateException) {
             if (stopRequested) {
                 return RecordedAudio(ShortArray(0), SAMPLE_RATE)
@@ -194,7 +259,11 @@ class AndroidVoiceInputEngine(
             }
             throw IllegalStateException(e.message ?: "语音录制失败", e)
         } finally {
-            vad.release()
+            if (useEnergyVad) {
+                (vad as EnergyVad).release()
+            } else {
+                (vad as SherpaOnnxSileroVad).release()
+            }
         }
     }
 
@@ -253,6 +322,15 @@ class AndroidVoiceInputEngine(
         }
         runCatching {
             audioRecord?.release()
+        }
+    }
+
+    private fun fileLog(message: String) {
+        runCatching {
+            val time = SimpleDateFormat("HH:mm:ss.SSS", Locale.getDefault()).format(Date())
+            context.openFileOutput("voice_input_log.txt", android.content.Context.MODE_APPEND).use { output ->
+                output.write("[$time] $message\n".toByteArray())
+            }
         }
     }
 

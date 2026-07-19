@@ -5,10 +5,12 @@ import com.companion.chat.data.context.ContextConfigRepository
 import com.companion.chat.data.context.DefaultContextManager
 import com.companion.chat.data.context.PromptAssembler
 import com.companion.chat.data.discover.DiscoverRoleRepository
+import com.companion.chat.data.engine.CustomApiConfigRepository
 import com.companion.chat.data.engine.ModelConfigRepository
 import com.companion.chat.data.image.HttpImageGenerationEngine
 import com.companion.chat.data.image.ImageGenerationConfigRepository
 import com.companion.chat.data.image.ImageGenerationEngineSelector
+import com.companion.chat.data.image.ImageStudioMessageRepository
 import com.companion.chat.data.image.LocalImageGenerationEngine
 import com.companion.chat.data.local.CompanionDatabase
 import com.companion.chat.data.embedding.OnnxEmbeddingEngine
@@ -37,7 +39,8 @@ import com.companion.chat.engine.AndroidVoiceInputEngine
 import com.companion.chat.engine.AndroidVoiceOutputEngine
 import com.companion.chat.engine.InferenceEngineFactory
 import com.companion.chat.engine.LocalAudioPlaybackEngine
-import com.companion.chat.engine.MossTtsNanoVoiceCloneEngine
+import com.companion.chat.engine.MossTtsMnnVoiceCloneEngine
+// import com.companion.chat.engine.MossTtsNanoVoiceCloneEngine
 import com.companion.chat.engine.RoleAwareVoiceOutputEngine
 
 class AppContainer(
@@ -45,7 +48,13 @@ class AppContainer(
 ) {
     val database: CompanionDatabase by lazy { CompanionDatabase.getInstance(application) }
 
-    val modelConfigRepository: ModelConfigRepository by lazy { ModelConfigRepository(application) }
+    val customApiConfigRepository: CustomApiConfigRepository by lazy {
+        CustomApiConfigRepository(database.customApiConfigDao())
+    }
+
+    val modelConfigRepository: ModelConfigRepository by lazy {
+        ModelConfigRepository(application, customApiConfigRepository)
+    }
     val contextConfigRepository: ContextConfigRepository by lazy { ContextConfigRepository(application) }
     val imageGenerationConfigRepository: ImageGenerationConfigRepository by lazy {
         ImageGenerationConfigRepository(application)
@@ -59,6 +68,9 @@ class AppContainer(
     val memoryRepository: MemoryRepository by lazy { MemoryRepository(database.memoryDao()) }
     val preferenceRepository: PreferenceRepository by lazy { PreferenceRepository(database.preferenceDao()) }
     val roleCardRepository: RoleCardRepository by lazy { RoleCardRepository(database.roleCardDao()) }
+    val imageStudioMessageRepository: ImageStudioMessageRepository by lazy {
+        ImageStudioMessageRepository(database.imageStudioMessageDao())
+    }
     val skillRepository: SkillRepository by lazy { SkillRepository(database.skillDao()) }
     val userProfileRepository: UserProfileRepository by lazy {
         UserProfileRepository(application)
@@ -74,19 +86,46 @@ class AppContainer(
     val voiceInputEngine: AndroidVoiceInputEngine by lazy { AndroidVoiceInputEngine(application) }
     val androidVoiceOutputEngine: AndroidVoiceOutputEngine by lazy { AndroidVoiceOutputEngine(application) }
     val localAudioPlaybackEngine: LocalAudioPlaybackEngine by lazy { LocalAudioPlaybackEngine(application) }
-    val mossTtsNanoVoiceCloneEngine: MossTtsNanoVoiceCloneEngine by lazy {
-        MossTtsNanoVoiceCloneEngine(
+    val mossTtsMnnVoiceCloneEngine: MossTtsMnnVoiceCloneEngine by lazy {
+        MossTtsMnnVoiceCloneEngine(
             context = application,
-            modelDirectoryProvider = { voiceCloneConfigRepository.getConfig().mossModelDirectory }
+            modelDirectoryProvider = { voiceCloneConfigRepository.getConfig().mnnModelDirectory }
         )
     }
     val voiceOutputEngine: RoleAwareVoiceOutputEngine by lazy {
+        val ttsAudioCacheDao = database.ttsAudioCacheDao()
         RoleAwareVoiceOutputEngine(
             fallbackEngine = androidVoiceOutputEngine,
             roleCardRepository = roleCardRepository,
-            cloneEngine = mossTtsNanoVoiceCloneEngine,
+            cloneEngine = mossTtsMnnVoiceCloneEngine,
             localAudioPlaybackEngine = localAudioPlaybackEngine,
-            defaultReferenceAudioProvider = { voiceCloneConfigRepository.getDefaultReferenceAudioUri() }
+            defaultReferenceAudioProvider = { voiceCloneConfigRepository.getDefaultReferenceAudioUri() },
+            getCachedAudioUri = { role, text ->
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    val hash = java.security.MessageDigest.getInstance("SHA-256")
+                        .digest(text.toByteArray(Charsets.UTF_8))
+                        .joinToString("") { "%02x".format(it) }
+                    val key = "$role|$hash"
+                    ttsAudioCacheDao.getByKey(key)?.audioUri
+                }
+            },
+            saveCachedAudioUri = { role, text, uri ->
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    val hash = java.security.MessageDigest.getInstance("SHA-256")
+                        .digest(text.toByteArray(Charsets.UTF_8))
+                        .joinToString("") { "%02x".format(it) }
+                    val key = "$role|$hash"
+                    ttsAudioCacheDao.upsert(
+                        com.companion.chat.data.local.entity.TtsAudioCacheEntity(
+                            cacheKey = key,
+                            role = role,
+                            contentHash = hash,
+                            audioUri = uri,
+                            textPreview = text.take(60)
+                        )
+                    )
+                }
+            }
         )
     }
 
@@ -137,12 +176,12 @@ class AppContainer(
 
     /** 应用启动时预热关键模型 */
     suspend fun warmUp() {
-        // 预热 MOSS TTS 语音克隆模型
-        try {
-            mossTtsNanoVoiceCloneEngine.warmUp()
-        } catch (e: Exception) {
-            android.util.Log.e("AppContainer", "MOSS TTS 预热失败: ${e.message}", e)
-        }
+        // 当前专注 MNN，先禁用 ONNX 预热
+        // try {
+        //     mossTtsNanoVoiceCloneEngine.warmUp()
+        // } catch (e: Exception) {
+        //     android.util.Log.e("AppContainer", "MOSS TTS 预热失败: ${e.message}", e)
+        // }
     }
 }
 
